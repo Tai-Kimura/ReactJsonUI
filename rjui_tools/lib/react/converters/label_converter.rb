@@ -11,8 +11,9 @@ module RjuiTools
           style_attr = build_style_attr
           text = convert_binding(json['text'] || '')
           id_attr = extract_id ? " id=\"#{extract_id}\"" : ''
+          onclick_attr = build_onclick_attr
 
-          "#{indent_str(indent)}<span#{id_attr} className=\"#{class_name}\"#{style_attr}>#{text}</span>"
+          "#{indent_str(indent)}<span#{id_attr} className=\"#{class_name}\"#{style_attr}#{onclick_attr}>#{text}</span>"
         end
 
         protected
@@ -30,7 +31,17 @@ module RjuiTools
           # Font weight
           classes << 'font-bold' if json['fontWeight'] == 'bold'
 
+          # Cursor pointer for clickable items
+          classes << 'cursor-pointer' if json['onClick']
+
           classes.compact.reject(&:empty?).join(' ')
+        end
+
+        def build_onclick_attr
+          return '' unless json['onClick']
+
+          onclick = json['onClick']
+          " onClick={#{onclick}}"
         end
       end
     end

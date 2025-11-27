@@ -81,20 +81,25 @@ module RjuiTools
       end
 
       def generate_component_file(name, jsx_content, json)
-        # Extract data bindings for props
-        props = extract_props(json)
-        handlers = extract_handlers(json)
         state_vars = extract_state_variables(json)
         included_components = extract_included_components(json)
         uses_string_manager = uses_string_manager?(json)
 
-        # Determine if we need useState
+        # Props come only from 'data' attribute
+        props = extract_data_props(json['data'])
+
+        # Determine if we need useState or "use client"
         needs_state = !state_vars.empty?
-        use_client = needs_state ? "\"use client\";\n\n" : ''
-        react_import = needs_state ? "import React, { useState } from 'react';" : "import React from 'react';"
+        needs_client = needs_state || uses_string_manager
+        use_client = needs_client ? "\"use client\";\n\n" : ''
+
+        # Build React import
+        react_hooks = []
+        react_hooks << 'useState' if needs_state
+        react_import = react_hooks.empty? ? "import React from 'react';" : "import React, { #{react_hooks.join(', ')} } from 'react';"
 
         # Generate StringManager import if needed
-        string_manager_import = uses_string_manager ? "\nimport { StringManager } from './StringManager';" : ''
+        string_manager_import = uses_string_manager ? "\nimport { StringManager } from '@/generated/StringManager';" : ''
 
         # Generate imports for included components
         component_imports = included_components.map do |comp_name|
@@ -113,7 +118,7 @@ module RjuiTools
           #{react_import}#{string_manager_import}#{component_imports}
 
           #{generate_props_interface(name, props) if @config['typescript']}
-          export const #{name} = (#{generate_props_signature(props, handlers)}) => {#{state_declarations}
+          export const #{name} = (#{generate_props_signature(props)}) => {#{state_declarations}
             return (
           #{jsx_content}
             );
@@ -153,45 +158,10 @@ module RjuiTools
         vars.uniq { |v| v[:name] }
       end
 
-      def extract_props(json, props = [])
-        # Extract @{propName} bindings
-        json.each do |key, value|
-          if value.is_a?(String) && value.match(/@\{([^}]+)\}/)
-            # Extract the root property name (e.g., "selectedProduct" from "selectedProduct.name")
-            binding_expr = Regexp.last_match(1)
-            root_prop = binding_expr.split('.').first
-            props << root_prop
-          elsif value.is_a?(Hash)
-            extract_props(value, props)
-          elsif value.is_a?(Array)
-            value.each { |v| extract_props(v, props) if v.is_a?(Hash) }
-          end
-        end
-        props.uniq
-      end
+      def generate_props_signature(props)
+        return '' if props.empty?
 
-      def extract_handlers(json, handlers = [])
-        %w[onClick onclick onLongPress onChange onTextChange onValueChanged].each do |handler_key|
-          if json[handler_key].is_a?(String) && !json[handler_key].start_with?('@{')
-            handlers << json[handler_key]
-          end
-        end
-
-        json['child']&.each do |child|
-          extract_handlers(child, handlers) if child.is_a?(Hash)
-        end
-
-        handlers.uniq
-      end
-
-      def generate_props_signature(props, handlers)
-        all_params = []
-        all_params += props.map { |p| p }
-        all_params += handlers.map { |h| h }
-
-        return '' if all_params.empty?
-
-        "{ #{all_params.join(', ')} }"
+        "{ #{props.join(', ')} }"
       end
 
       def generate_props_interface(name, props)
@@ -234,6 +204,17 @@ module RjuiTools
 
         false
       end
+
+      # Extract props from 'data' attribute
+      # Format: [{"class": "String", "name": "title"}, {"class": "ViewModel", "name": "viewModel"}]
+      def extract_data_props(data)
+        return [] unless data.is_a?(Array)
+
+        data.filter_map do |item|
+          item['name'] if item.is_a?(Hash) && item['name']
+        end
+      end
+
     end
   end
 end

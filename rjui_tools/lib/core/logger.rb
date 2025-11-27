@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# Disable buffering for real-time output
+$stdout.sync = true
+
 module RjuiTools
   module Core
     class Logger

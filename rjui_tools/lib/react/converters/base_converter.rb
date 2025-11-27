@@ -218,18 +218,47 @@ module RjuiTools
         def convert_binding(value)
           return value unless value.is_a?(String)
 
-          # First check if it's a binding expression @{propName}
-          if value.match?(/@\{[^}]+\}/)
-            # Convert @{propName} to {propName}
-            return value.gsub(/@\{(\w+)\}/, '{\1}')
-          end
-
           # Check if it's a snake_case string key for StringManager
           if string_key?(value)
             return convert_string_key(value)
           end
 
+          # Check if it's a binding expression @{propName} or @{prop.name}
+          if value.match?(/@\{[^}]+\}/)
+            # Convert @{propName} or @{prop.name} to {propName} or {prop.name}
+            converted = value.gsub(/@\{([^}]+)\}/, '{\1}')
+            # Also escape any remaining literal braces (not part of binding expressions)
+            return escape_jsx_braces_with_bindings(converted)
+          end
+
+          # Escape { and } in plain text for JSX (must be wrapped as JSX expressions)
+          escape_jsx_braces(value)
+        end
+
+        def escape_jsx_braces_with_bindings(value)
+          # For text that has both JSX expressions {binding} and literal braces,
+          # we need to handle them differently
+          return value unless value.is_a?(String)
+
+          # If the text contains literal { or } that aren't part of JSX expressions,
+          # wrap in template literal
+          # Check if text starts with { and is likely JSON (not a binding)
+          if value.start_with?('{') && !value.match?(/^\{[a-zA-Z]/)
+            # Likely JSON code block, wrap in template literal
+            escaped = value.gsub('`', '\\`').gsub('${', '\\${')
+            return "{`#{escaped}`}"
+          end
+
           value
+        end
+
+        def escape_jsx_braces(value)
+          return value unless value.is_a?(String)
+          return value unless value.include?('{') || value.include?('}')
+
+          # For text containing braces, wrap entire string in JSX expression with template literal
+          escaped = value.gsub('`', '\\`').gsub('${', '\\${')
+          "{`#{escaped}`}"
         end
 
         def extract_id

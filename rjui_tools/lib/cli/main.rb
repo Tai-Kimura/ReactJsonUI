@@ -9,6 +9,7 @@ module RjuiTools
       COMMANDS = {
         'init' => 'Initialize ReactJsonUI in current project',
         'build' => 'Build React components from JSON layouts',
+        'watch' => 'Watch JSON files and auto-rebuild on changes',
         'g' => 'Generate (view, component)',
         'generate' => 'Generate (view, component)',
         'help' => 'Show this help message'
@@ -25,6 +26,9 @@ module RjuiTools
         when 'build'
           require_relative 'commands/build_command'
           Commands::BuildCommand.new(sub_args).execute
+        when 'watch'
+          require_relative 'commands/watch_command'
+          Commands::WatchCommand.new(sub_args).execute
         when 'g', 'generate'
           require_relative 'commands/generate_command'
           Commands::GenerateCommand.new(sub_args).execute
@@ -56,6 +60,7 @@ module RjuiTools
             rjui init                    # Initialize in current directory
             rjui g view HomeView         # Generate HomeView component
             rjui build                   # Build all components from JSON
+            rjui watch                   # Watch and auto-rebuild on changes
         EXAMPLES
       end
     end
