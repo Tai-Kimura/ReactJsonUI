@@ -1,0 +1,244 @@
+# frozen_string_literal: true
+
+require_relative '../tailwind_mapper'
+
+module RjuiTools
+  module React
+    module Converters
+      class BaseConverter
+        attr_reader :json, :config
+
+        def initialize(json, config)
+          @json = json
+          @config = config
+          @use_tailwind = config['use_tailwind'] != false
+        end
+
+        def convert(indent = 2)
+          raise NotImplementedError, 'Subclasses must implement convert method'
+        end
+
+        protected
+
+        def build_class_name
+          classes = []
+          @dynamic_styles = {}
+
+          # Width/Height
+          classes << TailwindMapper.map_width(json['width'])
+          classes << TailwindMapper.map_height(json['height'])
+
+          # Padding
+          classes << TailwindMapper.map_padding(json['padding'] || json['paddings'])
+
+          # Margin
+          classes << TailwindMapper.map_margin(json['margins'])
+
+          # Background - check for dynamic binding
+          if json['background']
+            if has_binding?(json['background'])
+              @dynamic_styles['backgroundColor'] = convert_binding(json['background'])
+            else
+              classes << TailwindMapper.map_color(json['background'], 'bg')
+            end
+          end
+
+          # Corner radius
+          classes << TailwindMapper.map_corner_radius(json['cornerRadius']) if json['cornerRadius']
+
+          # Text color - check for dynamic binding
+          if json['fontColor']
+            if has_binding?(json['fontColor'])
+              @dynamic_styles['color'] = convert_binding(json['fontColor'])
+            else
+              classes << TailwindMapper.map_color(json['fontColor'], 'text')
+            end
+          end
+
+          # Font size
+          classes << TailwindMapper.map_font_size(json['fontSize']) if json['fontSize']
+
+          # Font weight
+          classes << TailwindMapper.map_font_weight(json['fontWeight']) if json['fontWeight']
+
+          # Text align
+          classes << TailwindMapper.map_text_align(json['textAlign'])
+
+          # Orientation (flex)
+          classes << TailwindMapper.map_orientation(json['orientation'])
+
+          # Shadow
+          classes << TailwindMapper.map_shadow(json['shadow']) if json['shadow']
+
+          # Border
+          classes << TailwindMapper.map_border(json['borderWidth'], json['borderColor']) if json['borderWidth'] || json['borderColor']
+
+          # Opacity/Alpha
+          opacity = json['opacity'] || json['alpha']
+          classes << TailwindMapper.map_opacity(opacity) if opacity && opacity < 1
+
+          # Visibility
+          classes << TailwindMapper.map_visibility(json['hidden']) if json['hidden']
+
+          # Clip to bounds
+          classes << TailwindMapper.map_overflow(json['clipToBounds']) if json['clipToBounds']
+
+          # Z-index
+          classes << TailwindMapper.map_z_index(json['zIndex']) if json['zIndex']
+
+          # Flex grow (weight)
+          classes << TailwindMapper.map_flex_grow(json['weight']) if json['weight']
+
+          # Gravity alignment
+          classes.concat(TailwindMapper.map_gravity(json['gravity'])) if json['gravity']
+
+          # Additional className from JSON
+          classes << json['className'] if json['className']
+
+          classes.compact.reject(&:empty?).join(' ')
+        end
+
+        def has_binding?(value)
+          value.is_a?(String) && value.include?('@{')
+        end
+
+        def build_style_attr
+          return '' if @dynamic_styles.nil? || @dynamic_styles.empty?
+
+          style_pairs = @dynamic_styles.map do |key, value|
+            # Remove braces from the value since we're inside a JSX expression
+            clean_value = value.gsub(/^\{|\}$/, '')
+            "#{key}: #{clean_value}"
+          end
+
+          " style={{ #{style_pairs.join(', ')} }}"
+        end
+
+        def convert_children(indent)
+          return '' unless json['child'].is_a?(Array)
+
+          json['child'].map do |child|
+            converter = create_converter_for_child(child)
+            converter.convert(indent + 2)
+          end.join("\n")
+        end
+
+        def create_converter_for_child(child)
+          # Check if this is an include component
+          if child['include']
+            require_relative 'include_converter'
+            return IncludeConverter.new(child, config)
+          end
+
+          # Apply style if specified
+          resolved_child = apply_style(child)
+
+          converter_class = get_converter_class(resolved_child['type'])
+          converter_class.new(resolved_child, config)
+        end
+
+        def apply_style(child)
+          return child unless child['style']
+
+          style_name = child['style']
+          style_data = load_style(style_name)
+          return child unless style_data
+
+          # Merge style with child (child attributes override style)
+          merged = style_data.merge(child)
+          merged.delete('style')
+          merged
+        end
+
+        def load_style(style_name)
+          styles_dir = config['styles_directory'] || 'src/Styles'
+          style_path = File.join(styles_dir, "#{style_name}.json")
+
+          return nil unless File.exist?(style_path)
+
+          JSON.parse(File.read(style_path))
+        rescue JSON::ParserError
+          nil
+        end
+
+        def get_converter_class(type)
+          require_relative 'view_converter'
+          require_relative 'label_converter'
+          require_relative 'button_converter'
+          require_relative 'image_converter'
+          require_relative 'text_field_converter'
+          require_relative 'text_view_converter'
+          require_relative 'scroll_view_converter'
+          require_relative 'collection_converter'
+          require_relative 'toggle_converter'
+          require_relative 'slider_converter'
+          require_relative 'segment_converter'
+          require_relative 'radio_converter'
+          require_relative 'progress_converter'
+          require_relative 'indicator_converter'
+          require_relative 'select_box_converter'
+          require_relative 'include_converter'
+
+          {
+            'View' => ViewConverter,
+            'SafeAreaView' => ViewConverter,
+            'Label' => LabelConverter,
+            'Text' => LabelConverter,
+            'Button' => ButtonConverter,
+            'Image' => ImageConverter,
+            'CircleImage' => ImageConverter,
+            'NetworkImage' => ImageConverter,
+            'TextField' => TextFieldConverter,
+            'TextView' => TextViewConverter,
+            'Scroll' => ScrollViewConverter,
+            'ScrollView' => ScrollViewConverter,
+            'Collection' => CollectionConverter,
+            'Table' => CollectionConverter,
+            'Switch' => ToggleConverter,
+            'Toggle' => ToggleConverter,
+            'Check' => ToggleConverter,
+            'Checkbox' => ToggleConverter,
+            'Slider' => SliderConverter,
+            'Segment' => SegmentConverter,
+            'Radio' => RadioConverter,
+            'Progress' => ProgressConverter,
+            'Indicator' => IndicatorConverter,
+            'SelectBox' => SelectBoxConverter,
+            'Include' => IncludeConverter
+          }[type] || ViewConverter
+        end
+
+        def indent_str(indent)
+          ' ' * indent
+        end
+
+        def convert_binding(value)
+          return value unless value.is_a?(String)
+
+          # Convert @{propName} to {propName}
+          value.gsub(/@\{(\w+)\}/, '{\1}')
+        end
+
+        def extract_id
+          json['id'] || json['propertyName']
+        end
+
+        # Get default value from config
+        def defaults(component_type = nil)
+          return {} unless config['defaults']
+
+          if component_type
+            config['defaults'][component_type] || {}
+          else
+            config['defaults']
+          end
+        end
+
+        # Get value with fallback to default
+        def get_value(key, component_type = nil)
+          json[key] || defaults(component_type)[key]
+        end
+      end
+    end
+  end
+end
