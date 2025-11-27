@@ -1,11 +1,14 @@
 # frozen_string_literal: true
 
 require_relative '../tailwind_mapper'
+require_relative '../helpers/string_manager_helper'
 
 module RjuiTools
   module React
     module Converters
       class BaseConverter
+        include Helpers::StringManagerHelper
+
         attr_reader :json, :config
 
         def initialize(json, config)
@@ -215,8 +218,18 @@ module RjuiTools
         def convert_binding(value)
           return value unless value.is_a?(String)
 
-          # Convert @{propName} to {propName}
-          value.gsub(/@\{(\w+)\}/, '{\1}')
+          # First check if it's a binding expression @{propName}
+          if value.match?(/@\{[^}]+\}/)
+            # Convert @{propName} to {propName}
+            return value.gsub(/@\{(\w+)\}/, '{\1}')
+          end
+
+          # Check if it's a snake_case string key for StringManager
+          if string_key?(value)
+            return convert_string_key(value)
+          end
+
+          value
         end
 
         def extract_id

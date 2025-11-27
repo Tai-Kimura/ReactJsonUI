@@ -12,6 +12,9 @@ module RjuiTools
         'generated_directory' => 'src/generated',
         'components_directory' => 'src/generated/components',
         'styles_directory' => 'src/Styles',
+        'strings_directory' => 'src/Strings',
+        'languages' => ['en', 'ja'],
+        'default_language' => 'en',
         'use_tailwind' => true,
         'typescript' => false
       }.freeze
