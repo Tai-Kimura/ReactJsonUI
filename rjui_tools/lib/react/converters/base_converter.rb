@@ -165,6 +165,10 @@ module RjuiTools
         end
 
         def get_converter_class(type)
+          # First check extension converters
+          extension_converters = config['_extension_converters'] || {}
+          return extension_converters[type] if extension_converters[type]
+
           require_relative 'view_converter'
           require_relative 'label_converter'
           require_relative 'button_converter'

@@ -56,6 +56,57 @@ module RjuiTools
       def initialize(config)
         @config = config
         @use_tailwind = config['use_tailwind'] != false
+        @extension_converters = load_extension_converters
+        # Store extension converters in config so child converters can access them
+        @config['_extension_converters'] = @extension_converters
+      end
+
+      # Load custom converters from extensions directory
+      def load_extension_converters
+        converters = {}
+
+        # Check for extensions directory
+        extensions_dir = find_extensions_dir
+        return converters unless extensions_dir && File.directory?(extensions_dir)
+
+        # Load converter mappings if exists
+        mappings_file = File.join(extensions_dir, 'converter_mappings.rb')
+        return converters unless File.exist?(mappings_file)
+
+        # Load the mappings
+        require mappings_file
+
+        # Get the mappings hash
+        if defined?(Converters::Extensions::CONVERTER_MAPPINGS)
+          Converters::Extensions::CONVERTER_MAPPINGS.each do |type, class_name|
+            # Load the converter file
+            snake_case = type.gsub(/([A-Z]+)([A-Z][a-z])/, '\1_\2')
+                            .gsub(/([a-z\d])([A-Z])/, '\1_\2')
+                            .downcase
+            converter_file = File.join(extensions_dir, "#{snake_case}_converter.rb")
+
+            if File.exist?(converter_file)
+              require converter_file
+              converter_class = Converters::Extensions.const_get(class_name)
+              converters[type] = converter_class
+            end
+          end
+        end
+
+        converters
+      rescue => e
+        Core::Logger.warn("Failed to load extension converters: #{e.message}") if defined?(Core::Logger)
+        {}
+      end
+
+      def find_extensions_dir
+        # Check multiple possible locations
+        candidates = [
+          File.join(Dir.pwd, 'rjui_tools', 'lib', 'react', 'converters', 'extensions'),
+          File.join(File.dirname(__FILE__), 'converters', 'extensions')
+        ]
+
+        candidates.find { |dir| File.directory?(dir) }
       end
 
       def generate(component_name, json)
@@ -74,7 +125,9 @@ module RjuiTools
         end
 
         type = json['type'] || 'View'
-        converter_class = CONVERTERS[type] || Converters::ViewConverter
+
+        # First check extension converters, then built-in converters
+        converter_class = @extension_converters[type] || CONVERTERS[type] || Converters::ViewConverter
 
         converter = converter_class.new(json, @config)
         converter.convert(indent)
