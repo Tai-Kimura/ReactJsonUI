@@ -139,8 +139,9 @@ module RjuiTools
         extension_components = extract_extension_components(json)
         uses_string_manager = uses_string_manager?(json)
 
-        # Props come only from 'data' attribute
-        props = extract_data_props(json['data'])
+        # Props come from 'data' attribute - can be at root level or as first child element
+        data = extract_data_from_json(json)
+        props = extract_data_props(data)
 
         # Determine if we need useState or "use client"
         needs_state = !state_vars.empty?
@@ -280,6 +281,28 @@ module RjuiTools
         end
 
         false
+      end
+
+      # Extract data from JSON - search for data-only elements in children
+      # A data-only element is { "data": [...] } with only the data key
+      def extract_data_from_json(json)
+        return [] unless json['child'].is_a?(Array)
+
+        json['child'].each do |child|
+          next unless child.is_a?(Hash)
+          # Check if this child has only 'data' key (data-only element)
+          if child.keys == ['data'] && child['data'].is_a?(Array)
+            return child['data']
+          end
+        end
+
+        []
+      end
+
+      # Check if a child element is a data-only element (should not be rendered)
+      def data_only_element?(child)
+        return false unless child.is_a?(Hash)
+        child.keys == ['data'] && child['data'].is_a?(Array)
       end
 
       # Extract props from 'data' attribute

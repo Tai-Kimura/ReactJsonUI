@@ -120,10 +120,20 @@ module RjuiTools
         def convert_children(indent)
           return '' unless json['child'].is_a?(Array)
 
-          json['child'].map do |child|
+          json['child'].filter_map do |child|
+            # Skip data-only elements (they define props, not rendered content)
+            next nil if data_only_element?(child)
+
             converter = create_converter_for_child(child)
             converter.convert(indent + 2)
           end.join("\n")
+        end
+
+        # Check if a child element is a data-only element (should not be rendered)
+        # Data-only element: { "data": [...] } with only the data key
+        def data_only_element?(child)
+          return false unless child.is_a?(Hash)
+          child.keys == ['data'] && child['data'].is_a?(Array)
         end
 
         def create_converter_for_child(child)
@@ -261,9 +271,10 @@ module RjuiTools
         # Escape special characters in text for JSX (without wrapping)
         def escape_text_for_jsx(text)
           return text unless text.is_a?(String)
-          return text unless text.include?('{') || text.include?('}')
+          # Escape if text contains braces or single quotes
+          return text unless text.include?('{') || text.include?('}') || text.include?("'")
 
-          # Wrap text containing braces in JSX expression
+          # Wrap text containing special characters in JSX expression
           escaped = text.gsub('`', '\\`').gsub('${', '\\${')
           "{`#{escaped}`}"
         end
@@ -287,9 +298,10 @@ module RjuiTools
 
         def escape_jsx_braces(value)
           return value unless value.is_a?(String)
-          return value unless value.include?('{') || value.include?('}')
+          # Escape if text contains braces or single quotes (which can break JSX attributes)
+          return value unless value.include?('{') || value.include?('}') || value.include?("'")
 
-          # For text containing braces, wrap entire string in JSX expression with template literal
+          # For text containing special characters, wrap entire string in JSX expression with template literal
           escaped = value.gsub('`', '\\`').gsub('${', '\\${')
           "{`#{escaped}`}"
         end
