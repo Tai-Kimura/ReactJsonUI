@@ -37,12 +37,24 @@ module RjuiTools
         end
 
         # Extract visibility binding property if exists
+        # For visibility, we need to check if the result is 'visible' (not 'gone')
         def build_visibility_binding
           visibility = json['visibility']
           return nil unless visibility && has_binding?(visibility)
 
-          # Convert @{viewModel.isSwiftVisible} to viewModel.isSwiftVisible
-          visibility.gsub(/@\{|\}/, '')
+          # Extract the binding expression
+          binding_expr = visibility.gsub(/@\{|\}/, '')
+
+          # If expression contains ternary with 'gone'/'visible', convert to boolean condition
+          # e.g., "data.isLast ? 'gone' : 'visible'" becomes "!data.isLast"
+          if binding_expr =~ /^(.+?)\s*\?\s*'gone'\s*:\s*'visible'$/
+            "!#{$1.strip}"
+          elsif binding_expr =~ /^(.+?)\s*\?\s*'visible'\s*:\s*'gone'$/
+            $1.strip
+          else
+            # Assume expression directly evaluates to 'visible' or 'gone'
+            "(#{binding_expr}) !== 'gone'"
+          end
         end
 
         protected

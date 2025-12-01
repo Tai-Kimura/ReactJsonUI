@@ -158,7 +158,7 @@ module RjuiTools
         def map_height(height)
           case height
           when 'matchParent'
-            'h-full'
+            'h-auto'
           when 'wrapContent'
             'h-auto'
           when Numeric
@@ -184,7 +184,7 @@ module RjuiTools
         def map_orientation(orientation)
           case orientation&.downcase
           when 'horizontal'
-            'flex flex-row'
+            'flex flex-row items-stretch'
           when 'vertical'
             'flex flex-col'
           else
