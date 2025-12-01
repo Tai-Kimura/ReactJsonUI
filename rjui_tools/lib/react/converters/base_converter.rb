@@ -235,8 +235,37 @@ module RjuiTools
             return escape_jsx_braces_with_bindings(converted)
           end
 
+          # Convert newlines to <br /> and escape JSX braces
+          convert_text_with_newlines(value)
+        end
+
+        # Convert text with newline characters to JSX with <br /> tags
+        def convert_text_with_newlines(value)
+          return value unless value.is_a?(String)
+
+          # If text contains newlines, convert to JSX fragment with <br /> tags
+          if value.include?("\n")
+            parts = value.split("\n")
+            # Build JSX expression: <>line1<br />line2<br />line3</>
+            jsx_parts = parts.map.with_index do |part, i|
+              escaped_part = escape_text_for_jsx(part)
+              i < parts.length - 1 ? "#{escaped_part}<br />" : escaped_part
+            end
+            return "<>#{jsx_parts.join('')}</>"
+          end
+
           # Escape { and } in plain text for JSX (must be wrapped as JSX expressions)
           escape_jsx_braces(value)
+        end
+
+        # Escape special characters in text for JSX (without wrapping)
+        def escape_text_for_jsx(text)
+          return text unless text.is_a?(String)
+          return text unless text.include?('{') || text.include?('}')
+
+          # Wrap text containing braces in JSX expression
+          escaped = text.gsub('`', '\\`').gsub('${', '\\${')
+          "{`#{escaped}`}"
         end
 
         def escape_jsx_braces_with_bindings(value)
