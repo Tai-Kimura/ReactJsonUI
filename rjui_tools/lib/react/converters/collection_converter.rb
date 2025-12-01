@@ -24,7 +24,7 @@ module RjuiTools
         def build_class_name
           classes = [super]
 
-          columns = json['columns'] || 2
+          columns = json['columnCount'] || json['columns'] || 1
           layout = json['layout'] || 'vertical'
           is_horizontal = layout == 'horizontal'
 
@@ -120,7 +120,7 @@ module RjuiTools
             items_binding = extract_binding_property(json['items'])
             if items_binding
               lines << "#{indent_str(indent)}{#{items_binding}?.map((item, index) => ("
-              lines << "#{indent_str(indent + 2)}<#{cell_view} key={index} data={item} />"
+              lines << "#{indent_str(indent + 2)}<#{cell_view} key={index} {...item} />"
               lines << "#{indent_str(indent)}))}"
             else
               lines << "#{indent_str(indent)}{/* Add items prop to render cells */}"
@@ -149,6 +149,13 @@ module RjuiTools
 
           return nil unless class_name
 
+          # Handle path-based component references like "components/attribute_row"
+          if class_name.include?('/')
+            # Extract the last part of the path and convert to PascalCase
+            base_name = class_name.split('/').last
+            return to_pascal_case(base_name)
+          end
+
           # Convert UIKit cell class name to React component name
           # InformationListCollectionViewCell -> InformationListView
           # SomeCell -> SomeCellView
@@ -163,6 +170,10 @@ module RjuiTools
           else
             class_name
           end
+        end
+
+        def to_pascal_case(string)
+          string.split('_').map(&:capitalize).join
         end
 
         def extract_binding_property(items_property)

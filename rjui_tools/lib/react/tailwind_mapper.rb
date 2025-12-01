@@ -300,7 +300,11 @@ module RjuiTools
         def map_flex_grow(weight)
           return '' unless weight
 
-          weight > 0 ? "grow-[#{weight}]" : 'grow-0'
+          case weight
+          when 0 then 'grow-0'
+          when 1 then 'flex-1'
+          else "grow-[#{weight}]"
+          end
         end
 
         private
