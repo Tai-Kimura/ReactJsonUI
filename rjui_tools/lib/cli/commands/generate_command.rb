@@ -51,40 +51,174 @@ module RjuiTools
         def generate_view(name)
           view_name = to_pascal_case(name)
           json_name = to_snake_case(name)
+          kebab_name = to_kebab_case(name)
 
           layouts_dir = @config['layouts_directory']
-          json_path = File.join(layouts_dir, "#{json_name}.json")
+          json_path = File.join(layouts_dir, "pages", "#{json_name}.json")
 
           if File.exist?(json_path)
             Core::Logger.warn("Layout already exists: #{json_path}")
             return
           end
 
-          FileUtils.mkdir_p(layouts_dir)
+          FileUtils.mkdir_p(File.dirname(json_path))
 
           layout = {
             'type' => 'View',
-            'id' => "#{json_name}_container",
-            'className' => 'flex flex-col p-4',
+            'id' => "#{json_name}_page",
+            'width' => 'matchParent',
+            'orientation' => 'vertical',
             'child' => [
+              { 'data' => [{ 'class' => "#{view_name}ViewModel", 'name' => 'viewModel' }] },
               {
-                'type' => 'Label',
-                'id' => "#{json_name}_title",
-                'text' => view_name,
-                'fontSize' => 24,
-                'fontColor' => '#000000'
+                'type' => 'View',
+                'id' => "#{json_name}_content",
+                'width' => 'matchParent',
+                'padding' => [48, 24],
+                'orientation' => 'vertical',
+                'background' => '#FFFFFF',
+                'child' => [
+                  {
+                    'type' => 'Label',
+                    'text' => view_name,
+                    'fontSize' => 32,
+                    'fontWeight' => 'bold',
+                    'fontColor' => '#23272F'
+                  }
+                ]
               }
             ]
           }
 
           File.write(json_path, JSON.pretty_generate(layout))
           Core::Logger.success("Created layout: #{json_path}")
+
+          # Generate page.tsx
+          generate_page_file(view_name, kebab_name)
+
+          # Generate ViewModel
+          generate_viewmodel_file(view_name)
+
           Core::Logger.info('Run "rjui build" to generate the React component')
         end
 
         def generate_component(name)
-          # For custom reusable components
-          generate_view(name)
+          view_name = to_pascal_case(name)
+          json_name = to_snake_case(name)
+
+          layouts_dir = @config['layouts_directory']
+          json_path = File.join(layouts_dir, "components", "#{json_name}.json")
+
+          if File.exist?(json_path)
+            Core::Logger.warn("Layout already exists: #{json_path}")
+            return
+          end
+
+          FileUtils.mkdir_p(File.dirname(json_path))
+
+          layout = {
+            'type' => 'View',
+            'id' => "#{json_name}_container",
+            'orientation' => 'vertical',
+            'child' => [
+              {
+                'type' => 'Label',
+                'text' => view_name,
+                'fontSize' => 16,
+                'fontColor' => '#000000'
+              }
+            ]
+          }
+
+          File.write(json_path, JSON.pretty_generate(layout))
+          Core::Logger.success("Created component layout: #{json_path}")
+          Core::Logger.info('Run "rjui build" to generate the React component')
+        end
+
+        def generate_page_file(view_name, kebab_name)
+          page_dir = File.join('src', 'app', kebab_name)
+          page_path = File.join(page_dir, 'page.tsx')
+
+          if File.exist?(page_path)
+            Core::Logger.warn("Page already exists: #{page_path}")
+            return
+          end
+
+          FileUtils.mkdir_p(page_dir)
+
+          page_content = <<~TSX
+            "use client";
+
+            import { useRouter } from "next/navigation";
+            import { useMemo, useState } from "react";
+            import Header from "@/generated/components/Header";
+            import #{view_name} from "@/generated/components/#{view_name}";
+            import { HeaderViewModel } from "@/viewmodels/HeaderViewModel";
+            import { #{view_name}ViewModel } from "@/viewmodels/#{view_name}ViewModel";
+
+            export default function #{view_name}Page() {
+              const router = useRouter();
+              const [currentTab, setCurrentTab] = useState(0);
+              const headerViewModel = useMemo(() => new HeaderViewModel(router), [router]);
+              const viewModel = useMemo(
+                () => new #{view_name}ViewModel(router, currentTab, setCurrentTab),
+                [router, currentTab]
+              );
+
+              return (
+                <>
+                  <Header viewModel={headerViewModel} />
+                  <#{view_name} viewModel={viewModel} />
+                </>
+              );
+            }
+          TSX
+
+          File.write(page_path, page_content)
+          Core::Logger.success("Created page: #{page_path}")
+        end
+
+        def generate_viewmodel_file(view_name)
+          viewmodel_dir = File.join('src', 'viewmodels')
+          viewmodel_path = File.join(viewmodel_dir, "#{view_name}ViewModel.ts")
+
+          if File.exist?(viewmodel_path)
+            Core::Logger.warn("ViewModel already exists: #{viewmodel_path}")
+            return
+          end
+
+          FileUtils.mkdir_p(viewmodel_dir)
+
+          viewmodel_content = <<~TS
+            import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
+
+            export class #{view_name}ViewModel {
+              private router: AppRouterInstance;
+              private _currentTab: number;
+              private _setCurrentTab: (tab: number) => void;
+
+              constructor(
+                router: AppRouterInstance,
+                currentTab: number,
+                setCurrentTab: (tab: number) => void
+              ) {
+                this.router = router;
+                this._currentTab = currentTab;
+                this._setCurrentTab = setCurrentTab;
+              }
+
+              get currentTab(): number {
+                return this._currentTab;
+              }
+
+              onTabChange = (index: number) => {
+                this._setCurrentTab(index);
+              };
+            }
+          TS
+
+          File.write(viewmodel_path, viewmodel_content)
+          Core::Logger.success("Created ViewModel: #{viewmodel_path}")
         end
 
         def generate_converter
@@ -125,7 +259,11 @@ module RjuiTools
         end
 
         def to_pascal_case(string)
-          string.split(/[-_\/]/).map(&:capitalize).join
+          # If already PascalCase (no separators), return as-is
+          return string if string !~ /[-_\/]/ && string =~ /^[A-Z]/
+
+          # Otherwise, split and capitalize each part
+          string.split(/[-_\/]/).map { |part| part.sub(/^./, &:upcase) }.join
         end
 
         def to_snake_case(string)
@@ -134,6 +272,14 @@ module RjuiTools
             .gsub(/([a-z\d])([A-Z])/, '\1_\2')
             .downcase
             .gsub(/\//, '_')
+        end
+
+        def to_kebab_case(string)
+          string
+            .gsub(/([A-Z]+)([A-Z][a-z])/, '\1-\2')
+            .gsub(/([a-z\d])([A-Z])/, '\1-\2')
+            .downcase
+            .gsub(/[_\/]/, '-')
         end
 
         def show_help

@@ -57,7 +57,7 @@ module RjuiTools
             'py-2'
           end
 
-          base_classes = "flex-1 px-4 #{padding_class} #{font_size_class} font-medium rounded-md transition-colors"
+          base_classes = "flex-1 px-4 #{padding_class} #{font_size_class} font-medium rounded-md transition-colors cursor-pointer"
 
           if is_binding?(selected_index)
             prop = extract_binding_property(selected_index)
