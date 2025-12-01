@@ -31,7 +31,7 @@ module RjuiTools
           Commands::WatchCommand.new(sub_args).execute
         when 'g', 'generate'
           require_relative 'commands/generate_command'
-          Commands::GenerateCommand.new(sub_args).execute
+          Commands::GenerateCommand.new(sub_args, sub_args.dup).execute
         when 'help', nil, '-h', '--help'
           show_help
         else

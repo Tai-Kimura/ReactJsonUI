@@ -120,7 +120,7 @@ module RjuiTools
             items_binding = extract_binding_property(json['items'])
             if items_binding
               lines << "#{indent_str(indent)}{#{items_binding}?.map((item, index) => ("
-              lines << "#{indent_str(indent + 2)}<#{cell_view} key={index} {...item} />"
+              lines << "#{indent_str(indent + 2)}<#{cell_view} key={index} data={item} />"
               lines << "#{indent_str(indent)}))}"
             else
               lines << "#{indent_str(indent)}{/* Add items prop to render cells */}"

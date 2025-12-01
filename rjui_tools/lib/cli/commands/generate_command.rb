@@ -10,8 +10,9 @@ module RjuiTools
   module CLI
     module Commands
       class GenerateCommand
-        def initialize(args)
+        def initialize(args, original_args = nil)
           @args = args
+          @original_args = original_args || args.dup
           @config = Core::ConfigManager.load_config
         end
 
@@ -49,19 +50,29 @@ module RjuiTools
         private
 
         def generate_view(name)
-          view_name = to_pascal_case(name)
-          json_name = to_snake_case(name)
-          kebab_name = to_kebab_case(name)
+          # Handle nested paths like "learn/components/View"
+          path_parts = name.split('/')
+          base_name = path_parts.last
+          dir_parts = path_parts[0...-1]
+
+          view_name = to_pascal_case(base_name)
+          json_name = to_snake_case(base_name)
+
+          # Convert directory parts to kebab-case
+          kebab_dir_parts = dir_parts.map { |part| to_kebab_case(part) }
+          kebab_path = (kebab_dir_parts + [to_kebab_case(base_name)]).join('/')
 
           layouts_dir = @config['layouts_directory']
-          json_path = File.join(layouts_dir, "pages", "#{json_name}.json")
+          # Build nested path for JSON file
+          json_dir = File.join(layouts_dir, "pages", *kebab_dir_parts)
+          json_path = File.join(json_dir, "#{json_name}.json")
 
           if File.exist?(json_path)
             Core::Logger.warn("Layout already exists: #{json_path}")
             return
           end
 
-          FileUtils.mkdir_p(File.dirname(json_path))
+          FileUtils.mkdir_p(json_dir)
 
           layout = {
             'type' => 'View',
@@ -94,7 +105,7 @@ module RjuiTools
           Core::Logger.success("Created layout: #{json_path}")
 
           # Generate page.tsx
-          generate_page_file(view_name, kebab_name)
+          generate_page_file(view_name, kebab_path)
 
           # Generate ViewModel
           generate_viewmodel_file(view_name)
@@ -135,8 +146,10 @@ module RjuiTools
           Core::Logger.info('Run "rjui build" to generate the React component')
         end
 
-        def generate_page_file(view_name, kebab_name)
-          page_dir = File.join('src', 'app', kebab_name)
+        def generate_page_file(view_name, kebab_path)
+          # kebab_path can be nested like "learn/components/view"
+          path_parts = kebab_path.split('/')
+          page_dir = File.join('src', 'app', *path_parts)
           page_path = File.join(page_dir, 'page.tsx')
 
           if File.exist?(page_path)
@@ -231,8 +244,12 @@ module RjuiTools
             return
           end
 
+          # Build command line string for comment (skip the type argument like 'converter')
+          remaining_args = @original_args[1..] || []
+          command_line = "rjui g converter #{remaining_args.join(' ')}"
+
           require_relative '../../react/generators/converter_generator'
-          generator = React::Generators::ConverterGenerator.new(name, options, @config)
+          generator = React::Generators::ConverterGenerator.new(name, options, @config, command_line)
           generator.generate
         end
 
