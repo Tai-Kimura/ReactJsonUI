@@ -31,7 +31,8 @@ module RjuiTools
         def build_class_name
           classes = [super]
 
-          classes << 'inline-flex'
+          classes << 'w-full'
+          classes << 'flex'
           classes << 'rounded-lg'
           classes << 'bg-gray-100'
           classes << 'p-1'
@@ -42,7 +43,21 @@ module RjuiTools
         def build_button_class(index)
           selected_index = json['selectedIndex'] || json['selectedTabIndex'] || 0
 
-          base_classes = 'px-4 py-2 text-sm font-medium rounded-md transition-colors'
+          # Build font size class
+          font_size_class = if json['fontSize']
+            TailwindMapper.map_font_size(json['fontSize'])
+          else
+            'text-sm'
+          end
+
+          # Build padding class
+          padding_class = if json['height']
+            "py-#{TailwindMapper::PADDING_MAP[json['height'] / 4] || (json['height'] / 4)}"
+          else
+            'py-2'
+          end
+
+          base_classes = "flex-1 px-4 #{padding_class} #{font_size_class} font-medium rounded-md transition-colors"
 
           if is_binding?(selected_index)
             prop = extract_binding_property(selected_index)

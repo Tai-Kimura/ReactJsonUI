@@ -80,8 +80,14 @@ module RjuiTools
           opacity = json['opacity'] || json['alpha']
           classes << TailwindMapper.map_opacity(opacity) if opacity && opacity < 1
 
-          # Visibility
+          # Visibility (hidden attribute - static)
           classes << TailwindMapper.map_visibility(json['hidden']) if json['hidden']
+
+          # Visibility attribute (supports data binding)
+          # If it's a binding, we'll handle it with conditional class
+          if json['visibility'] && !has_binding?(json['visibility'])
+            classes << 'hidden' unless json['visibility']
+          end
 
           # Clip to bounds
           classes << TailwindMapper.map_overflow(json['clipToBounds']) if json['clipToBounds']
@@ -308,6 +314,20 @@ module RjuiTools
 
         def extract_id
           json['id'] || json['propertyName']
+        end
+
+        # Build onClick attribute - converts @{handler} to {handler}
+        def build_onclick_attr
+          handler = json['onClick']
+          return '' unless handler
+
+          if handler.start_with?('@{')
+            # Binding: @{handleClick} -> {handleClick}
+            " onClick={#{handler.gsub(/@\{|\}/, '')}}"
+          else
+            # Direct handler name
+            " onClick={#{handler}}"
+          end
         end
 
         # Get default value from config
