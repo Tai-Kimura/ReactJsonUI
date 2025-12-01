@@ -346,6 +346,71 @@ module RjuiTools
           end
         end
 
+        # Build visibility binding for conditional rendering (gone) or opacity (invisible)
+        # Returns: { type: :gone, condition: "..." } or { type: :invisible, condition: "...", invert: bool } or nil
+        def build_visibility_info
+          visibility = json['visibility']
+          return nil unless visibility && has_binding?(visibility)
+
+          binding_expr = visibility.gsub(/@\{|\}/, '')
+
+          # Check for ternary patterns: condition ? 'value1' : 'value2'
+          # Pattern: condition ? 'visible' : 'gone'
+          if binding_expr =~ /^(.+?)\s*\?\s*'visible'\s*:\s*'gone'$/
+            { type: :gone, condition: $1.strip }
+          # Pattern: condition ? 'gone' : 'visible'
+          elsif binding_expr =~ /^(.+?)\s*\?\s*'gone'\s*:\s*'visible'$/
+            { type: :gone, condition: "!#{$1.strip}" }
+          # Pattern: condition ? 'visible' : 'invisible'
+          elsif binding_expr =~ /^(.+?)\s*\?\s*'visible'\s*:\s*'invisible'$/
+            { type: :invisible, condition: $1.strip, invert: true }
+          # Pattern: condition ? 'invisible' : 'visible'
+          elsif binding_expr =~ /^(.+?)\s*\?\s*'invisible'\s*:\s*'visible'$/
+            { type: :invisible, condition: $1.strip, invert: false }
+          # Simple boolean variable like "viewModel.isVisible"
+          elsif binding_expr =~ /^[\w.]+$/
+            { type: :gone, condition: binding_expr }
+          else
+            nil
+          end
+        end
+
+        # Wrap JSX with visibility condition (for 'gone' type - conditional render)
+        def wrap_with_visibility(jsx, indent)
+          vis_info = build_visibility_info
+          return jsx unless vis_info
+
+          case vis_info[:type]
+          when :gone
+            <<~JSX.chomp
+              #{indent_str(indent)}{#{vis_info[:condition]} && (
+              #{jsx}
+              #{indent_str(indent)})}
+            JSX
+          when :invisible
+            # For invisible, we add opacity style instead of conditional rendering
+            # The opacity is handled in build_visibility_style
+            jsx
+          else
+            jsx
+          end
+        end
+
+        # Build style for invisible visibility (opacity: 0)
+        def build_visibility_style
+          vis_info = build_visibility_info
+          return nil unless vis_info && vis_info[:type] == :invisible
+
+          condition = vis_info[:condition]
+          if vis_info[:invert]
+            # condition ? 'visible' : 'invisible' -> opacity: condition ? 1 : 0
+            "opacity: #{condition} ? 1 : 0"
+          else
+            # condition ? 'invisible' : 'visible' -> opacity: condition ? 0 : 1
+            "opacity: #{condition} ? 0 : 1"
+          end
+        end
+
         # Get default value from config
         def defaults(component_type = nil)
           return {} unless config['defaults']

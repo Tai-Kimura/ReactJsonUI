@@ -8,11 +8,10 @@ module RjuiTools
       class ViewConverter < BaseConverter
         def convert(indent = 2)
           class_name = build_class_name
-          style_attr = build_style_attr
+          style_attr = build_style_attr_with_visibility
           children = convert_children(indent)
           id_attr = extract_id ? " id=\"#{extract_id}\"" : ''
           onclick_attr = build_onclick_attr
-          visibility_binding = build_visibility_binding
 
           jsx = if children.empty?
             "#{indent_str(indent)}<div#{id_attr} className=\"#{class_name}\"#{style_attr}#{onclick_attr} />"
@@ -24,40 +23,30 @@ module RjuiTools
             JSX
           end
 
-          # Wrap with visibility condition if binding exists
-          if visibility_binding
-            <<~JSX.chomp
-              #{indent_str(indent)}{#{visibility_binding} && (
-              #{jsx}
-              #{indent_str(indent)})}
-            JSX
-          else
-            jsx
-          end
-        end
-
-        # Extract visibility binding property if exists
-        # For visibility, we need to check if the result is 'visible' (not 'gone')
-        def build_visibility_binding
-          visibility = json['visibility']
-          return nil unless visibility && has_binding?(visibility)
-
-          # Extract the binding expression
-          binding_expr = visibility.gsub(/@\{|\}/, '')
-
-          # If expression contains ternary with 'gone'/'visible', convert to boolean condition
-          # e.g., "data.isLast ? 'gone' : 'visible'" becomes "!data.isLast"
-          if binding_expr =~ /^(.+?)\s*\?\s*'gone'\s*:\s*'visible'$/
-            "!#{$1.strip}"
-          elsif binding_expr =~ /^(.+?)\s*\?\s*'visible'\s*:\s*'gone'$/
-            $1.strip
-          else
-            # Assume expression directly evaluates to 'visible' or 'gone'
-            "(#{binding_expr}) !== 'gone'"
-          end
+          # Wrap with visibility condition (for 'gone' type)
+          wrap_with_visibility(jsx, indent)
         end
 
         protected
+
+        # Build style attribute including visibility (for 'invisible' type)
+        def build_style_attr_with_visibility
+          visibility_style = build_visibility_style
+
+          if visibility_style
+            @dynamic_styles ||= {}
+            # Add visibility opacity to dynamic styles
+            existing_style = build_style_attr
+            if existing_style.empty?
+              " style={{ #{visibility_style} }}"
+            else
+              # Merge with existing styles
+              existing_style.sub(/\}\}$/, ", #{visibility_style} }}")
+            end
+          else
+            build_style_attr
+          end
+        end
 
         def build_class_name
           classes = [super]
