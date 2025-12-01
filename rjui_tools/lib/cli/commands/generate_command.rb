@@ -26,19 +26,21 @@ module RjuiTools
 
           case type
           when 'view', 'v'
+            options = parse_view_options
             name = @args.shift
             unless name
               Core::Logger.error("Name is required for '#{type}'")
               return
             end
-            generate_view(name)
+            generate_view(name, options)
           when 'component', 'c'
+            options = parse_view_options
             name = @args.shift
             unless name
               Core::Logger.error("Name is required for '#{type}'")
               return
             end
-            generate_component(name)
+            generate_component(name, options)
           when 'converter', 'conv'
             generate_converter
           else
@@ -49,7 +51,9 @@ module RjuiTools
 
         private
 
-        def generate_view(name)
+        def generate_view(name, options = {})
+          with_viewmodel = options[:with_viewmodel]
+
           # Handle nested paths like "learn/components/View"
           path_parts = name.split('/')
           base_name = path_parts.last
@@ -74,46 +78,79 @@ module RjuiTools
 
           FileUtils.mkdir_p(json_dir)
 
-          layout = {
-            'type' => 'View',
-            'id' => "#{json_name}_page",
-            'width' => 'matchParent',
-            'orientation' => 'vertical',
-            'child' => [
-              { 'data' => [{ 'class' => "#{view_name}ViewModel", 'name' => 'viewModel' }] },
-              {
-                'type' => 'View',
-                'id' => "#{json_name}_content",
-                'width' => 'matchParent',
-                'padding' => [48, 24],
-                'orientation' => 'vertical',
-                'background' => '#FFFFFF',
-                'child' => [
-                  {
-                    'type' => 'Label',
-                    'text' => view_name,
-                    'fontSize' => 32,
-                    'fontWeight' => 'bold',
-                    'fontColor' => '#23272F'
-                  }
-                ]
-              }
-            ]
-          }
+          # Build layout based on --with-viewmodel option
+          if with_viewmodel
+            layout = {
+              'type' => 'View',
+              'id' => "#{json_name}_page",
+              'width' => 'matchParent',
+              'orientation' => 'vertical',
+              'child' => [
+                { 'data' => [{ 'class' => "#{view_name}ViewModel", 'name' => 'viewModel' }] },
+                {
+                  'type' => 'View',
+                  'id' => "#{json_name}_content",
+                  'width' => 'matchParent',
+                  'padding' => [48, 24],
+                  'orientation' => 'vertical',
+                  'background' => '#FFFFFF',
+                  'child' => [
+                    {
+                      'type' => 'Label',
+                      'text' => view_name,
+                      'fontSize' => 32,
+                      'fontWeight' => 'bold',
+                      'fontColor' => '#23272F'
+                    }
+                  ]
+                }
+              ]
+            }
+          else
+            layout = {
+              'type' => 'View',
+              'id' => "#{json_name}_page",
+              'width' => 'matchParent',
+              'orientation' => 'vertical',
+              'child' => [
+                {
+                  'type' => 'View',
+                  'id' => "#{json_name}_content",
+                  'width' => 'matchParent',
+                  'padding' => [48, 24],
+                  'orientation' => 'vertical',
+                  'background' => '#FFFFFF',
+                  'child' => [
+                    {
+                      'type' => 'Label',
+                      'text' => view_name,
+                      'fontSize' => 32,
+                      'fontWeight' => 'bold',
+                      'fontColor' => '#23272F'
+                    }
+                  ]
+                }
+              ]
+            }
+          end
 
           File.write(json_path, JSON.pretty_generate(layout))
           Core::Logger.success("Created layout: #{json_path}")
 
           # Generate page.tsx
-          generate_page_file(view_name, kebab_path)
+          generate_page_file(view_name, kebab_path, with_viewmodel)
 
-          # Generate ViewModel
-          generate_viewmodel_file(view_name)
+          # Generate ViewModel only if --with-viewmodel is specified
+          if with_viewmodel
+            generate_viewmodel_file(view_name)
+          end
 
           Core::Logger.info('Run "rjui build" to generate the React component')
         end
 
-        def generate_component(name)
+        def generate_component(name, options = {})
+          with_viewmodel = options[:with_viewmodel]
+
           view_name = to_pascal_case(name)
           json_name = to_snake_case(name)
 
@@ -127,26 +164,50 @@ module RjuiTools
 
           FileUtils.mkdir_p(File.dirname(json_path))
 
-          layout = {
-            'type' => 'View',
-            'id' => "#{json_name}_container",
-            'orientation' => 'vertical',
-            'child' => [
-              {
-                'type' => 'Label',
-                'text' => view_name,
-                'fontSize' => 16,
-                'fontColor' => '#000000'
-              }
-            ]
-          }
+          # Build layout based on --with-viewmodel option
+          if with_viewmodel
+            layout = {
+              'type' => 'View',
+              'id' => "#{json_name}_container",
+              'orientation' => 'vertical',
+              'child' => [
+                { 'data' => [{ 'class' => "#{view_name}ViewModel", 'name' => 'viewModel' }] },
+                {
+                  'type' => 'Label',
+                  'text' => view_name,
+                  'fontSize' => 16,
+                  'fontColor' => '#000000'
+                }
+              ]
+            }
+          else
+            layout = {
+              'type' => 'View',
+              'id' => "#{json_name}_container",
+              'orientation' => 'vertical',
+              'child' => [
+                {
+                  'type' => 'Label',
+                  'text' => view_name,
+                  'fontSize' => 16,
+                  'fontColor' => '#000000'
+                }
+              ]
+            }
+          end
 
           File.write(json_path, JSON.pretty_generate(layout))
           Core::Logger.success("Created component layout: #{json_path}")
+
+          # Generate ViewModel if --with-viewmodel is specified
+          if with_viewmodel
+            generate_component_viewmodel_file(view_name)
+          end
+
           Core::Logger.info('Run "rjui build" to generate the React component')
         end
 
-        def generate_page_file(view_name, kebab_path)
+        def generate_page_file(view_name, kebab_path, with_viewmodel = false)
           # kebab_path can be nested like "learn/components/view"
           path_parts = kebab_path.split('/')
           page_dir = File.join('src', 'app', *path_parts)
@@ -159,33 +220,57 @@ module RjuiTools
 
           FileUtils.mkdir_p(page_dir)
 
-          page_content = <<~TSX
-            "use client";
+          if with_viewmodel
+            page_content = <<~TSX
+              "use client";
 
-            import { useRouter } from "next/navigation";
-            import { useMemo, useState } from "react";
-            import Header from "@/generated/components/Header";
-            import #{view_name} from "@/generated/components/#{view_name}";
-            import { HeaderViewModel } from "@/viewmodels/HeaderViewModel";
-            import { #{view_name}ViewModel } from "@/viewmodels/#{view_name}ViewModel";
+              import { useRouter } from "next/navigation";
+              import { useMemo, useState } from "react";
+              import Header from "@/generated/components/Header";
+              import #{view_name} from "@/generated/components/#{view_name}";
+              import { HeaderViewModel } from "@/viewmodels/HeaderViewModel";
+              import { #{view_name}ViewModel } from "@/viewmodels/#{view_name}ViewModel";
 
-            export default function #{view_name}Page() {
-              const router = useRouter();
-              const [currentTab, setCurrentTab] = useState(0);
-              const headerViewModel = useMemo(() => new HeaderViewModel(router), [router]);
-              const viewModel = useMemo(
-                () => new #{view_name}ViewModel(router, currentTab, setCurrentTab),
-                [router, currentTab]
-              );
+              export default function #{view_name}Page() {
+                const router = useRouter();
+                const [currentTab, setCurrentTab] = useState(0);
+                const headerViewModel = useMemo(() => new HeaderViewModel(router), [router]);
+                const viewModel = useMemo(
+                  () => new #{view_name}ViewModel(router, currentTab, setCurrentTab),
+                  [router, currentTab]
+                );
 
-              return (
-                <>
-                  <Header viewModel={headerViewModel} />
-                  <#{view_name} viewModel={viewModel} />
-                </>
-              );
-            }
-          TSX
+                return (
+                  <>
+                    <Header viewModel={headerViewModel} />
+                    <#{view_name} viewModel={viewModel} />
+                  </>
+                );
+              }
+            TSX
+          else
+            page_content = <<~TSX
+              "use client";
+
+              import { useRouter } from "next/navigation";
+              import { useMemo } from "react";
+              import Header from "@/generated/components/Header";
+              import #{view_name} from "@/generated/components/#{view_name}";
+              import { HeaderViewModel } from "@/viewmodels/HeaderViewModel";
+
+              export default function #{view_name}Page() {
+                const router = useRouter();
+                const headerViewModel = useMemo(() => new HeaderViewModel(router), [router]);
+
+                return (
+                  <>
+                    <Header viewModel={headerViewModel} />
+                    <#{view_name} />
+                  </>
+                );
+              }
+            TSX
+          end
 
           File.write(page_path, page_content)
           Core::Logger.success("Created page: #{page_path}")
@@ -232,6 +317,42 @@ module RjuiTools
 
           File.write(viewmodel_path, viewmodel_content)
           Core::Logger.success("Created ViewModel: #{viewmodel_path}")
+        end
+
+        def generate_component_viewmodel_file(view_name)
+          viewmodel_dir = File.join('src', 'viewmodels')
+          viewmodel_path = File.join(viewmodel_dir, "#{view_name}ViewModel.ts")
+
+          if File.exist?(viewmodel_path)
+            Core::Logger.warn("ViewModel already exists: #{viewmodel_path}")
+            return
+          end
+
+          FileUtils.mkdir_p(viewmodel_dir)
+
+          viewmodel_content = <<~TS
+            export class #{view_name}ViewModel {
+              constructor() {
+              }
+            }
+          TS
+
+          File.write(viewmodel_path, viewmodel_content)
+          Core::Logger.success("Created ViewModel: #{viewmodel_path}")
+        end
+
+        def parse_view_options
+          options = {
+            with_viewmodel: false
+          }
+
+          OptionParser.new do |opts|
+            opts.on('--with-viewmodel', 'Generate ViewModel along with view/component') do
+              options[:with_viewmodel] = true
+            end
+          end.parse!(@args)
+
+          options
         end
 
         def generate_converter
@@ -317,6 +438,9 @@ module RjuiTools
               component, c      Generate a component layout
               converter, conv   Generate a custom converter
 
+            Options for view/component:
+              --with-viewmodel  Generate ViewModel along with the view/component
+
             Options for converter:
               --attributes      Comma-separated key:type pairs (e.g., file:String,language:String)
               --container       Force component to be a container (handles children)
@@ -324,7 +448,9 @@ module RjuiTools
 
             Examples:
               rjui g view HomeView
+              rjui g view HomeView --with-viewmodel
               rjui g component UserCard
+              rjui g component UserCard --with-viewmodel
               rjui g converter CodeBlock --attributes file:String,language:String
               rjui g converter Card --container
               rjui g converter Badge --no-container
