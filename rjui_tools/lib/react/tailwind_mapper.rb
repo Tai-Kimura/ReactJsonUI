@@ -95,6 +95,15 @@ module RjuiTools
           end
         end
 
+        def map_individual_paddings(top, right, bottom, left)
+          classes = []
+          classes << "pt-#{closest_padding(top)}" if top
+          classes << "pr-#{closest_padding(right)}" if right
+          classes << "pb-#{closest_padding(bottom)}" if bottom
+          classes << "pl-#{closest_padding(left)}" if left
+          classes.join(' ')
+        end
+
         def map_margin(margin)
           case margin
           when Numeric
@@ -122,6 +131,15 @@ module RjuiTools
           else
             ''
           end
+        end
+
+        def map_individual_margins(top, right, bottom, left)
+          classes = []
+          classes << "mt-#{closest_padding(top)}" if top
+          classes << "mr-#{closest_padding(right)}" if right
+          classes << "mb-#{closest_padding(bottom)}" if bottom
+          classes << "ml-#{closest_padding(left)}" if left
+          classes.join(' ')
         end
 
         def map_font_size(size)

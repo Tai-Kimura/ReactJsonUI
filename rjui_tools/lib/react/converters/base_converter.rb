@@ -31,11 +31,27 @@ module RjuiTools
           classes << TailwindMapper.map_width(json['width'])
           classes << TailwindMapper.map_height(json['height'])
 
-          # Padding
+          # Padding (array format)
           classes << TailwindMapper.map_padding(json['padding'] || json['paddings'])
 
-          # Margin
+          # Individual paddings (topPadding, bottomPadding, leftPadding, rightPadding)
+          classes << TailwindMapper.map_individual_paddings(
+            json['topPadding'],
+            json['rightPadding'],
+            json['bottomPadding'],
+            json['leftPadding']
+          )
+
+          # Margin (array format)
           classes << TailwindMapper.map_margin(json['margins'])
+
+          # Individual margins (topMargin, bottomMargin, leftMargin, rightMargin)
+          classes << TailwindMapper.map_individual_margins(
+            json['topMargin'],
+            json['rightMargin'],
+            json['bottomMargin'],
+            json['leftMargin']
+          )
 
           # Background - check for dynamic binding
           if json['background']
