@@ -131,6 +131,7 @@ module RjuiTools
         def converter_template
           attr_lines = generate_attribute_lines
           props_lines = generate_props_lines
+          is_container = @options[:is_container]
 
           template = []
           template << '# frozen_string_literal: true'
@@ -155,9 +156,33 @@ module RjuiTools
           template.concat(props_lines)
           template << '            props_str = props.empty? ? \'\' : " #{props.join(\' \')}"'
           template << ''
-          template << '            <<~JSX.chomp'
-          template << "              \#{indent_str(indent)}<#{@name}\#{id_attr} className=\"\#{class_name}\"\#{props_str} />"
-          template << '            JSX'
+
+          # Add container check
+          template.concat(generate_container_check_lines)
+          template << ''
+
+          # Generate different output based on container mode
+          if is_container == false
+            # Force non-container mode
+            template << '            <<~JSX.chomp'
+            template << "              \#{indent_str(indent)}<#{@name}\#{id_attr} className=\"\#{class_name}\"\#{props_str} />"
+            template << '            JSX'
+          else
+            # Container mode (auto-detect or forced)
+            template << '            if is_container'
+            template << '              children_jsx = convert_children(indent + 2)'
+            template << '              <<~JSX.chomp'
+            template << "                \#{indent_str(indent)}<#{@name}\#{id_attr} className=\"\#{class_name}\"\#{props_str}>"
+            template << '                #{children_jsx}'
+            template << "                \#{indent_str(indent)}</#{@name}>"
+            template << '              JSX'
+            template << '            else'
+            template << '              <<~JSX.chomp'
+            template << "                \#{indent_str(indent)}<#{@name}\#{id_attr} className=\"\#{class_name}\"\#{props_str} />"
+            template << '              JSX'
+            template << '            end'
+          end
+
           template << '          end'
           template << ''
           template << '          protected'
@@ -177,6 +202,26 @@ module RjuiTools
           template << 'end'
 
           template.join("\n") + "\n"
+        end
+
+        def generate_container_check_lines
+          case @options[:is_container]
+          when true
+            [
+              '            # Force container mode',
+              '            is_container = true'
+            ]
+          when false
+            [
+              '            # Force non-container mode',
+              '            is_container = false'
+            ]
+          else
+            [
+              '            # Auto-detect container based on children or child',
+              "            is_container = (json['children'] && !json['children'].empty?) || (json['child'] && !json['child'].empty?)"
+            ]
+          end
         end
 
         def generate_attribute_lines

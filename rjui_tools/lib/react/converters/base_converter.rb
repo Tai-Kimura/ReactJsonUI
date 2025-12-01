@@ -140,9 +140,11 @@ module RjuiTools
         end
 
         def convert_children(indent)
-          return '' unless json['child'].is_a?(Array)
+          # Support both 'children' and 'child' keys
+          child_array = json['children'] || json['child']
+          return '' unless child_array.is_a?(Array)
 
-          json['child'].filter_map do |child|
+          child_array.filter_map do |child|
             # Skip data-only elements (they define props, not rendered content)
             next nil if data_only_element?(child)
 
@@ -355,17 +357,18 @@ module RjuiTools
           binding_expr = visibility.gsub(/@\{|\}/, '')
 
           # Check for ternary patterns: condition ? 'value1' : 'value2'
-          # Pattern: condition ? 'visible' : 'gone'
-          if binding_expr =~ /^(.+?)\s*\?\s*'visible'\s*:\s*'gone'$/
+          # Supports both 'visible' and '.visible' formats
+          # Pattern: condition ? 'visible' : 'gone' or condition ? '.visible' : '.gone'
+          if binding_expr =~ /^(.+?)\s*\?\s*'\.?visible'\s*:\s*'\.?gone'\s*$/
             { type: :gone, condition: $1.strip }
           # Pattern: condition ? 'gone' : 'visible'
-          elsif binding_expr =~ /^(.+?)\s*\?\s*'gone'\s*:\s*'visible'$/
+          elsif binding_expr =~ /^(.+?)\s*\?\s*'\.?gone'\s*:\s*'\.?visible'\s*$/
             { type: :gone, condition: "!#{$1.strip}" }
           # Pattern: condition ? 'visible' : 'invisible'
-          elsif binding_expr =~ /^(.+?)\s*\?\s*'visible'\s*:\s*'invisible'$/
+          elsif binding_expr =~ /^(.+?)\s*\?\s*'\.?visible'\s*:\s*'\.?invisible'\s*$/
             { type: :invisible, condition: $1.strip, invert: true }
           # Pattern: condition ? 'invisible' : 'visible'
-          elsif binding_expr =~ /^(.+?)\s*\?\s*'invisible'\s*:\s*'visible'$/
+          elsif binding_expr =~ /^(.+?)\s*\?\s*'\.?invisible'\s*:\s*'\.?visible'\s*$/
             { type: :invisible, condition: $1.strip, invert: false }
           # Simple boolean variable like "viewModel.isVisible"
           elsif binding_expr =~ /^[\w.]+$/

@@ -255,7 +255,8 @@ module RjuiTools
 
         def parse_converter_options
           options = {
-            attributes: {}
+            attributes: {},
+            is_container: nil  # nil means auto-detect based on children
           }
 
           OptionParser.new do |opts|
@@ -269,6 +270,14 @@ module RjuiTools
                   exit 1
                 end
               end
+            end
+
+            opts.on('--container', 'Force component to be a container (handles children)') do
+              options[:is_container] = true
+            end
+
+            opts.on('--no-container', 'Force component to not be a container (ignores children)') do
+              options[:is_container] = false
             end
           end.parse!(@args)
 
@@ -310,11 +319,15 @@ module RjuiTools
 
             Options for converter:
               --attributes      Comma-separated key:type pairs (e.g., file:String,language:String)
+              --container       Force component to be a container (handles children)
+              --no-container    Force component to not be a container (ignores children)
 
             Examples:
               rjui g view HomeView
               rjui g component UserCard
               rjui g converter CodeBlock --attributes file:String,language:String
+              rjui g converter Card --container
+              rjui g converter Badge --no-container
           HELP
         end
       end
