@@ -297,6 +297,17 @@ module RjuiTools
           hidden ? 'hidden' : ''
         end
 
+        def map_direction(direction)
+          case direction&.downcase
+          when 'rtl'
+            'rtl'
+          when 'ltr'
+            'ltr'
+          else
+            ''
+          end
+        end
+
         def map_overflow(clip_to_bounds)
           clip_to_bounds ? 'overflow-hidden' : ''
         end

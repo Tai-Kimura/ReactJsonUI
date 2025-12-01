@@ -117,6 +117,9 @@ module RjuiTools
           # Gravity alignment
           classes.concat(TailwindMapper.map_gravity(json['gravity'])) if json['gravity']
 
+          # Direction (RTL/LTR)
+          classes << TailwindMapper.map_direction(json['direction']) if json['direction']
+
           # Additional className from JSON
           classes << json['className'] if json['className']
 
