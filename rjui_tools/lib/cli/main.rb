@@ -10,6 +10,7 @@ module RjuiTools
         'init' => 'Initialize ReactJsonUI in current project',
         'build' => 'Build React components from JSON layouts',
         'watch' => 'Watch JSON files and auto-rebuild on changes',
+        'hotload' => 'HotLoader (listen, stop, status)',
         'g' => 'Generate (view, component)',
         'generate' => 'Generate (view, component)',
         'help' => 'Show this help message'
@@ -29,6 +30,9 @@ module RjuiTools
         when 'watch'
           require_relative 'commands/watch_command'
           Commands::WatchCommand.new(sub_args).execute
+        when 'hotload'
+          require_relative 'commands/hotload_command'
+          Commands::HotloadCommand.new(sub_args).execute
         when 'g', 'generate'
           require_relative 'commands/generate_command'
           Commands::GenerateCommand.new(sub_args, sub_args.dup).execute
@@ -61,6 +65,8 @@ module RjuiTools
             rjui g view HomeView         # Generate HomeView component
             rjui build                   # Build all components from JSON
             rjui watch                   # Watch and auto-rebuild on changes
+            rjui hotload listen          # Start HotLoader watch mode
+            rjui hotload stop            # Stop HotLoader
         EXAMPLES
       end
     end
