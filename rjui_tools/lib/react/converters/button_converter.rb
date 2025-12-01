@@ -12,7 +12,13 @@ module RjuiTools
           id_attr = extract_id ? " id=\"#{extract_id}\"" : ''
           on_click = build_on_click
 
-          "#{indent_str(indent)}<button#{id_attr} className=\"#{class_name}\"#{on_click}>#{text}</button>"
+          # If href is specified, wrap with Next.js Link
+          if json['href']
+            href = json['href']
+            "#{indent_str(indent)}<Link href=\"#{href}\"><button#{id_attr} className=\"#{class_name}\"#{on_click}>#{text}</button></Link>"
+          else
+            "#{indent_str(indent)}<button#{id_attr} className=\"#{class_name}\"#{on_click}>#{text}</button>"
+          end
         end
 
         protected
@@ -39,16 +45,7 @@ module RjuiTools
         end
 
         def build_on_click
-          handler = json['onClick'] || json['onclick']
-          return '' unless handler
-
-          if handler.start_with?('@{')
-            # Binding: @{handleClick} -> {handleClick}
-            " onClick={#{handler.gsub(/@\{|\}/, '')}}"
-          else
-            # Direct handler name
-            " onClick={#{handler}}"
-          end
+          build_onclick_attr
         end
       end
     end

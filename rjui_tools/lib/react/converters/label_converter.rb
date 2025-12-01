@@ -37,12 +37,6 @@ module RjuiTools
           classes.compact.reject(&:empty?).join(' ')
         end
 
-        def build_onclick_attr
-          return '' unless json['onClick']
-
-          onclick = json['onClick']
-          " onClick={#{onclick}}"
-        end
       end
     end
   end
