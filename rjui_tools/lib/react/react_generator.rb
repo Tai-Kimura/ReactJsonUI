@@ -258,7 +258,12 @@ module RjuiTools
             class_name = class_ref.is_a?(Hash) ? class_ref['className'] : class_ref
             next unless class_name.is_a?(String)
             base_name = class_name.split('/').last
-            component_name = base_name.split('_').map(&:capitalize).join
+            # If already PascalCase (starts with uppercase and no underscores), use as-is
+            component_name = if base_name.match?(/^[A-Z]/) && !base_name.include?('_')
+                               base_name
+                             else
+                               base_name.split('_').map(&:capitalize).join
+                             end
             components << component_name
           end
         end

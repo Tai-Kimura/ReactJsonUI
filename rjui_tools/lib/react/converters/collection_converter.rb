@@ -156,6 +156,13 @@ module RjuiTools
             return to_pascal_case(base_name)
           end
 
+          # If already PascalCase React component name (starts with uppercase, no underscores),
+          # use as-is without appending 'View'
+          if class_name.match?(/^[A-Z]/) && !class_name.include?('_') &&
+             !class_name.end_with?('Cell') && !class_name.end_with?('CollectionViewCell')
+            return class_name
+          end
+
           # Convert UIKit cell class name to React component name
           # InformationListCollectionViewCell -> InformationListView
           # SomeCell -> SomeCellView
