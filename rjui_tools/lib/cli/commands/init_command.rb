@@ -145,7 +145,7 @@ module RjuiTools
           languages.each do |lang|
             lang_file = File.join(strings_dir, "#{lang}.json")
             if File.exist?(lang_file)
-              strings_data[lang] = JSON.parse(File.read(lang_file))
+              strings_data[lang] = JSON.parse(File.read(lang_file, encoding: 'UTF-8'))
             else
               strings_data[lang] = {}
             end
