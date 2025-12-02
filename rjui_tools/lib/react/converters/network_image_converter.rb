@@ -13,7 +13,8 @@ module RjuiTools
           src = build_src_attr
           alt = json['alt'] || json['accessibilityLabel'] || ''
           content_mode = build_content_mode_attr
-          placeholder = json['placeholder'] ? " placeholder=\"#{json['placeholder']}\"" : ''
+          placeholder_value = json['placeholder'] || json['defaultImage']
+          placeholder = placeholder_value ? " placeholder=\"#{placeholder_value}\"" : ''
           error_image = json['errorImage'] ? " errorImage=\"#{json['errorImage']}\"" : ''
 
           # Build event handlers
