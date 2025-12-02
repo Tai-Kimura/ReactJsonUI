@@ -227,6 +227,7 @@ module RjuiTools
           require_relative 'blur_converter'
           require_relative 'circle_view_converter'
           require_relative 'web_converter'
+          require_relative 'switch_converter'
 
           {
             'View' => ViewConverter,
@@ -243,7 +244,7 @@ module RjuiTools
             'ScrollView' => ScrollViewConverter,
             'Collection' => CollectionConverter,
             'Table' => CollectionConverter,
-            'Switch' => ToggleConverter,
+            'Switch' => SwitchConverter,
             'Toggle' => ToggleConverter,
             'Check' => ToggleConverter,
             'Checkbox' => ToggleConverter,
