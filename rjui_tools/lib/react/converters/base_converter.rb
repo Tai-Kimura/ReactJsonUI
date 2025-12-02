@@ -222,6 +222,11 @@ module RjuiTools
           require_relative 'indicator_converter'
           require_relative 'select_box_converter'
           require_relative 'include_converter'
+          require_relative 'icon_label_converter'
+          require_relative 'gradient_view_converter'
+          require_relative 'blur_converter'
+          require_relative 'circle_view_converter'
+          require_relative 'web_converter'
 
           {
             'View' => ViewConverter,
@@ -248,7 +253,12 @@ module RjuiTools
             'Progress' => ProgressConverter,
             'Indicator' => IndicatorConverter,
             'SelectBox' => SelectBoxConverter,
-            'Include' => IncludeConverter
+            'Include' => IncludeConverter,
+            'IconLabel' => IconLabelConverter,
+            'GradientView' => GradientViewConverter,
+            'Blur' => BlurConverter,
+            'CircleView' => CircleViewConverter,
+            'Web' => WebConverter
           }[type] || ViewConverter
         end
 
