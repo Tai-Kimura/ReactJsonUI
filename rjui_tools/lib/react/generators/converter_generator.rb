@@ -188,10 +188,12 @@ module RjuiTools
           template << '          protected'
           template << ''
           template << '          def build_class_name'
-          template << "            classes = ['flex', 'flex-col']"
+          template << '            # Get base classes from parent (handles margins, padding, etc.)'
+          template << '            base_classes = super'
           template << ''
-          template << "            classes << TailwindMapper.map_width(json['width']) if json['width']"
-          template << "            classes << TailwindMapper.map_flex_grow(json['weight']) if json['weight']"
+          template << '            # Add component-specific classes'
+          template << "            classes = ['flex', 'flex-col']"
+          template << '            classes << base_classes unless base_classes.empty?'
           template << ''
           template << "            classes.compact.reject(&:empty?).join(' ')"
           template << '          end'
