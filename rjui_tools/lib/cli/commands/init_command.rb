@@ -56,6 +56,9 @@ module RjuiTools
           # Create StringManager
           create_string_manager(config)
 
+          # Create built-in components
+          create_builtin_components(config)
+
           Core::Logger.success('ReactJsonUI initialized successfully!')
           Core::Logger.info('Run "rjui build" to generate React components')
         end
@@ -211,6 +214,19 @@ module RjuiTools
 
           File.write(string_manager_path, content)
           Core::Logger.success("Created StringManager: #{string_manager_path}")
+        end
+
+        def create_builtin_components(config)
+          extensions_dir = config['extensions_directory'] || 'src/components/extensions'
+          FileUtils.mkdir_p(extensions_dir)
+
+          # Create NetworkImage component
+          network_image_path = File.join(extensions_dir, 'NetworkImage.tsx')
+          unless File.exist?(network_image_path)
+            template_path = File.join(File.dirname(__FILE__), '../../react/templates/network_image.tsx')
+            File.write(network_image_path, File.read(template_path))
+            Core::Logger.success("Created built-in component: #{network_image_path}")
+          end
         end
       end
     end

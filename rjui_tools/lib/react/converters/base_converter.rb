@@ -228,6 +228,7 @@ module RjuiTools
           require_relative 'circle_view_converter'
           require_relative 'web_converter'
           require_relative 'switch_converter'
+          require_relative 'network_image_converter'
 
           {
             'View' => ViewConverter,
@@ -237,7 +238,7 @@ module RjuiTools
             'Button' => ButtonConverter,
             'Image' => ImageConverter,
             'CircleImage' => ImageConverter,
-            'NetworkImage' => ImageConverter,
+            'NetworkImage' => NetworkImageConverter,
             'TextField' => TextFieldConverter,
             'TextView' => TextViewConverter,
             'Scroll' => ScrollViewConverter,
