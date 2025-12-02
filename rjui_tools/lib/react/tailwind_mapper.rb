@@ -330,9 +330,9 @@ module RjuiTools
           return '' unless weight
 
           case weight
-          when 0 then 'grow-0'
+          when 0 then 'flex-none'
           when 1 then 'flex-1'
-          else "grow-[#{weight}]"
+          else "flex-[#{weight}]"
           end
         end
 
