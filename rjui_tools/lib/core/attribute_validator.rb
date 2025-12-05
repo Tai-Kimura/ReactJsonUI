@@ -171,14 +171,27 @@ module RjuiTools
         expected_types = Array(definition['type'])
         actual_type = get_value_type(value)
 
-        unless type_matches?(actual_type, expected_types, value)
+        unless type_matches?(actual_type, expected_types, value, definition)
           add_warning("Attribute '#{current_path}' in '#{component_type}' expects #{expected_types.join(' or ')}, got #{actual_type}")
           return # Don't validate nested properties if type is wrong
         end
 
-        # Check enum values
-        if definition['enum'] && !definition['enum'].include?(value)
-          add_warning("Attribute '#{current_path}' in '#{component_type}' has invalid value '#{value}'. Valid values: #{definition['enum'].join(', ')}")
+        # Check enum values - skip if value is a binding expression or array
+        if definition['enum']
+          # Skip enum validation for binding expressions (values starting with @{)
+          is_binding = value.is_a?(String) && value.start_with?('@{') && value.end_with?('}')
+
+          unless is_binding
+            if value.is_a?(Array)
+              # For array values, check if all elements are in enum
+              invalid_values = value.reject { |v| definition['enum'].include?(v) }
+              unless invalid_values.empty?
+                add_warning("Attribute '#{current_path}' in '#{component_type}' has invalid values #{invalid_values.inspect}. Valid values: #{definition['enum'].join(', ')}")
+              end
+            elsif !definition['enum'].include?(value)
+              add_warning("Attribute '#{current_path}' in '#{component_type}' has invalid value '#{value}'. Valid values: #{definition['enum'].join(', ')}")
+            end
+          end
         end
 
         # Check min/max for numbers
@@ -232,7 +245,7 @@ module RjuiTools
             # Simple type validation for array items
             expected_types = Array(item_def['type'])
             actual_type = get_value_type(item)
-            unless type_matches?(actual_type, expected_types, item)
+            unless type_matches?(actual_type, expected_types, item, item_def)
               add_warning("#{item_path} in '#{component_type}' expects #{expected_types.join(' or ')}, got #{actual_type}")
             end
           end
@@ -258,7 +271,7 @@ module RjuiTools
         end
       end
 
-      def type_matches?(actual, expected_types, value)
+      def type_matches?(actual, expected_types, value, definition = nil)
         expected_types.any? do |expected|
           case expected
           when 'string'
@@ -274,6 +287,13 @@ module RjuiTools
           when 'binding'
             # binding type should be a string in the format @{propertyName}
             actual == 'string' && value.is_a?(String) && value.start_with?('@{') && value.end_with?('}')
+          when Hash
+            # Handle complex type definitions like { "enum": [...] }
+            if expected['enum']
+              actual == 'string' && expected['enum'].include?(value)
+            else
+              false
+            end
           when 'any'
             true
           else
