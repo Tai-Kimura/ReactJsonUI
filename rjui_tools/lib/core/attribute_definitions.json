@@ -10,12 +10,24 @@
       "description": "Component type"
     },
     "width": {
-      "type": ["number", "string"],
-      "description": "Width (number, 'matchParent', 'wrapContent', or 'infinity')"
+      "type": [
+        "number",
+        {
+          "enum": ["matchParent", "wrapContent"]
+        },
+        "binding"
+      ],
+      "description": "Width (number, 'matchParent', 'wrapContent') - binding supported"
     },
     "height": {
-      "type": ["number", "string"],
-      "description": "Height (number, 'matchParent', 'wrapContent', or 'infinity')"
+      "type": [
+        "number",
+        {
+          "enum": ["matchParent", "wrapContent"]
+        },
+        "binding"
+      ],
+      "description": "Height (number, 'matchParent', 'wrapContent') - binding supported"
     },
     "minWidth": { "type": "number", "description": "Minimum width" },
     "maxWidth": { "type": "number", "description": "Maximum width" },
