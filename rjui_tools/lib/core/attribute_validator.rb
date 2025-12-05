@@ -162,6 +162,11 @@ module RjuiTools
 
         current_path = path ? "#{path}.#{name}" : name
 
+        # Skip validation for binding expressions
+        if value.is_a?(String) && value.include?('@{')
+          return
+        end
+
         # Check type
         expected_types = Array(definition['type'])
         actual_type = get_value_type(value)
@@ -266,6 +271,9 @@ module RjuiTools
             actual == 'array'
           when 'object'
             actual == 'object'
+          when 'binding'
+            # binding type should be a string in the format @{propertyName}
+            actual == 'string' && value.is_a?(String) && value.start_with?('@{') && value.end_with?('}')
           when 'any'
             true
           else
