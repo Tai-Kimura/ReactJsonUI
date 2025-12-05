@@ -117,8 +117,8 @@ module RjuiTools
           # Flex grow (weight)
           classes << TailwindMapper.map_flex_grow(json['weight']) if json['weight']
 
-          # Gravity alignment
-          classes.concat(TailwindMapper.map_gravity(json['gravity'])) if json['gravity']
+          # Gravity alignment - pass orientation for correct flexbox mapping
+          classes.concat(TailwindMapper.map_gravity(json['gravity'], json['orientation'])) if json['gravity']
 
           # Direction (RTL/LTR)
           classes << TailwindMapper.map_direction(json['direction']) if json['direction']

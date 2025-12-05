@@ -30,7 +30,7 @@
       "description": "Height weight for flexible layouts"
     },
     "weight": { "type": "number", "description": "Shorthand for widthWeight" },
-    "background": { "type": ["string", "binding"], "description": "Background color (can be data binding)" },
+    "background": { "type": "string", "description": "Background color" },
     "tapBackground": { "type": "string", "description": "Background color when tapped/hovered" },
     "highlightBackground": { "type": "string", "description": "Background color when highlighted" },
     "disabledBackground": { "type": "string", "description": "Background when disabled" },
@@ -50,7 +50,7 @@
       "description": "Opacity (0-1), alias for alpha"
     },
     "visibility": {
-      "type": ["string", "binding"],
+      "type": "string",
       "description": "View visibility state: 'visible', 'invisible', 'gone' or data binding expression"
     },
     "hidden": {
@@ -139,7 +139,7 @@
     "variables": { "type": "object", "description": "Variables for include" },
     "shared_data": { "type": "object", "description": "Data passed to included components" },
     "userInteractionEnabled": { "type": "boolean", "description": "Enable user interaction (pointer-events)" },
-    "enabled": { "type": ["boolean", "string", "binding"], "description": "Whether component is enabled (can be data binding)" },
+    "enabled": { "type": ["boolean", "string"], "description": "Whether component is enabled (can be data binding)" },
     "indexBelow": { "type": "string", "description": "Place below specified view ID (z-index)" },
     "indexAbove": { "type": "string", "description": "Place above specified view ID (z-index)" },
     "data": { "type": "array", "description": "Data model definitions for binding" },
@@ -149,10 +149,10 @@
     "testId": { "type": "string", "description": "Test ID for testing (data-testid)", "mode": "react" }
   },
   "Label": {
-    "text": { "type": ["string", "binding"], "description": "Text content (can be data binding)" },
+    "text": { "type": "string", "description": "Text content" },
     "font": { "type": "string", "description": "Font family or 'bold'" },
     "fontSize": { "type": "number", "description": "Font size" },
-    "fontColor": { "type": ["string", "binding"], "description": "Font color (can be data binding)" },
+    "fontColor": { "type": "string", "description": "Font color" },
     "fontWeight": {
       "type": ["string", "number"],
       "description": "Font weight: 'normal', 'bold', 'semibold', 'light', 'medium', 'heavy', 'black', 'thin', 'ultraLight' or numeric (100-900)"
@@ -289,7 +289,7 @@
     }
   },
   "TextField": {
-    "text": { "type": ["string", "binding"], "description": "Text content (binding for two-way)" },
+    "text": { "type": "string", "description": "Text content or binding" },
     "hint": { "type": "string", "description": "Placeholder text" },
     "placeholder": {
       "type": "string",
@@ -365,7 +365,7 @@
     "required": { "type": "boolean", "description": "Required field validation", "mode": "react" }
   },
   "TextView": {
-    "text": { "type": ["string", "binding"], "description": "Text content (binding for two-way)" },
+    "text": { "type": "string", "description": "Text content or binding" },
     "hint": { "type": "string", "description": "Placeholder text" },
     "placeholder": {
       "type": "string",
@@ -421,7 +421,7 @@
     "resize": { "type": "string", "enum": ["none", "both", "horizontal", "vertical"], "description": "Resize behavior", "mode": "react" }
   },
   "Button": {
-    "text": { "type": ["string", "binding"], "description": "Button text (can be data binding)" },
+    "text": { "type": "string", "description": "Button text" },
     "font": { "type": "string", "description": "Font name or 'bold'" },
     "fontSize": { "type": "number", "description": "Font size" },
     "fontColor": { "type": "string", "description": "Font color" },
@@ -443,7 +443,7 @@
     "buttonType": { "type": "string", "enum": ["button", "submit", "reset"], "description": "HTML button type", "mode": "react" }
   },
   "Image": {
-    "src": { "type": ["string", "binding"], "description": "Image source path (can be data binding)" },
+    "src": { "type": "string", "description": "Image source path" },
     "srcName": { "type": "string", "description": "Image source name (alias)" },
     "highlightSrc": { "type": "string", "description": "Image when hovered" },
     "contentMode": {
@@ -460,8 +460,8 @@
     "loading": { "type": "string", "enum": ["lazy", "eager"], "description": "Loading behavior", "mode": "react" }
   },
   "NetworkImage": {
-    "src": { "type": ["string", "binding"], "description": "Image URL (can be data binding)" },
-    "url": { "type": ["string", "binding"], "description": "Image URL (alias, can be data binding)" },
+    "src": { "type": "string", "description": "Image URL" },
+    "url": { "type": "string", "description": "Image URL (alias)" },
     "placeholder": {
       "type": "string",
       "description": "Placeholder image path"
@@ -481,12 +481,12 @@
     "prompt": { "type": "string", "description": "Prompt text" },
     "hint": { "type": "string", "description": "Hint text (alias for prompt)" },
     "items": {
-      "type": ["array", "string", "binding"],
-      "description": "List of items for select (can be data binding)"
+      "type": ["array", "string"],
+      "description": "List of items for select (can be data binding expression)"
     },
     "selectedValue": {
-      "type": ["string", "number", "binding"],
-      "description": "Currently selected value (binding for two-way)"
+      "type": ["string", "number"],
+      "description": "Currently selected value (can be data binding)"
     },
     "onValueChanged": {
       "type": "string",
@@ -542,9 +542,9 @@
     "size": { "type": "number", "description": "Number of visible options", "mode": "react" }
   },
   "Toggle": {
-    "isOn": { "type": ["boolean", "string", "binding"], "description": "Toggle state (binding for two-way)" },
-    "value": { "type": ["boolean", "string", "binding"], "description": "Toggle state alias (binding for two-way)" },
-    "checked": { "type": ["boolean", "string", "binding"], "description": "Toggle state alias (binding for two-way)" },
+    "isOn": { "type": ["boolean", "string"], "description": "Toggle state (can be binding)" },
+    "value": { "type": ["boolean", "string"], "description": "Toggle state alias (can be binding)" },
+    "checked": { "type": ["boolean", "string"], "description": "Toggle state alias (can be binding)" },
     "tint": { "type": "string", "description": "Tint color (accent-color)" },
     "tintColor": { "type": "string", "description": "Tint color (alias)" },
     "onToggle": { "type": "string", "description": "Toggle handler function" },
@@ -567,8 +567,8 @@
       "description": "Segment items (array or comma-separated string)"
     },
     "selectedIndex": {
-      "type": ["number", "string", "binding"],
-      "description": "Initially selected index (binding for two-way)"
+      "type": ["number", "string"],
+      "description": "Initially selected index (can be binding)"
     },
     "tintColor": { "type": "string", "description": "Tint color" },
     "normalColor": { "type": "string", "description": "Normal state color" },
@@ -577,7 +577,7 @@
     "onValueChanged": { "type": "string", "description": "Callback when value changes (data binding expression)" }
   },
   "Slider": {
-    "value": { "type": ["number", "string", "binding"], "description": "Current value (binding for two-way)" },
+    "value": { "type": ["number", "string"], "description": "Current value (can be binding)" },
     "minValue": { "type": "number", "description": "Minimum value" },
     "minimum": { "type": "number", "description": "Minimum value (alias)" },
     "maxValue": { "type": "number", "description": "Maximum value" },
@@ -595,10 +595,10 @@
   },
   "Progress": {
     "progress": {
-      "type": ["number", "string", "binding"],
+      "type": ["number", "string"],
       "min": 0,
       "max": 1,
-      "description": "Progress value (0-1, can be data binding)"
+      "description": "Progress value (0-1, can be binding)"
     },
     "tintColor": { "type": "string", "description": "Tint color" },
     "progressTintColor": { "type": "string", "description": "Progress portion color" },
@@ -664,7 +664,6 @@
     "scrollBehavior": { "type": "string", "enum": ["auto", "smooth"], "description": "Scroll behavior", "mode": "react" }
   },
   "Collection": {
-    "items": { "type": ["string", "array", "binding"], "description": "Data source (can be data binding)" },
     "cellClasses": { "type": "array", "description": "Cell class definitions" },
     "headerClasses": {
       "type": "array",
@@ -724,12 +723,12 @@
           "columns": { "type": "number", "description": "Columns for this section" }
         }
       }
-    }
+    },
+    "items": { "type": ["string", "array"], "description": "Data source binding" }
   },
   "Radio": {
-    "label": { "type": ["string", "binding"], "description": "Radio label (can be data binding)" },
-    "text": { "type": ["string", "binding"], "description": "Radio label (alias, can be data binding)" },
-    "selectedValue": { "type": ["string", "binding"], "description": "Selected value (binding for two-way)" },
+    "label": { "type": "string", "description": "Radio label" },
+    "text": { "type": "string", "description": "Radio label (alias)" },
     "group": {
       "type": "string",
       "required": true,
@@ -746,10 +745,10 @@
     "spacing": { "type": "number", "description": "Space between icon and text" }
   },
   "CheckBox": {
-    "label": { "type": ["string", "binding"], "description": "Checkbox label (can be data binding)" },
-    "text": { "type": ["string", "binding"], "description": "Checkbox label (alias, can be data binding)" },
-    "isOn": { "type": ["boolean", "string", "binding"], "description": "Checked state (binding for two-way)" },
-    "checked": { "type": ["boolean", "string", "binding"], "description": "Checked state alias (binding for two-way)" },
+    "label": { "type": "string", "description": "Checkbox label" },
+    "text": { "type": "string", "description": "Checkbox label (alias)" },
+    "isOn": { "type": ["boolean", "string"], "description": "Checked state (can be binding)" },
+    "checked": { "type": ["boolean", "string"], "description": "Checked state alias (can be binding)" },
     "icon": { "type": "string", "description": "Icon for unchecked state" },
     "src": { "type": "string", "description": "Icon for unchecked state (alias)" },
     "selectedIcon": { "type": "string", "description": "Selected icon" },
@@ -782,8 +781,7 @@
     }
   },
   "IconLabel": {
-    "text": { "type": ["string", "binding"], "description": "Label text (can be data binding)" },
-    "selected": { "type": ["boolean", "binding"], "description": "Selection state (can be data binding)" },
+    "text": { "type": "string", "description": "Label text" },
     "font": { "type": "string", "description": "Font name" },
     "fontSize": { "type": "number", "description": "Font size" },
     "fontColor": { "type": "string", "description": "Text color" },
@@ -799,8 +797,8 @@
     "iconMargin": { "type": "number", "description": "Icon-text spacing (gap)" }
   },
   "Web": {
-    "url": { "type": ["string", "binding"], "description": "Web page URL (can be data binding)" },
-    "html": { "type": ["string", "binding"], "description": "HTML content (can be data binding)" },
+    "url": { "type": "string", "description": "Web page URL (iframe src)" },
+    "html": { "type": "string", "description": "HTML content (srcdoc)" },
     "allowsBackForwardNavigationGestures": { "type": "boolean", "description": "Enable navigation" },
     "allowsLinkPreview": { "type": "boolean", "description": "Enable link preview" },
     "sandbox": { "type": "string", "description": "Iframe sandbox attribute", "mode": "react" },

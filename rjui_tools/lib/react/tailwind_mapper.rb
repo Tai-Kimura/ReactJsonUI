@@ -266,28 +266,70 @@ module RjuiTools
           "gap-#{closest_padding(spacing)}"
         end
 
-        def map_gravity(gravity)
+        # Map gravity attribute based on orientation
+        # Flexbox behavior:
+        # - flex-row (horizontal): items-* controls vertical alignment, justify-* controls horizontal alignment
+        # - flex-col (vertical): items-* controls horizontal alignment, justify-* controls vertical alignment
+        def map_gravity(gravity, orientation = nil)
           return [] unless gravity
 
           classes = []
           gravity_str = gravity.is_a?(Array) ? gravity.join('|') : gravity.to_s
+          is_horizontal = orientation&.downcase == 'horizontal'
 
-          # Horizontal alignment
-          if gravity_str.include?('center') || gravity_str.include?('centerHorizontal')
-            classes << 'items-center'
-          elsif gravity_str.include?('right')
-            classes << 'items-end'
-          elsif gravity_str.include?('left')
-            classes << 'items-start'
-          end
+          if is_horizontal
+            # orientation: "horizontal" (flex-row)
+            # items-* = vertical alignment, justify-* = horizontal alignment
 
-          # Vertical alignment
-          if gravity_str.include?('center') || gravity_str.include?('centerVertical')
-            classes << 'justify-center'
-          elsif gravity_str.include?('bottom')
-            classes << 'justify-end'
-          elsif gravity_str.include?('top')
-            classes << 'justify-start'
+            # Vertical alignment (cross-axis for flex-row)
+            if gravity_str.include?('centerVertical')
+              classes << 'items-center'
+            elsif gravity_str.include?('top')
+              classes << 'items-start'
+            elsif gravity_str.include?('bottom')
+              classes << 'items-end'
+            end
+
+            # Horizontal alignment (main-axis for flex-row)
+            if gravity_str.include?('centerHorizontal')
+              classes << 'justify-center'
+            elsif gravity_str.include?('left')
+              classes << 'justify-start'
+            elsif gravity_str.include?('right')
+              classes << 'justify-end'
+            end
+
+            # Handle "center" (both directions)
+            if gravity_str == 'center' || (gravity_str.include?('center') && !gravity_str.include?('centerVertical') && !gravity_str.include?('centerHorizontal'))
+              classes << 'items-center' unless classes.any? { |c| c.start_with?('items-') }
+              classes << 'justify-center' unless classes.any? { |c| c.start_with?('justify-') }
+            end
+          else
+            # orientation: "vertical" (flex-col) or not specified (default to vertical behavior)
+            # items-* = horizontal alignment, justify-* = vertical alignment
+
+            # Horizontal alignment (cross-axis for flex-col)
+            if gravity_str.include?('centerHorizontal') || gravity_str.include?('center')
+              classes << 'items-center'
+            elsif gravity_str.include?('right')
+              classes << 'items-end'
+            elsif gravity_str.include?('left')
+              classes << 'items-start'
+            end
+
+            # Vertical alignment (main-axis for flex-col)
+            if gravity_str.include?('centerVertical')
+              classes << 'justify-center'
+            elsif gravity_str.include?('bottom')
+              classes << 'justify-end'
+            elsif gravity_str.include?('top')
+              classes << 'justify-start'
+            end
+
+            # Handle "center" (both directions)
+            if gravity_str == 'center' && !classes.any? { |c| c.start_with?('justify-') }
+              classes << 'justify-center'
+            end
           end
 
           classes
