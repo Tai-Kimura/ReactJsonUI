@@ -1,0 +1,826 @@
+{
+  "_comment": "binding type requires @{propertyName} format for data binding expressions",
+  "common": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for the component"
+    },
+    "type": {
+      "type": "string",
+      "required": true,
+      "description": "Component type"
+    },
+    "width": {
+      "type": ["number", "string"],
+      "description": "Width (number, 'matchParent', 'wrapContent', or 'infinity')"
+    },
+    "height": {
+      "type": ["number", "string"],
+      "description": "Height (number, 'matchParent', 'wrapContent', or 'infinity')"
+    },
+    "minWidth": { "type": "number", "description": "Minimum width" },
+    "maxWidth": { "type": "number", "description": "Maximum width" },
+    "minHeight": { "type": "number", "description": "Minimum height" },
+    "maxHeight": { "type": "number", "description": "Maximum height" },
+    "widthWeight": {
+      "type": "number",
+      "description": "Width weight for flexible layouts"
+    },
+    "heightWeight": {
+      "type": "number",
+      "description": "Height weight for flexible layouts"
+    },
+    "weight": { "type": "number", "description": "Shorthand for widthWeight" },
+    "background": { "type": ["string", "binding"], "description": "Background color (can be data binding)" },
+    "tapBackground": { "type": "string", "description": "Background color when tapped/hovered" },
+    "highlightBackground": { "type": "string", "description": "Background color when highlighted" },
+    "disabledBackground": { "type": "string", "description": "Background when disabled" },
+    "cornerRadius": { "type": "number", "description": "Corner radius" },
+    "borderWidth": { "type": "number", "description": "Border width" },
+    "borderColor": { "type": "string", "description": "Border color" },
+    "alpha": {
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "description": "Opacity (0-1)"
+    },
+    "opacity": {
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "description": "Opacity (0-1), alias for alpha"
+    },
+    "visibility": {
+      "type": ["string", "binding"],
+      "description": "View visibility state: 'visible', 'invisible', 'gone' or data binding expression"
+    },
+    "hidden": {
+      "type": ["boolean", "binding"],
+      "description": "Whether component is hidden (can be data binding)"
+    },
+    "paddings": {
+      "type": ["number", "array"],
+      "description": "Padding as single value or [top, right, bottom, left]"
+    },
+    "padding": {
+      "type": ["number", "array"],
+      "description": "Padding as single value or [top, right, bottom, left] (alias for paddings)"
+    },
+    "paddingTop": { "type": "number", "description": "Top padding" },
+    "paddingBottom": { "type": "number", "description": "Bottom padding" },
+    "paddingLeft": { "type": "number", "description": "Left padding" },
+    "paddingRight": { "type": "number", "description": "Right padding" },
+    "paddingStart": { "type": "number", "description": "Start padding (RTL aware)" },
+    "paddingEnd": { "type": "number", "description": "End padding (RTL aware)" },
+    "margins": {
+      "type": ["number", "array"],
+      "description": "Margin as single value or [top, right, bottom, left]"
+    },
+    "topMargin": { "type": "number", "description": "Top margin" },
+    "bottomMargin": { "type": "number", "description": "Bottom margin" },
+    "leftMargin": { "type": "number", "description": "Left margin" },
+    "rightMargin": { "type": "number", "description": "Right margin" },
+    "startMargin": { "type": "number", "description": "Start margin (RTL aware)" },
+    "endMargin": { "type": "number", "description": "End margin (RTL aware)" },
+    "centerInParent": { "type": "boolean", "description": "Center both horizontally and vertically" },
+    "centerVertical": { "type": "boolean", "description": "Center vertically in parent" },
+    "centerHorizontal": { "type": "boolean", "description": "Center horizontally in parent" },
+    "alignTop": { "type": "boolean", "description": "Align to parent top" },
+    "alignBottom": { "type": "boolean", "description": "Align to parent bottom" },
+    "alignLeft": { "type": "boolean", "description": "Align to parent left" },
+    "alignRight": { "type": "boolean", "description": "Align to parent right" },
+    "alignTopOfView": { "type": "string", "description": "Align below specified view ID" },
+    "alignBottomOfView": { "type": "string", "description": "Align above specified view ID" },
+    "alignLeftOfView": { "type": "string", "description": "Align to right of specified view ID" },
+    "alignRightOfView": { "type": "string", "description": "Align to left of specified view ID" },
+    "alignTopView": { "type": "string", "description": "Align top edge with specified view" },
+    "alignBottomView": { "type": "string", "description": "Align bottom edge with specified view" },
+    "alignLeftView": { "type": "string", "description": "Align left edge with specified view" },
+    "alignRightView": { "type": "string", "description": "Align right edge with specified view" },
+    "alignCenterVerticalView": { "type": "string", "description": "Align vertical center with specified view" },
+    "alignCenterHorizontalView": { "type": "string", "description": "Align horizontal center with specified view" },
+    "shadow": {
+      "type": ["string", "object"],
+      "description": "Shadow configuration (string 'color|offsetX|offsetY|opacity|radius' or object)",
+      "properties": {
+        "color": { "type": "string", "description": "Shadow color (hex)" },
+        "offsetX": { "type": "number", "description": "Shadow X offset" },
+        "offsetY": { "type": "number", "description": "Shadow Y offset" },
+        "opacity": { "type": "number", "min": 0, "max": 1, "description": "Shadow opacity (0-1)" },
+        "radius": { "type": "number", "description": "Shadow blur radius" }
+      }
+    },
+    "clipToBounds": {
+      "type": "boolean",
+      "description": "Whether to clip content to bounds (overflow: hidden)"
+    },
+    "onclick": {
+      "type": ["string", "array"],
+      "description": "Click handler function name or event array"
+    },
+    "onClick": {
+      "type": "string",
+      "description": "Click handler function name (camelCase)"
+    },
+    "onLongPress": {
+      "type": "string",
+      "description": "Long press handler (onContextMenu in web)"
+    },
+    "canTap": {
+      "type": "boolean",
+      "description": "Whether component is tappable (cursor: pointer)"
+    },
+    "tintColor": { "type": "string", "description": "Tint color" },
+    "binding": { "type": ["string", "object"], "description": "Data binding expression" },
+    "bind": { "type": ["string", "object"], "description": "Data binding expression (alias)" },
+    "include": {
+      "type": "string",
+      "description": "Include another JSON layout"
+    },
+    "variables": { "type": "object", "description": "Variables for include" },
+    "shared_data": { "type": "object", "description": "Data passed to included components" },
+    "userInteractionEnabled": { "type": "boolean", "description": "Enable user interaction (pointer-events)" },
+    "enabled": { "type": ["boolean", "binding"], "description": "Whether component is enabled (can be data binding)" },
+    "indexBelow": { "type": "string", "description": "Place below specified view ID (z-index)" },
+    "indexAbove": { "type": "string", "description": "Place above specified view ID (z-index)" },
+    "data": { "type": "array", "description": "Data model definitions for binding" },
+    "binding_group": { "type": "string", "description": "Groups related bindings for batch updates" },
+    "className": { "type": "string", "description": "Custom CSS class name", "mode": "react" },
+    "style": { "type": ["object", "string"], "description": "Style name (string) or inline style object" },
+    "testId": { "type": "string", "description": "Test ID for testing (data-testid)", "mode": "react" }
+  },
+  "Label": {
+    "text": { "type": ["string", "binding"], "description": "Text content (can be data binding)" },
+    "font": { "type": "string", "description": "Font family or 'bold'" },
+    "fontSize": { "type": "number", "description": "Font size" },
+    "fontColor": { "type": ["string", "binding"], "description": "Font color (can be data binding)" },
+    "fontWeight": {
+      "type": ["string", "number"],
+      "description": "Font weight: 'normal', 'bold', 'semibold', 'light', 'medium', 'heavy', 'black', 'thin', 'ultraLight' or numeric (100-900)"
+    },
+    "lineHeight": { "type": "number", "description": "Line height" },
+    "textTransform": {
+      "type": "string",
+      "enum": ["none", "capitalize", "uppercase", "lowercase"],
+      "description": "Text transformation"
+    },
+    "fontFamily": {
+      "type": "string",
+      "description": "Font family name"
+    },
+    "textAlign": {
+      "type": "string",
+      "enum": ["Left", "Center", "Right", "left", "center", "right"],
+      "description": "Text alignment"
+    },
+    "lines": {
+      "type": "number",
+      "min": 0,
+      "description": "Maximum number of lines (0 for unlimited)"
+    },
+    "lineBreakMode": {
+      "type": "string",
+      "enum": ["Char", "Clip", "Word", "Head", "Middle", "Tail"],
+      "description": "Truncation mode (text-overflow)"
+    },
+    "lineHeightMultiple": {
+      "type": "number",
+      "min": 1,
+      "description": "Line height multiplier"
+    },
+    "lineSpacing": {
+      "type": "number",
+      "description": "Line spacing"
+    },
+    "edgeInset": {
+      "type": ["array", "string"],
+      "description": "Edge insets as array or pipe-separated string"
+    },
+    "underline": {
+      "type": ["boolean", "object"],
+      "description": "Underline styling (boolean for simple, object for styled)",
+      "properties": {
+        "lineStyle": { "type": "string", "enum": ["Single", "Double", "Thick", "None"], "description": "Underline style" },
+        "color": { "type": "string", "description": "Underline color" },
+        "lineOffset": { "type": "number", "description": "Underline offset" }
+      }
+    },
+    "strikethrough": {
+      "type": ["boolean", "object"],
+      "description": "Strikethrough styling (boolean for simple, object for styled)",
+      "properties": {
+        "lineStyle": { "type": "string", "enum": ["Single", "Double", "Thick", "None"], "description": "Strikethrough style" },
+        "color": { "type": "string", "description": "Strikethrough color" }
+      }
+    },
+    "autoShrink": { "type": "boolean", "description": "Enable auto-shrink (font-size adjustment)" },
+    "minimumScaleFactor": {
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "description": "Minimum scale factor for auto-shrink"
+    },
+    "linkable": {
+      "type": "boolean",
+      "description": "Enable URL/email detection"
+    },
+    "textShadow": {
+      "type": ["string", "object"],
+      "description": "Text shadow configuration"
+    },
+    "hint": {
+      "type": "string",
+      "description": "Placeholder text when empty"
+    },
+    "hintColor": {
+      "type": "string",
+      "description": "Hint text color"
+    },
+    "highlightAttributes": {
+      "type": "object",
+      "description": "Highlight styling attributes when selected",
+      "properties": {
+        "font": { "type": "string", "description": "Font name" },
+        "fontSize": { "type": "number", "description": "Font size" },
+        "fontColor": { "type": "string", "description": "Font color" },
+        "lineHeightMultiple": { "type": "number", "description": "Line height multiplier" },
+        "textAlign": { "type": "string", "enum": ["Left", "Right", "Center"], "description": "Text alignment" }
+      }
+    },
+    "highlightColor": {
+      "type": "string",
+      "description": "Font color when selected"
+    },
+    "partialAttributes": {
+      "type": "array",
+      "description": "Partial text styling (for rich text)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "font": { "type": "string", "description": "Font name" },
+          "fontSize": { "type": "number", "description": "Font size" },
+          "fontColor": { "type": "string", "description": "Font color" },
+          "lineSpacing": { "type": "number", "description": "Line spacing" },
+          "lineHeightMultiple": { "type": "number", "description": "Line height multiplier" },
+          "lineBreakMode": { "type": "string", "enum": ["Char", "Clip", "Word", "Head", "Middle", "Tail"], "description": "Line break mode" },
+          "textAlign": { "type": "string", "enum": ["Left", "Right", "Center"], "description": "Text alignment" },
+          "underline": {
+            "type": "object",
+            "properties": {
+              "lineStyle": { "type": "string", "enum": ["Single", "Double", "Thick", "None"], "description": "Underline style" },
+              "color": { "type": "string", "description": "Underline color" },
+              "lineOffset": { "type": "number", "description": "Baseline offset" }
+            }
+          },
+          "textShadow": { "type": "string", "description": "Text shadow" },
+          "range": { "type": "array", "description": "Range [start, end] or binding expression" },
+          "onclick": { "type": "string", "description": "Click handler for this range" }
+        }
+      }
+    },
+    "hintAttributes": {
+      "type": "object",
+      "description": "Hint text styling attributes",
+      "properties": {
+        "font": { "type": "string", "description": "Font name" },
+        "fontSize": { "type": "number", "description": "Font size" },
+        "fontColor": { "type": "string", "description": "Font color" },
+        "lineHeightMultiple": { "type": "number", "description": "Line height multiplier" }
+      }
+    }
+  },
+  "TextField": {
+    "text": { "type": ["string", "binding"], "description": "Text content (binding for two-way)" },
+    "hint": { "type": "string", "description": "Placeholder text" },
+    "placeholder": {
+      "type": "string",
+      "description": "Placeholder text (alias for hint)"
+    },
+    "hintColor": {
+      "type": "string",
+      "description": "Placeholder color"
+    },
+    "hintFont": {
+      "type": "string",
+      "description": "Placeholder font"
+    },
+    "hintFontSize": {
+      "type": "number",
+      "description": "Placeholder font size"
+    },
+    "font": { "type": "string", "description": "Font name or 'bold'" },
+    "fontSize": { "type": "number", "description": "Font size" },
+    "fontColor": { "type": "string", "description": "Font color" },
+    "textAlign": {
+      "type": "string",
+      "enum": ["Left", "Center", "Right", "left", "center", "right"],
+      "description": "Text alignment"
+    },
+    "borderStyle": {
+      "type": "string",
+      "enum": ["none", "line", "bezel", "roundedRect", "RoundedRect", "Line", "Bezel"],
+      "description": "Border style"
+    },
+    "input": {
+      "type": "string",
+      "enum": [
+        "default",
+        "alphabet",
+        "email",
+        "number",
+        "phone",
+        "url",
+        "password",
+        "decimal"
+      ],
+      "description": "Input type"
+    },
+    "returnKeyType": {
+      "type": "string",
+      "enum": [
+        "Done",
+        "Go",
+        "Next",
+        "Return",
+        "Search",
+        "Send"
+      ],
+      "description": "Enter key type (enterkeyhint)"
+    },
+    "contentType": {
+      "type": "string",
+      "description": "Content type for autofill (autocomplete)"
+    },
+    "secure": {
+      "type": "boolean",
+      "description": "Secure text entry for passwords"
+    },
+    "fieldPadding": { "type": "number", "description": "Field padding" },
+    "textPaddingLeft": { "type": "number", "description": "Text padding left" },
+    "textPaddingRight": { "type": "number", "description": "Text padding right" },
+    "onTextChange": { "type": "string", "description": "Text change event handler" },
+    "autocapitalizationType": { "type": "string", "description": "Auto-capitalization type" },
+    "autocorrectionType": { "type": "string", "description": "Auto-correction type (spellcheck)" },
+    "maxLength": { "type": "number", "description": "Maximum input length", "mode": "react" },
+    "pattern": { "type": "string", "description": "Input validation pattern", "mode": "react" },
+    "required": { "type": "boolean", "description": "Required field validation", "mode": "react" }
+  },
+  "TextView": {
+    "text": { "type": ["string", "binding"], "description": "Text content (binding for two-way)" },
+    "hint": { "type": "string", "description": "Placeholder text" },
+    "placeholder": {
+      "type": "string",
+      "description": "Placeholder text (alias for hint)"
+    },
+    "hintColor": { "type": "string", "description": "Placeholder color" },
+    "hintFont": { "type": "string", "description": "Placeholder font" },
+    "hintFontSize": {
+      "type": "number",
+      "description": "Placeholder font size"
+    },
+    "hintLineHeightMultiple": {
+      "type": "number",
+      "description": "Placeholder line height multiplier"
+    },
+    "hintAttributes": {
+      "type": "object",
+      "description": "Hint styling attributes"
+    },
+    "font": { "type": "string", "description": "Font name or 'bold'" },
+    "fontSize": { "type": "number", "description": "Font size" },
+    "fontColor": { "type": "string", "description": "Font color" },
+    "textAlign": {
+      "type": "string",
+      "enum": ["Left", "Center", "Right", "left", "center", "right", "justified"],
+      "description": "Text alignment"
+    },
+    "containerInset": {
+      "type": ["number", "array", "string"],
+      "description": "Container inset (padding) - supports number, array [top, left, bottom, right], or pipe-separated string '10|20|30|40'"
+    },
+    "flexible": { "type": "boolean", "description": "Enable flexible height (auto-resize)" },
+    "returnKeyType": {
+      "type": "string",
+      "enum": [
+        "Done",
+        "Go",
+        "Next",
+        "Return",
+        "Search",
+        "Send"
+      ],
+      "description": "Return key type"
+    },
+    "editable": { "type": "boolean", "description": "Enable/disable editing (readonly)" },
+    "scrollEnabled": { "type": "boolean", "description": "Enable/disable scrolling (overflow)" },
+    "lineBreakMode": { "type": "string", "description": "Line break mode" },
+    "keyboardType": { "type": "string", "description": "Keyboard type (inputmode)" },
+    "onTextChange": { "type": "string", "description": "Text change event handler" },
+    "selectable": { "type": "boolean", "description": "Whether text is selectable" },
+    "rows": { "type": "number", "description": "Number of visible rows", "mode": "react" },
+    "cols": { "type": "number", "description": "Number of visible columns", "mode": "react" },
+    "resize": { "type": "string", "enum": ["none", "both", "horizontal", "vertical"], "description": "Resize behavior", "mode": "react" }
+  },
+  "Button": {
+    "text": { "type": ["string", "binding"], "description": "Button text (can be data binding)" },
+    "font": { "type": "string", "description": "Font name or 'bold'" },
+    "fontSize": { "type": "number", "description": "Font size" },
+    "fontColor": { "type": "string", "description": "Font color" },
+    "disabledFontColor": {
+      "type": "string",
+      "description": "Font color when disabled"
+    },
+    "highlightColor": { "type": "string", "description": "Highlight color (hover)" },
+    "hilightColor": { "type": "string", "description": "Highlight color (typo alias)" },
+    "tapBackground": {
+      "type": "string",
+      "description": "Background when active"
+    },
+    "highlightBackground": {
+      "type": "string",
+      "description": "Background when hovered"
+    },
+    "image": { "type": "string", "description": "Button image (icon)" },
+    "buttonType": { "type": "string", "enum": ["button", "submit", "reset"], "description": "HTML button type", "mode": "react" }
+  },
+  "Image": {
+    "src": { "type": ["string", "binding"], "description": "Image source path (can be data binding)" },
+    "srcName": { "type": "string", "description": "Image source name (alias)" },
+    "highlightSrc": { "type": "string", "description": "Image when hovered" },
+    "contentMode": {
+      "type": "string",
+      "enum": ["fit", "fill", "center", "top", "bottom", "left", "right", "AspectFill", "AspectFit", "Center", "ScaleToFill", "Top", "Bottom", "Left", "Right"],
+      "description": "Content mode (object-fit)"
+    },
+    "renderingMode": {
+      "type": "string",
+      "enum": ["original", "template"],
+      "description": "Rendering mode"
+    },
+    "alt": { "type": "string", "description": "Alt text for accessibility", "mode": "react" },
+    "loading": { "type": "string", "enum": ["lazy", "eager"], "description": "Loading behavior", "mode": "react" }
+  },
+  "NetworkImage": {
+    "src": { "type": ["string", "binding"], "description": "Image URL (can be data binding)" },
+    "url": { "type": ["string", "binding"], "description": "Image URL (alias, can be data binding)" },
+    "placeholder": {
+      "type": "string",
+      "description": "Placeholder image path"
+    },
+    "defaultImage": { "type": "string", "description": "Default image path" },
+    "errorImage": { "type": "string", "description": "Error image path" },
+    "loadingImage": { "type": "string", "description": "Loading image path" },
+    "contentMode": {
+      "type": "string",
+      "enum": ["fit", "fill", "center", "top", "bottom", "left", "right", "AspectFill", "AspectFit", "Center"],
+      "description": "Content mode (object-fit)"
+    },
+    "alt": { "type": "string", "description": "Alt text for accessibility", "mode": "react" },
+    "loading": { "type": "string", "enum": ["lazy", "eager"], "description": "Loading behavior", "mode": "react" }
+  },
+  "SelectBox": {
+    "prompt": { "type": "string", "description": "Prompt text" },
+    "hint": { "type": "string", "description": "Hint text (alias for prompt)" },
+    "items": {
+      "type": ["array", "binding"],
+      "description": "List of items for select (can be data binding expression)"
+    },
+    "selectedValue": {
+      "type": ["string", "number", "binding"],
+      "description": "Currently selected value (can be data binding)"
+    },
+    "onValueChanged": {
+      "type": "string",
+      "description": "Callback when value changes (data binding expression)"
+    },
+    "selectItemType": {
+      "type": "string",
+      "enum": ["Normal", "Date"],
+      "description": "Select item type"
+    },
+    "selectedIndex": {
+      "type": ["number", "binding"],
+      "min": 0,
+      "description": "Initial selected index (can be binding)"
+    },
+    "selectedDate": {
+      "type": "string",
+      "description": "Initial selected date (yyyy-MM-dd format)"
+    },
+    "datePickerMode": {
+      "type": "string",
+      "enum": ["date", "time", "datetime", "dateAndTime"],
+      "description": "Date picker mode (input type)"
+    },
+    "dateStringFormat": {
+      "type": "string",
+      "description": "Date string format"
+    },
+    "minimumDate": {
+      "type": "string",
+      "description": "Minimum date (yyyy-MM-dd format)"
+    },
+    "maximumDate": {
+      "type": "string",
+      "description": "Maximum date (yyyy-MM-dd format)"
+    },
+    "font": { "type": "string", "description": "Font name" },
+    "fontSize": { "type": "number", "description": "Font size" },
+    "fontColor": { "type": "string", "description": "Font color" },
+    "labelAttributes": {
+      "type": "object",
+      "description": "Label styling attributes",
+      "properties": {
+        "font": { "type": "string", "description": "Font name" },
+        "fontSize": { "type": "number", "description": "Font size" },
+        "fontColor": { "type": "string", "description": "Font color" },
+        "textAlign": { "type": "string", "enum": ["Left", "Right", "Center"], "description": "Text alignment" },
+        "text": { "type": "string", "description": "Label text" }
+      }
+    },
+    "onValueChange": { "type": "string", "description": "Value change event" },
+    "multiple": { "type": "boolean", "description": "Allow multiple selection", "mode": "react" },
+    "size": { "type": "number", "description": "Number of visible options", "mode": "react" }
+  },
+  "Toggle": {
+    "isOn": { "type": ["boolean", "binding"], "description": "Toggle state (binding for two-way)" },
+    "value": { "type": ["boolean", "binding"], "description": "Toggle state alias (binding for two-way)" },
+    "checked": { "type": ["boolean", "binding"], "description": "Toggle state alias (binding for two-way)" },
+    "tint": { "type": "string", "description": "Tint color (accent-color)" },
+    "tintColor": { "type": "string", "description": "Tint color (alias)" },
+    "onToggle": { "type": "string", "description": "Toggle handler function" },
+    "onValueChange": { "type": "string", "description": "Value change handler (alias)" },
+    "labelAttributes": {
+      "type": "object",
+      "description": "Label styling for Toggle",
+      "properties": {
+        "text": { "type": "string", "description": "Label text" },
+        "font": { "type": "string", "description": "Font name" },
+        "fontSize": { "type": "number", "description": "Font size" },
+        "fontColor": { "type": "string", "description": "Font color" }
+      }
+    }
+  },
+  "Segment": {
+    "items": {
+      "type": "array",
+      "required": true,
+      "description": "Segment items array"
+    },
+    "selectedIndex": {
+      "type": ["number", "binding"],
+      "description": "Initially selected index (binding for two-way)"
+    },
+    "tintColor": { "type": "string", "description": "Tint color" },
+    "normalColor": { "type": "string", "description": "Normal state color" },
+    "selectedColor": { "type": "string", "description": "Selected state color" },
+    "valueChange": { "type": "string", "description": "Value change event" },
+    "onValueChanged": { "type": "string", "description": "Callback when value changes (data binding expression)" }
+  },
+  "Slider": {
+    "value": { "type": ["number", "binding"], "description": "Current value (binding for two-way)" },
+    "minValue": { "type": "number", "description": "Minimum value" },
+    "minimum": { "type": "number", "description": "Minimum value (alias)" },
+    "maxValue": { "type": "number", "description": "Maximum value" },
+    "maximum": { "type": "number", "description": "Maximum value (alias)" },
+    "tintColor": { "type": "string", "description": "Tint color (accent-color)" },
+    "onValueChanged": {
+      "type": "string",
+      "description": "Value change handler"
+    },
+    "onValueChange": {
+      "type": "string",
+      "description": "Value change handler (alias)"
+    },
+    "step": { "type": "number", "description": "Step increment", "mode": "react" }
+  },
+  "Progress": {
+    "progress": {
+      "type": ["number", "binding"],
+      "min": 0,
+      "max": 1,
+      "description": "Progress value (0-1, can be binding)"
+    },
+    "tintColor": { "type": "string", "description": "Tint color" },
+    "progressTintColor": { "type": "string", "description": "Progress portion color" },
+    "trackTintColor": { "type": "string", "description": "Track portion color" }
+  },
+  "View": {
+    "orientation": {
+      "type": "string",
+      "enum": ["horizontal", "vertical"],
+      "description": "Flex direction"
+    },
+    "direction": {
+      "type": "string",
+      "enum": ["topToBottom", "bottomToTop", "leftToRight", "rightToLeft", "none"],
+      "description": "Layout direction"
+    },
+    "child": {
+      "type": ["object", "array"],
+      "description": "Child component(s)"
+    },
+    "children": {
+      "type": "array",
+      "description": "Child components (alias for child)"
+    },
+    "gravity": {
+      "type": ["string", "array"],
+      "enum": ["top", "bottom", "center", "centerVertical", "left", "right", "centerHorizontal"],
+      "description": "Content gravity (justify-content/align-items)"
+    },
+    "alignment": { "type": "string", "description": "Alternative child alignment" },
+    "distribution": { "type": "string", "description": "Distribution mode" },
+    "spacing": { "type": "number", "description": "Gap between children" },
+    "gradient": { "type": "array", "description": "Gradient colors (linear-gradient)" },
+    "gradientDirection": { "type": "string", "description": "Gradient direction" },
+    "locations": { "type": "array", "description": "Gradient color stop locations" },
+    "highlighted": { "type": "boolean", "description": "View highlighted state" },
+    "flexWrap": { "type": "string", "enum": ["nowrap", "wrap", "wrap-reverse"], "description": "Flex wrap behavior", "mode": "react" }
+  },
+  "ScrollView": {
+    "child": {
+      "type": ["object", "array"],
+      "description": "Child component(s)"
+    },
+    "children": { "type": "array", "description": "Child components" },
+    "orientation": {
+      "type": "string",
+      "enum": ["horizontal", "vertical"],
+      "description": "Scroll orientation (overflow-x/y)"
+    },
+    "showsHorizontalScrollIndicator": {
+      "type": "boolean",
+      "description": "Show horizontal scrollbar"
+    },
+    "showsVerticalScrollIndicator": {
+      "type": "boolean",
+      "description": "Show vertical scrollbar"
+    },
+    "paging": { "type": "boolean", "description": "Enable snap scrolling (scroll-snap)" },
+    "bounces": { "type": "boolean", "description": "Enable overscroll effect" },
+    "scrollEnabled": { "type": "boolean", "description": "Enable scrolling (overflow)" },
+    "maxZoom": { "type": "number", "description": "Maximum zoom scale" },
+    "minZoom": { "type": "number", "description": "Minimum zoom scale" },
+    "scrollBehavior": { "type": "string", "enum": ["auto", "smooth"], "description": "Scroll behavior", "mode": "react" }
+  },
+  "Collection": {
+    "cellClasses": { "type": "array", "description": "Cell class definitions" },
+    "headerClasses": {
+      "type": "array",
+      "description": "Header class definitions"
+    },
+    "footerClasses": {
+      "type": "array",
+      "description": "Footer class definitions"
+    },
+    "columns": {
+      "type": "number",
+      "min": 1,
+      "description": "Number of columns (CSS grid)"
+    },
+    "columnCount": {
+      "type": "number",
+      "min": 1,
+      "description": "Number of columns (alias for columns)"
+    },
+    "columnSpacing": {
+      "type": "number",
+      "description": "Column gap"
+    },
+    "lineSpacing": { "type": "number", "description": "Row gap" },
+    "horizontalScroll": {
+      "type": "boolean",
+      "description": "Enable horizontal scroll"
+    },
+    "layout": {
+      "type": "string",
+      "enum": ["vertical", "horizontal", "Flow"],
+      "description": "Layout type (grid/flex)"
+    },
+    "insets": {
+      "type": ["array", "string"],
+      "description": "Content insets (padding) - supports array [top, left, bottom, right] or pipe-separated string '10|20|30|40'"
+    },
+    "insetHorizontal": { "type": "number", "description": "Horizontal inset" },
+    "insetVertical": { "type": "number", "description": "Vertical inset" },
+    "contentInsets": {
+      "type": ["array", "string"],
+      "description": "Content insets - supports array [top, left, bottom, right] or pipe-separated string '10|20|30|40'"
+    },
+    "itemWeight": { "type": "number", "description": "Item sizing weight" },
+    "showsHorizontalScrollIndicator": { "type": "boolean", "description": "Show horizontal scrollbar" },
+    "showsVerticalScrollIndicator": { "type": "boolean", "description": "Show vertical scrollbar" },
+    "paging": { "type": "boolean", "description": "Enable snap scrolling" },
+    "sections": {
+      "type": "array",
+      "description": "Section-based configuration",
+      "items": {
+        "type": "object",
+        "properties": {
+          "header": { "type": "string", "description": "Header component name" },
+          "cell": { "type": "string", "description": "Cell component name" },
+          "footer": { "type": "string", "description": "Footer component name" },
+          "columns": { "type": "number", "description": "Columns for this section" }
+        }
+      }
+    },
+    "items": { "type": ["array", "binding"], "description": "Data source binding" }
+  },
+  "Radio": {
+    "label": { "type": ["string", "binding"], "description": "Radio label (can be data binding)" },
+    "text": { "type": ["string", "binding"], "description": "Radio label (alias, can be data binding)" },
+    "group": {
+      "type": "string",
+      "required": true,
+      "description": "Radio group name"
+    },
+    "icon": { "type": "string", "description": "Icon for normal state" },
+    "selectedIcon": { "type": "string", "description": "Selected icon" },
+    "selected_icon": { "type": "string", "description": "Selected icon (underscore alias)" },
+    "checked": { "type": ["boolean", "binding"], "description": "Initial checked state (can be binding)" },
+    "value": { "type": "any", "description": "Associated value when selected" },
+    "font": { "type": "string", "description": "Font name" },
+    "fontSize": { "type": "number", "description": "Font size" },
+    "fontColor": { "type": "string", "description": "Text color" },
+    "spacing": { "type": "number", "description": "Space between icon and text" }
+  },
+  "CheckBox": {
+    "label": { "type": ["string", "binding"], "description": "Checkbox label (can be data binding)" },
+    "text": { "type": ["string", "binding"], "description": "Checkbox label (alias, can be data binding)" },
+    "isOn": { "type": ["boolean", "binding"], "description": "Checked state (binding for two-way)" },
+    "checked": { "type": ["boolean", "binding"], "description": "Checked state alias (binding for two-way)" },
+    "icon": { "type": "string", "description": "Icon for unchecked state" },
+    "src": { "type": "string", "description": "Icon for unchecked state (alias)" },
+    "selectedIcon": { "type": "string", "description": "Selected icon" },
+    "onSrc": { "type": "string", "description": "Selected icon (alias)" },
+    "value": { "type": "any", "description": "Associated value when checked" }
+  },
+  "Indicator": {
+    "indicatorStyle": {
+      "type": "string",
+      "enum": ["medium", "large"],
+      "description": "Indicator style/size"
+    },
+    "color": { "type": "string", "description": "Indicator color" },
+    "hidesWhenStopped": { "type": "boolean", "description": "Hide when stopped" }
+  },
+  "GradientView": {
+    "gradient": { "type": "array", "description": "Gradient colors" },
+    "gradientDirection": {
+      "type": "string",
+      "enum": ["Vertical", "Horizontal", "Oblique"],
+      "description": "Gradient direction"
+    },
+    "locations": { "type": "array", "description": "Color stop locations (0.0-1.0)" }
+  },
+  "Blur": {
+    "effectStyle": {
+      "type": "string",
+      "enum": ["Light", "Dark", "ExtraLight"],
+      "description": "Blur effect style (backdrop-filter)"
+    }
+  },
+  "IconLabel": {
+    "text": { "type": "string", "description": "Label text" },
+    "font": { "type": "string", "description": "Font name" },
+    "fontSize": { "type": "number", "description": "Font size" },
+    "fontColor": { "type": "string", "description": "Text color" },
+    "textShadow": { "type": "string", "description": "Text shadow" },
+    "selectedFontColor": { "type": "string", "description": "Selected text color" },
+    "icon_on": { "type": "string", "description": "Selected icon" },
+    "icon_off": { "type": "string", "description": "Normal icon" },
+    "iconPosition": {
+      "type": "string",
+      "enum": ["Left", "Right", "Top", "Bottom"],
+      "description": "Icon position relative to text"
+    },
+    "iconMargin": { "type": "number", "description": "Icon-text spacing (gap)" }
+  },
+  "Web": {
+    "url": { "type": "string", "description": "Web page URL (iframe src)" },
+    "html": { "type": "string", "description": "HTML content (srcdoc)" },
+    "allowsBackForwardNavigationGestures": { "type": "boolean", "description": "Enable navigation" },
+    "allowsLinkPreview": { "type": "boolean", "description": "Enable link preview" },
+    "sandbox": { "type": "string", "description": "Iframe sandbox attribute", "mode": "react" },
+    "allow": { "type": "string", "description": "Iframe allow attribute", "mode": "react" }
+  },
+  "SafeAreaView": {
+    "safeAreaInsetPositions": {
+      "type": "array",
+      "description": "Safe area edges (padding with env())",
+      "items": {
+        "type": "string",
+        "enum": ["top", "bottom", "leading", "trailing", "vertical", "all"]
+      }
+    },
+    "child": {
+      "type": ["object", "array"],
+      "description": "Child component(s)"
+    },
+    "children": {
+      "type": "array",
+      "description": "Child components (alias for child)"
+    }
+  }
+}

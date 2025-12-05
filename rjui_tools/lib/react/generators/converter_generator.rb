@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'fileutils'
+require 'json'
 require_relative '../../core/logger'
 require_relative 'react_component_generator'
 
@@ -26,6 +27,9 @@ module RjuiTools
           # Update mappings file
           update_mappings_file
 
+          # Create attribute definition file
+          create_attribute_definition_file
+
           # Create React component skeleton
           component_generator = ReactComponentGenerator.new(@name, @options, @config, @command_line)
           component_generator.generate
@@ -46,9 +50,17 @@ module RjuiTools
           end
         end
 
+        def attribute_definitions_dir
+          File.join(extensions_dir, 'attribute_definitions')
+        end
+
         def converter_file_path
           snake_case_name = to_snake_case(@name)
           File.join(extensions_dir, "#{snake_case_name}_converter.rb")
+        end
+
+        def attribute_definition_file_path
+          File.join(attribute_definitions_dir, "#{@name}.json")
         end
 
         def create_converter_file
@@ -65,6 +77,53 @@ module RjuiTools
 
           File.write(file_path, converter_template)
           @logger.info "Created converter file: #{file_path}"
+        end
+
+        def create_attribute_definition_file
+          # Skip if no attributes
+          return if @options[:attributes].nil? || @options[:attributes].empty?
+
+          FileUtils.mkdir_p(attribute_definitions_dir)
+
+          file_path = attribute_definition_file_path
+
+          # Build attribute definition JSON
+          definition = {
+            @name => build_attribute_definitions
+          }
+
+          # Write JSON file with pretty formatting
+          File.write(file_path, JSON.pretty_generate(definition))
+          @logger.info "Created attribute definition file: #{file_path}"
+        end
+
+        def build_attribute_definitions
+          definitions = {}
+
+          @options[:attributes].each do |name, type|
+            definitions[name] = {
+              'type' => map_type_to_json_type(type),
+              'description' => "#{name} attribute"
+            }
+          end
+
+          definitions
+        end
+
+        def map_type_to_json_type(type)
+          case type.downcase
+          when 'string'
+            'string'
+          when 'int', 'integer'
+            'number'
+          when 'double', 'float'
+            'number'
+          when 'bool', 'boolean'
+            'boolean'
+          else
+            # Custom class types must use binding syntax (@{propertyName})
+            'binding'
+          end
         end
 
         def update_mappings_file

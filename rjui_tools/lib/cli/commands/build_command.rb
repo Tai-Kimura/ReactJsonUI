@@ -4,6 +4,7 @@ require 'json'
 require 'fileutils'
 require_relative '../../core/config_manager'
 require_relative '../../core/logger'
+require_relative '../../core/attribute_validator'
 require_relative '../../react/react_generator'
 
 module RjuiTools
@@ -13,6 +14,8 @@ module RjuiTools
         def initialize(args)
           @args = args
           @config = Core::ConfigManager.load_config
+          @validator = Core::AttributeValidator.new(:react)
+          @all_warnings = []
         end
 
         def execute
@@ -46,6 +49,9 @@ module RjuiTools
               component_name = File.basename(json_file, '.json')
               component_name = to_pascal_case(component_name)
 
+              # Validate JSON attributes
+              validate_component(json_content, json_file)
+
               output = generator.generate(component_name, json_content)
 
               output_path = File.join(
@@ -64,6 +70,9 @@ module RjuiTools
             end
           end
 
+          # Print all collected warnings at the end
+          print_validation_summary
+
           Core::Logger.success('Build completed!')
         end
 
@@ -71,6 +80,47 @@ module RjuiTools
 
         def to_pascal_case(string)
           string.split(/[-_]/).map(&:capitalize).join
+        end
+
+        # Validate component and its children recursively
+        def validate_component(component, file_path)
+          return unless component.is_a?(Hash)
+
+          # Skip style-only entries and data declarations
+          return if component.key?('style') && component.keys.size == 1
+          return if component.key?('data') && !component.key?('type')
+
+          if component['type']
+            warnings = @validator.validate(component)
+            warnings.each do |warning|
+              @all_warnings << { file: file_path, message: warning }
+            end
+          end
+
+          # Validate children recursively
+          if component['child']
+            children = component['child'].is_a?(Array) ? component['child'] : [component['child']]
+            children.each { |child| validate_component(child, file_path) }
+          end
+        end
+
+        # Print validation summary at the end of build
+        def print_validation_summary
+          return if @all_warnings.empty?
+
+          puts
+          Core::Logger.warn("Validation warnings found: #{@all_warnings.size}")
+          puts
+
+          # Group warnings by file
+          grouped = @all_warnings.group_by { |w| w[:file] }
+          grouped.each do |file, warnings|
+            puts "\e[33m  #{file}:\e[0m"
+            warnings.each do |w|
+              puts "\e[33m    ⚠️  #{w[:message]}\e[0m"
+            end
+          end
+          puts
         end
 
         def update_string_manager

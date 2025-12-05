@@ -165,7 +165,7 @@ module RjuiTools
           when 'matchParent'
             'w-full'
           when 'wrapContent'
-            'w-auto'
+            'w-fit'
           when Numeric
             "w-[#{width}px]"
           else
@@ -178,7 +178,7 @@ module RjuiTools
           when 'matchParent'
             'h-auto'
           when 'wrapContent'
-            'h-auto'
+            'h-fit'
           when Numeric
             "h-[#{height}px]"
           else
