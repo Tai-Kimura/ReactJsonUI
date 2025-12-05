@@ -77,80 +77,13 @@ module RjuiTools
       private
 
       def load_definitions
-        # Load base definitions
         definitions_path = File.join(File.dirname(__FILE__), 'attribute_definitions.json')
-        base_definitions = if File.exist?(definitions_path)
+        if File.exist?(definitions_path)
           JSON.parse(File.read(definitions_path))
         else
           puts "\e[31m[RJUI Error] attribute_definitions.json not found at #{definitions_path}\e[0m"
           {}
         end
-
-        # Load and merge extension definitions
-        extension_definitions = load_extension_definitions
-        merge_definitions(base_definitions, extension_definitions)
-      end
-
-      # Load extension attribute definitions from extensions directory
-      # @return [Hash] Hash of component types to their attribute definitions
-      def load_extension_definitions
-        extensions = {}
-        extensions_dir = find_extensions_definitions_dir
-
-        return extensions unless extensions_dir && Dir.exist?(extensions_dir)
-
-        # Find all JSON files in the extensions/attribute_definitions directory
-        Dir.glob(File.join(extensions_dir, '*.json')).each do |file_path|
-          begin
-            content = JSON.parse(File.read(file_path))
-            # Merge this extension file's definitions
-            content.each do |component_type, attributes|
-              extensions[component_type] ||= {}
-              extensions[component_type].merge!(attributes)
-            end
-          rescue JSON::ParserError => e
-            puts "\e[33m[RJUI Warning] Failed to parse extension definition: #{file_path}\e[0m"
-            puts "\e[33m  Error: #{e.message}\e[0m"
-          rescue => e
-            puts "\e[33m[RJUI Warning] Error loading extension definition: #{file_path}\e[0m"
-            puts "\e[33m  Error: #{e.message}\e[0m"
-          end
-        end
-
-        extensions
-      end
-
-      # Find the extensions attribute_definitions directory
-      # @return [String, nil] Path to the directory or nil if not found
-      def find_extensions_definitions_dir
-        # Try project root (rjui_tools at root)
-        root_path = File.join(Dir.pwd, 'rjui_tools', 'lib', 'react', 'converters', 'extensions', 'attribute_definitions')
-        return root_path if Dir.exist?(root_path)
-
-        # Try lib directory (rjui_tools within lib)
-        lib_path = File.join(Dir.pwd, 'lib', 'react', 'converters', 'extensions', 'attribute_definitions')
-        return lib_path if Dir.exist?(lib_path)
-
-        # Try relative to this file (for development)
-        relative_path = File.join(File.dirname(__FILE__), '..', 'react', 'converters', 'extensions', 'attribute_definitions')
-        return File.expand_path(relative_path) if Dir.exist?(File.expand_path(relative_path))
-
-        nil
-      end
-
-      # Merge extension definitions into base definitions
-      # @param base [Hash] Base attribute definitions
-      # @param extensions [Hash] Extension attribute definitions
-      # @return [Hash] Merged definitions
-      def merge_definitions(base, extensions)
-        result = base.dup
-
-        extensions.each do |component_type, attributes|
-          result[component_type] ||= {}
-          result[component_type].merge!(attributes)
-        end
-
-        result
       end
 
       # Get valid attributes for a component type (common + type-specific)
@@ -333,9 +266,6 @@ module RjuiTools
             actual == 'array'
           when 'object'
             actual == 'object'
-          when 'binding'
-            # binding型は @{propertyName} 形式の文字列である必要がある
-            actual == 'string' && value.is_a?(String) && value.start_with?('@{') && value.end_with?('}')
           when 'any'
             true
           else

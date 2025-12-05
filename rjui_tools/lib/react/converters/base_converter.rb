@@ -53,10 +53,13 @@ module RjuiTools
             json['leftMargin']
           )
 
-          # Background - check for dynamic binding
+          # Background - check for dynamic binding or gradient
           if json['background']
             if has_binding?(json['background'])
               @dynamic_styles['backgroundColor'] = convert_binding(json['background'])
+            elsif json['background'].to_s.include?('gradient')
+              # CSS gradients must be inline styles
+              @dynamic_styles['background'] = "'#{json['background']}'"
             else
               classes << TailwindMapper.map_color(json['background'], 'bg')
             end
@@ -350,11 +353,23 @@ module RjuiTools
         end
 
         # Build onClick attribute - converts @{handler} to {handler}
+        # Supports:
+        # - "@{handleClick}" -> binding to handler
+        # - "handleClick" -> direct handler reference
+        # - { "action": "link", "url": "..." } -> opens URL in new tab
         def build_onclick_attr
           handler = json['onClick']
           return '' unless handler
 
-          if handler.start_with?('@{')
+          if handler.is_a?(Hash)
+            # Action object: { "action": "link", "url": "..." }
+            if handler['action'] == 'link' && handler['url']
+              url = handler['url']
+              " onClick={() => window.open('#{url}', '_blank')}"
+            else
+              ''
+            end
+          elsif handler.start_with?('@{')
             # Binding: @{handleClick} -> {handleClick}
             " onClick={#{handler.gsub(/@\{|\}/, '')}}"
           else
