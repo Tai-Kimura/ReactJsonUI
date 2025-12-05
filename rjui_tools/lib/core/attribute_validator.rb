@@ -139,6 +139,8 @@ module RjuiTools
           'Radio'
         when 'CheckBox', 'Checkbox'
           'CheckBox'
+        when 'Check'
+          'Check'
         when 'Indicator', 'Spinner', 'Loading'
           'Indicator'
         when 'GradientView', 'Gradient'

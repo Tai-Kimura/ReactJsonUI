@@ -767,6 +767,11 @@
     "onSrc": { "type": "string", "description": "Selected icon (alias)" },
     "value": { "type": "any", "description": "Associated value when checked" }
   },
+  "Check": {
+    "check": { "type": ["boolean", "string"], "description": "Check state (can be binding)" },
+    "src": { "type": "string", "description": "Image source for unchecked state" },
+    "onSrc": { "type": "string", "description": "Image source for checked state" }
+  },
   "Indicator": {
     "indicatorStyle": {
       "type": "string",
