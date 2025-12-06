@@ -244,7 +244,11 @@
     },
     "hint": {
       "type": "string",
-      "description": "Placeholder text when empty"
+      "description": "Placeholder text when empty (primary)"
+    },
+    "placeholder": {
+      "type": "string",
+      "description": "Placeholder text when empty (alias for hint)"
     },
     "hintColor": {
       "type": "string",
@@ -305,7 +309,7 @@
   },
   "TextField": {
     "text": { "type": "string", "description": "Text content or binding" },
-    "hint": { "type": "string", "description": "Placeholder text" },
+    "hint": { "type": "string", "description": "Placeholder text (primary)" },
     "placeholder": {
       "type": "string",
       "description": "Placeholder text (alias for hint)"
@@ -392,7 +396,7 @@
   },
   "TextView": {
     "text": { "type": "string", "description": "Text content or binding" },
-    "hint": { "type": "string", "description": "Placeholder text" },
+    "hint": { "type": "string", "description": "Placeholder text (primary)" },
     "placeholder": {
       "type": "string",
       "description": "Placeholder text (alias for hint)"
@@ -493,9 +497,13 @@
   "NetworkImage": {
     "src": { "type": "string", "description": "Image URL" },
     "url": { "type": "string", "description": "Image URL (alias)" },
+    "hint": {
+      "type": "string",
+      "description": "Placeholder image path (primary)"
+    },
     "placeholder": {
       "type": "string",
-      "description": "Placeholder image path"
+      "description": "Placeholder image path (alias for hint)"
     },
     "defaultImage": { "type": "string", "description": "Default image path" },
     "errorImage": { "type": "string", "description": "Error image path" },
@@ -509,8 +517,9 @@
     "loading": { "type": "string", "enum": ["lazy", "eager"], "description": "Loading behavior", "mode": "react" }
   },
   "SelectBox": {
-    "prompt": { "type": "string", "description": "Prompt text" },
+    "prompt": { "type": "string", "description": "Prompt text (primary)" },
     "hint": { "type": "string", "description": "Hint text (alias for prompt)" },
+    "placeholder": { "type": "string", "description": "Placeholder text (alias for prompt)" },
     "hintColor": {
       "type": "string",
       "description": "Hint text color"
