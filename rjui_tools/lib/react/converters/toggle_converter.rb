@@ -5,6 +5,8 @@ require_relative 'base_converter'
 module RjuiTools
   module React
     module Converters
+      # ToggleConverter generates simple checkbox UI for "Check" and "Checkbox" components
+      # Note: "Switch" and "Toggle" now use SwitchConverter for iOS-style toggle switches.
       class ToggleConverter < BaseConverter
         def convert(indent = 2)
           class_name = build_class_name
@@ -16,12 +18,12 @@ module RjuiTools
           on_change = build_on_change
 
           if text.empty?
-            # Toggle only (no label)
+            # Checkbox only (no label)
             <<~JSX.chomp
               #{indent_str(indent)}<input#{id_attr} type="checkbox" className="#{class_name}"#{checked_attr}#{on_change} />
             JSX
           else
-            # Toggle with label
+            # Checkbox with label
             <<~JSX.chomp
               #{indent_str(indent)}<label#{id_attr} className="#{class_name}">
               #{indent_str(indent + 2)}<input type="checkbox"#{checked_attr}#{on_change} />

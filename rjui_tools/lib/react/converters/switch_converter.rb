@@ -5,6 +5,8 @@ require_relative 'base_converter'
 module RjuiTools
   module React
     module Converters
+      # SwitchConverter generates iOS-style toggle switches for both "Switch" and "Toggle" components
+      # Switch is the primary component name, Toggle is supported as an alias for backward compatibility.
       class SwitchConverter < BaseConverter
         def convert(indent = 2)
           class_name = build_class_name

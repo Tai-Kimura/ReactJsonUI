@@ -9,7 +9,8 @@ require_relative 'converters/text_field_converter'
 require_relative 'converters/text_view_converter'
 require_relative 'converters/scroll_view_converter'
 require_relative 'converters/collection_converter'
-require_relative 'converters/toggle_converter'
+require_relative 'converters/switch_converter'  # Primary converter for Switch/Toggle
+require_relative 'converters/toggle_converter'  # Kept for backward compatibility
 require_relative 'converters/slider_converter'
 require_relative 'converters/segment_converter'
 require_relative 'converters/radio_converter'
@@ -40,8 +41,11 @@ module RjuiTools
         'ScrollView' => Converters::ScrollViewConverter,
         'Collection' => Converters::CollectionConverter,
         'Table' => Converters::CollectionConverter,
-        'Switch' => Converters::ToggleConverter,
-        'Toggle' => Converters::ToggleConverter,
+        # Switch is the primary component name, uses SwitchConverter for iOS-style toggle
+        'Switch' => Converters::SwitchConverter,
+        # Toggle is an alias for Switch (backward compatibility), also uses SwitchConverter
+        'Toggle' => Converters::SwitchConverter,
+        # Check/Checkbox use ToggleConverter for simple checkbox
         'Check' => Converters::ToggleConverter,
         'Checkbox' => Converters::ToggleConverter,
         'Slider' => Converters::SliderConverter,

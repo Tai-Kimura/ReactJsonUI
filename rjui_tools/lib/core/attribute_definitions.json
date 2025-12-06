@@ -83,6 +83,8 @@
     "paddingRight": { "type": "number", "description": "Right padding" },
     "paddingStart": { "type": "number", "description": "Start padding (RTL aware)" },
     "paddingEnd": { "type": "number", "description": "End padding (RTL aware)" },
+    "rightPadding": { "type": ["number", "binding"], "description": "Right padding (alias for paddingRight)" },
+    "leftPadding": { "type": ["number", "binding"], "description": "Left padding (alias for paddingLeft)" },
     "margins": {
       "type": ["number", "array"],
       "description": "Margin as single value or [top, right, bottom, left]"
@@ -110,6 +112,7 @@
     "alignRightView": { "type": "string", "description": "Align right edge with specified view" },
     "alignCenterVerticalView": { "type": "string", "description": "Align vertical center with specified view" },
     "alignCenterHorizontalView": { "type": "string", "description": "Align horizontal center with specified view" },
+    "gravity": { "type": ["string", "array"], "enum": ["top", "bottom", "centerVertical", "left", "right", "centerHorizontal", "center"], "description": "Content gravity/alignment" },
     "shadow": {
       "type": ["string", "object"],
       "description": "Shadow configuration (string 'color|offsetX|offsetY|opacity|radius' or object)",
@@ -155,7 +158,7 @@
     "indexBelow": { "type": "string", "description": "Place below specified view ID (z-index)" },
     "indexAbove": { "type": "string", "description": "Place above specified view ID (z-index)" },
     "data": { "type": "array", "description": "Data model definitions for binding" },
-    "binding_group": { "type": "string", "description": "Groups related bindings for batch updates" },
+    "binding_group": { "type": ["string", "array"], "description": "Groups related bindings for batch updates (can be array for multiple groups)" },
     "className": { "type": "string", "description": "Custom CSS class name", "mode": "react" },
     "style": { "type": ["object", "string"], "description": "Style name (string) or inline style object" },
     "testId": { "type": "string", "description": "Test ID for testing (data-testid)", "mode": "react" }
@@ -208,8 +211,8 @@
       "description": "Edge insets as array or pipe-separated string"
     },
     "underline": {
-      "type": ["boolean", "object"],
-      "description": "Underline styling (boolean for simple, object for styled)",
+      "type": ["boolean", "array", "object"],
+      "description": "Underline styling (boolean for simple, array for ranges, object for styled)",
       "properties": {
         "lineStyle": { "type": "string", "enum": ["Single", "Double", "Thick", "None"], "description": "Underline style" },
         "color": { "type": "string", "description": "Underline color" },
@@ -232,8 +235,8 @@
       "description": "Minimum scale factor for auto-shrink"
     },
     "linkable": {
-      "type": "boolean",
-      "description": "Enable URL/email detection"
+      "type": ["boolean", "binding"],
+      "description": "Enable URL/email detection (binding supported)"
     },
     "textShadow": {
       "type": ["string", "object"],
@@ -319,6 +322,16 @@
       "type": "number",
       "description": "Placeholder font size"
     },
+    "hintAttributes": {
+      "type": "object",
+      "description": "Hint text styling attributes",
+      "properties": {
+        "font": { "type": "string", "description": "Font name" },
+        "fontSize": { "type": "number", "description": "Font size" },
+        "fontColor": { "type": "string", "description": "Font color" },
+        "lineHeightMultiple": { "type": "number", "description": "Line height multiplier" }
+      }
+    },
     "font": { "type": "string", "description": "Font name or 'bold'" },
     "fontSize": { "type": "number", "description": "Font size" },
     "fontColor": { "type": "string", "description": "Font color" },
@@ -337,6 +350,7 @@
       "enum": [
         "default",
         "alphabet",
+        "allphabet",
         "email",
         "number",
         "phone",
@@ -437,6 +451,11 @@
     "font": { "type": "string", "description": "Font name or 'bold'" },
     "fontSize": { "type": "number", "description": "Font size" },
     "fontColor": { "type": "string", "description": "Font color" },
+    "textAlign": {
+      "type": "string",
+      "enum": ["Left", "Center", "Right", "left", "center", "right"],
+      "description": "Text alignment"
+    },
     "disabledFontColor": {
       "type": "string",
       "description": "Font color when disabled"
@@ -492,6 +511,10 @@
   "SelectBox": {
     "prompt": { "type": "string", "description": "Prompt text" },
     "hint": { "type": "string", "description": "Hint text (alias for prompt)" },
+    "hintColor": {
+      "type": "string",
+      "description": "Hint text color"
+    },
     "items": {
       "type": ["array", "string"],
       "description": "List of items for select (can be data binding expression)"
@@ -553,14 +576,41 @@
     "multiple": { "type": "boolean", "description": "Allow multiple selection", "mode": "react" },
     "size": { "type": "number", "description": "Number of visible options", "mode": "react" }
   },
+  "Switch": {
+    "_alias": "Toggle",
+    "_comment": "Switch is the primary component name. Toggle is supported as an alias for backward compatibility.",
+    "isOn": { "type": ["boolean", "string"], "description": "Switch state (can be binding)" },
+    "value": { "type": ["boolean", "string"], "description": "Switch state alias (can be binding)" },
+    "checked": { "type": ["boolean", "string"], "description": "Switch state alias (can be binding)" },
+    "tint": { "type": "string", "description": "Tint color (accent-color)" },
+    "tintColor": { "type": "string", "description": "Tint color (alias)" },
+    "onTintColor": { "type": "string", "description": "On state tint color" },
+    "onToggle": { "type": "string", "description": "Toggle handler function" },
+    "onValueChange": { "type": "string", "description": "Value change handler (alias)" },
+    "onValueChanged": { "type": "string", "description": "Value change handler (alias)" },
+    "labelAttributes": {
+      "type": "object",
+      "description": "Label styling for Switch",
+      "properties": {
+        "text": { "type": "string", "description": "Label text" },
+        "font": { "type": "string", "description": "Font name" },
+        "fontSize": { "type": "number", "description": "Font size" },
+        "fontColor": { "type": "string", "description": "Font color" }
+      }
+    }
+  },
   "Toggle": {
+    "_alias_of": "Switch",
+    "_comment": "Toggle is an alias for Switch. Maintained for backward compatibility. New code should use Switch.",
     "isOn": { "type": ["boolean", "string"], "description": "Toggle state (can be binding)" },
     "value": { "type": ["boolean", "string"], "description": "Toggle state alias (can be binding)" },
     "checked": { "type": ["boolean", "string"], "description": "Toggle state alias (can be binding)" },
     "tint": { "type": "string", "description": "Tint color (accent-color)" },
     "tintColor": { "type": "string", "description": "Tint color (alias)" },
+    "onTintColor": { "type": "string", "description": "On state tint color" },
     "onToggle": { "type": "string", "description": "Toggle handler function" },
     "onValueChange": { "type": "string", "description": "Value change handler (alias)" },
+    "onValueChanged": { "type": "string", "description": "Value change handler (alias)" },
     "labelAttributes": {
       "type": "object",
       "description": "Label styling for Toggle",
@@ -769,6 +819,8 @@
   },
   "Check": {
     "check": { "type": ["boolean", "string"], "description": "Check state (can be binding)" },
+    "label": { "type": "string", "description": "Check label text" },
+    "text": { "type": "string", "description": "Check label text (alias)" },
     "src": { "type": "string", "description": "Image source for unchecked state" },
     "onSrc": { "type": "string", "description": "Image source for checked state" }
   },

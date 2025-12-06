@@ -7,15 +7,22 @@ module RjuiTools
     # Validates JSON component attributes against defined schemas
     # Used by React converters to ensure JSON layout correctness
     class AttributeValidator
-      attr_reader :definitions, :warnings
+      attr_reader :definitions, :warnings, :infos
       attr_accessor :mode
 
-      # Valid modes
+      # Valid modes for this platform
       MODES = [:react, :all].freeze
+
+      # Current platform identifier
+      PLATFORM = 'react'.freeze
+
+      # All supported platforms across JsonUI libraries
+      ALL_PLATFORMS = ['swift', 'kotlin', 'react'].freeze
 
       def initialize(mode = :all)
         @definitions = load_definitions
         @warnings = []
+        @infos = []
         @mode = mode
       end
 
@@ -25,6 +32,7 @@ module RjuiTools
       # @return [Array<String>] Array of warning messages
       def validate(component, component_type = nil)
         @warnings = []
+        @infos = []
         type = component_type || component['type']
 
         return @warnings unless type
@@ -38,13 +46,19 @@ module RjuiTools
 
           if valid_attrs.key?(key)
             attr_def = valid_attrs[key]
-            # Check mode compatibility first
-            if mode_compatible?(attr_def)
-              # Validate attribute value
-              validate_attribute(key, value, attr_def, type)
+            # Check platform compatibility first
+            if platform_compatible?(attr_def)
+              # Check mode compatibility
+              if mode_compatible?(attr_def)
+                # Validate attribute value
+                validate_attribute(key, value, attr_def, type)
+              else
+                # Attribute not supported in current mode - log as info
+                add_mode_info(key, attr_def, type)
+              end
             else
-              # Attribute not supported in current mode
-              add_mode_warning(key, attr_def, type)
+              # Attribute for other platform - log as info
+              add_platform_info(key, attr_def, type)
             end
           else
             # Unknown attribute
@@ -52,8 +66,9 @@ module RjuiTools
           end
         end
 
-        # Check for required attributes
+        # Check for required attributes (only for current platform)
         valid_attrs.each do |attr_name, attr_def|
+          next unless platform_compatible?(attr_def)
           if attr_def['required'] && !component.key?(attr_name)
             add_warning("Required attribute '#{attr_name}' is missing for component type '#{type}'")
           end
@@ -65,7 +80,14 @@ module RjuiTools
       # Print all warnings to console
       def print_warnings
         @warnings.each do |warning|
-          puts "\e[33m\u26a0\ufe0f  [RJUI Warning] #{warning}\e[0m"
+          puts "\e[33m⚠️  [RJUI Warning] #{warning}\e[0m"
+        end
+      end
+
+      # Print all info messages to console
+      def print_infos
+        @infos.each do |info|
+          puts "\e[36mℹ️  [RJUI Info] #{info}\e[0m"
         end
       end
 
@@ -74,16 +96,67 @@ module RjuiTools
         !@warnings.empty?
       end
 
+      # Check if there are any info messages
+      def has_infos?
+        !@infos.empty?
+      end
+
       private
 
       def load_definitions
         definitions_path = File.join(File.dirname(__FILE__), 'attribute_definitions.json')
-        if File.exist?(definitions_path)
+        base_definitions = if File.exist?(definitions_path)
           JSON.parse(File.read(definitions_path))
         else
           puts "\e[31m[RJUI Error] attribute_definitions.json not found at #{definitions_path}\e[0m"
           {}
         end
+
+        # Load and merge extension attribute definitions
+        extension_definitions = load_extension_definitions
+        merge_definitions(base_definitions, extension_definitions)
+      end
+
+      # Load extension attribute definitions from the extensions directory
+      def load_extension_definitions
+        extension_defs = {}
+
+        # Check for extension definitions in various locations
+        extension_paths = [
+          # Main ReactJsonUI structure
+          File.join(Dir.pwd, 'rjui_tools', 'lib', 'react', 'components', 'extensions', 'attribute_definitions'),
+          # Test app structure
+          File.join(Dir.pwd, 'app', 'rjui_tools', 'lib', 'react', 'components', 'extensions', 'attribute_definitions')
+        ]
+
+        extension_paths.each do |ext_dir|
+          next unless File.directory?(ext_dir)
+
+          Dir.glob(File.join(ext_dir, '*.json')).each do |file|
+            begin
+              component_defs = JSON.parse(File.read(file))
+              extension_defs.merge!(component_defs)
+            rescue JSON::ParserError => e
+              puts "\e[33m[RJUI Warning] Failed to parse extension definition #{file}: #{e.message}\e[0m"
+            end
+          end
+        end
+
+        extension_defs
+      end
+
+      # Merge extension definitions into base definitions
+      def merge_definitions(base, extensions)
+        extensions.each do |key, value|
+          if base.key?(key) && base[key].is_a?(Hash) && value.is_a?(Hash)
+            # Merge attributes for existing component types
+            base[key] = base[key].merge(value)
+          else
+            # Add new component type definitions
+            base[key] = value
+          end
+        end
+        base
       end
 
       # Get valid attributes for a component type (common + type-specific)
@@ -164,36 +237,24 @@ module RjuiTools
 
         current_path = path ? "#{path}.#{name}" : name
 
+        # Check if value is a binding expression
+        is_binding = value.is_a?(String) && value.include?('@{')
+
         # Skip validation for binding expressions
-        if value.is_a?(String) && value.include?('@{')
-          return
-        end
+        return if is_binding
 
         # Check type
         expected_types = Array(definition['type'])
         actual_type = get_value_type(value)
 
         unless type_matches?(actual_type, expected_types, value, definition)
-          add_warning("Attribute '#{current_path}' in '#{component_type}' expects #{expected_types.join(' or ')}, got #{actual_type}")
+          add_warning("Attribute '#{current_path}' in '#{component_type}' expects #{format_expected_types(expected_types)}, got #{actual_type}")
           return # Don't validate nested properties if type is wrong
         end
 
-        # Check enum values - skip if value is a binding expression or array
+        # Check enum values
         if definition['enum']
-          # Skip enum validation for binding expressions (values starting with @{)
-          is_binding = value.is_a?(String) && value.start_with?('@{') && value.end_with?('}')
-
-          unless is_binding
-            if value.is_a?(Array)
-              # For array values, check if all elements are in enum
-              invalid_values = value.reject { |v| definition['enum'].include?(v) }
-              unless invalid_values.empty?
-                add_warning("Attribute '#{current_path}' in '#{component_type}' has invalid values #{invalid_values.inspect}. Valid values: #{definition['enum'].join(', ')}")
-              end
-            elsif !definition['enum'].include?(value)
-              add_warning("Attribute '#{current_path}' in '#{component_type}' has invalid value '#{value}'. Valid values: #{definition['enum'].join(', ')}")
-            end
-          end
+          validate_enum_value(value, definition['enum'], current_path, component_type)
         end
 
         # Check min/max for numbers
@@ -215,6 +276,34 @@ module RjuiTools
         if actual_type == 'array' && definition['items']
           validate_array_items(value, definition['items'], component_type, current_path)
         end
+      end
+
+      # Validate enum value (supports both single values and arrays)
+      def validate_enum_value(value, enum_values, path, component_type)
+        if value.is_a?(Array)
+          # For array values, check each element
+          invalid_values = value.reject { |v| enum_values.include?(v) }
+          unless invalid_values.empty?
+            add_warning("Attribute '#{path}' in '#{component_type}' has invalid value(s) '#{invalid_values.inspect}'. Valid values: #{enum_values.join(', ')}")
+          end
+        else
+          # For single values
+          unless enum_values.include?(value)
+            add_warning("Attribute '#{path}' in '#{component_type}' has invalid value '#{value}'. Valid values: #{enum_values.join(', ')}")
+          end
+        end
+      end
+
+      # Format expected types for error messages
+      def format_expected_types(expected_types)
+        formatted = expected_types.map do |type|
+          if type.is_a?(Hash) && type['enum']
+            "enum(#{type['enum'].join(', ')})"
+          else
+            type
+          end
+        end
+        formatted.join(' or ')
       end
 
       # Validate nested object properties
@@ -287,17 +376,24 @@ module RjuiTools
           when 'object'
             actual == 'object'
           when 'binding'
-            # binding type should be a string in the format @{propertyName}
+            # binding type requires @{propertyName} format
             actual == 'string' && value.is_a?(String) && value.start_with?('@{') && value.end_with?('}')
+          when 'any'
+            true
           when Hash
-            # Handle complex type definitions like { "enum": [...] }
+            # Handle enum type definition: {"enum": [...]}
             if expected['enum']
-              actual == 'string' && expected['enum'].include?(value)
+              if actual == 'string'
+                expected['enum'].include?(value)
+              elsif actual == 'array'
+                # For array values, check if all elements are in enum
+                value.is_a?(Array) && value.all? { |v| expected['enum'].include?(v) }
+              else
+                false
+              end
             else
               false
             end
-          when 'any'
-            true
           else
             # For union types or special cases
             actual == expected
@@ -309,6 +405,19 @@ module RjuiTools
         @warnings << message unless @warnings.include?(message)
       end
 
+      def add_info(message)
+        @infos << message unless @infos.include?(message)
+      end
+
+      # Check if attribute is compatible with current platform
+      # Attributes with platform specified for other platforms are silently skipped
+      def platform_compatible?(attr_def)
+        return true unless attr_def['platform']
+
+        attr_platforms = Array(attr_def['platform'])
+        attr_platforms.include?(PLATFORM) || attr_platforms.include?('all')
+      end
+
       # Check if attribute is compatible with current mode
       def mode_compatible?(attr_def)
         return true if @mode == :all
@@ -318,13 +427,21 @@ module RjuiTools
         attr_modes.include?(@mode.to_s) || attr_modes.include?('all')
       end
 
-      # Add warning for mode-incompatible attribute
-      def add_mode_warning(attr_name, attr_def, component_type)
+      # Add info for mode-incompatible attribute (not an error, just informational)
+      def add_mode_info(attr_name, attr_def, component_type)
         attr_modes = Array(attr_def['mode'])
         mode_str = attr_modes.map { |m| m.capitalize }.join('/')
         current_mode_str = @mode.to_s.capitalize
 
-        add_warning("Attribute '#{attr_name}' in '#{component_type}' is only supported in #{mode_str} mode (current: #{current_mode_str})")
+        add_info("Attribute '#{attr_name}' in '#{component_type}' is for #{mode_str} mode (current: #{current_mode_str})")
+      end
+
+      # Add info for platform-specific attribute (not an error, just informational)
+      def add_platform_info(attr_name, attr_def, component_type)
+        attr_platforms = Array(attr_def['platform'])
+        platform_str = attr_platforms.map { |p| p.capitalize }.join('/')
+
+        add_info("Attribute '#{attr_name}' in '#{component_type}' is for #{platform_str} platform (current: #{PLATFORM.capitalize})")
       end
     end
   end
