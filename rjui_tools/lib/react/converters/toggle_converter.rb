@@ -5,8 +5,9 @@ require_relative 'base_converter'
 module RjuiTools
   module React
     module Converters
-      # ToggleConverter generates simple checkbox UI for "Check" and "Checkbox" components
-      # Note: "Switch" and "Toggle" now use SwitchConverter for iOS-style toggle switches.
+      # ToggleConverter generates simple checkbox UI for "CheckBox" and "Check" components.
+      # CheckBox is the primary component name, Check is supported as an alias for backward compatibility.
+      # Note: "Switch" and "Toggle" use SwitchConverter for iOS-style toggle switches.
       class ToggleConverter < BaseConverter
         def convert(indent = 2)
           class_name = build_class_name
@@ -61,7 +62,7 @@ module RjuiTools
         end
 
         def build_on_change
-          handler = json['onValueChanged'] || json['onChange']
+          handler = json['onValueChanged'] || json['onValueChange'] || json['onChange']
           return '' unless handler
 
           if handler.start_with?('@{')

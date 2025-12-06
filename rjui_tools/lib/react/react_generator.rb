@@ -45,8 +45,11 @@ module RjuiTools
         'Switch' => Converters::SwitchConverter,
         # Toggle is an alias for Switch (backward compatibility), also uses SwitchConverter
         'Toggle' => Converters::SwitchConverter,
-        # Check/Checkbox use ToggleConverter for simple checkbox
+        # CheckBox is the primary component name, uses ToggleConverter for simple checkbox
+        'CheckBox' => Converters::ToggleConverter,
+        # Check is an alias for CheckBox (backward compatibility), also uses ToggleConverter
         'Check' => Converters::ToggleConverter,
+        # Legacy mapping kept for backward compatibility
         'Checkbox' => Converters::ToggleConverter,
         'Slider' => Converters::SliderConverter,
         'Segment' => Converters::SegmentConverter,
