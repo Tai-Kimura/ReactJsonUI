@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative '../core/type_converter'
 require_relative 'converters/base_converter'
 require_relative 'converters/view_converter'
 require_relative 'converters/label_converter'
@@ -237,15 +238,18 @@ module RjuiTools
       def generate_props_signature(props)
         return '' if props.empty?
 
-        "{ #{props.join(', ')} }"
+        # Props are now hashes with :name and :ts_type
+        prop_names = props.map { |p| p[:name] }
+        "{ #{prop_names.join(', ')} }"
       end
 
       def generate_props_interface(name, props)
         return '' if props.empty?
 
+        # Props are now hashes with :name and :ts_type
         <<~TS
           interface #{name}Props {
-            #{props.map { |p| "#{p}?: any;" }.join("\n  ")}
+            #{props.map { |p| "#{p[:name]}?: #{p[:ts_type]};" }.join("\n  ")}
           }
         TS
       end
@@ -334,7 +338,8 @@ module RjuiTools
           next unless child.is_a?(Hash)
           # Check if this child has only 'data' key (data-only element)
           if child.keys == ['data'] && child['data'].is_a?(Array)
-            return child['data']
+            # Normalize types using TypeConverter (mode: react)
+            return Core::TypeConverter.normalize_data_properties(child['data'], 'react')
           end
           # Recurse into children
           result = extract_data_from_json(child)
@@ -350,13 +355,19 @@ module RjuiTools
         child.keys == ['data'] && child['data'].is_a?(Array)
       end
 
-      # Extract props from 'data' attribute
+      # Extract props from 'data' attribute with type information
       # Format: [{"class": "String", "name": "title"}, {"class": "ViewModel", "name": "viewModel"}]
+      # Returns array of hashes with :name and :ts_type keys
       def extract_data_props(data)
         return [] unless data.is_a?(Array)
 
         data.filter_map do |item|
-          item['name'] if item.is_a?(Hash) && item['name']
+          if item.is_a?(Hash) && item['name']
+            {
+              name: item['name'],
+              ts_type: item['tsType'] || Core::TypeConverter.to_typescript_type(item['class'])
+            }
+          end
         end
       end
 
