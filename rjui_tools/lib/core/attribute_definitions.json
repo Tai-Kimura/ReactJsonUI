@@ -4,6 +4,10 @@
       "type": "string",
       "description": "Unique identifier for the component"
     },
+    "generatedBy": {
+      "type": "string",
+      "description": "AI generation command that created this component (metadata only, not rendered)"
+    },
     "type": {
       "type": "string",
       "required": true,
@@ -130,15 +134,15 @@
     },
     "onclick": {
       "type": ["string", "array"],
-      "description": "Click handler function name or event array"
+      "description": "Click handler function name (selector-based, lowercase) - string only, no binding"
     },
     "onClick": {
-      "type": ["string", "object"],
-      "description": "Click handler function name, or action object { action: 'link', url: '...' }"
+      "type": ["binding", "object"],
+      "description": "Click handler (camelCase) - binding only (@{functionName}), or action object { action: 'link', url: '...' }"
     },
     "onLongPress": {
-      "type": "string",
-      "description": "Long press handler (onContextMenu in web)"
+      "type": "binding",
+      "description": "Long press handler (camelCase) - binding only (@{functionName})"
     },
     "canTap": {
       "type": "boolean",
@@ -655,12 +659,12 @@
     "maximum": { "type": "number", "description": "Maximum value (alias)" },
     "tintColor": { "type": "string", "description": "Tint color (accent-color)" },
     "onValueChanged": {
-      "type": "string",
-      "description": "Value change handler"
+      "type": "binding",
+      "description": "Value change handler (camelCase) - binding only (@{functionName})"
     },
     "onValueChange": {
       "type": "string",
-      "description": "Value change handler (alias)"
+      "description": "Value change handler (selector-based) - string only, no binding"
     },
     "step": { "type": "number", "description": "Step increment", "mode": "react" }
   },
