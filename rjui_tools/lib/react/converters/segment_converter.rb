@@ -79,13 +79,16 @@ module RjuiTools
         end
 
         def build_on_change
-          handler = json['onValueChanged'] || json['onChange']
+          # onValueChange (camelCase) -> binding format only (@{functionName})
+          handler = json['onValueChange']
 
           if handler
-            if handler.start_with?('@{')
+            if is_binding?(handler)
               handler.gsub(/@\{|\}/, '')
             else
-              handler
+              # ERROR: onValueChange requires binding format - use default setter
+              binding = build_selected_binding
+              "set#{binding[0].upcase}#{binding[1..]}"
             end
           else
             binding = build_selected_binding

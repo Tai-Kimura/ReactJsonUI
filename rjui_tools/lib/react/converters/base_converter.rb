@@ -352,30 +352,56 @@ module RjuiTools
           json['id'] || json['propertyName']
         end
 
-        # Build onClick attribute - converts @{handler} to {handler}
-        # Supports:
-        # - "@{handleClick}" -> binding to handler
-        # - "handleClick" -> direct handler reference
+        # Build onClick attribute
+        # Rules:
+        # - onClick (camelCase) -> binding format only (@{functionName})
+        # - onclick (lowercase) -> selector format only (string)
         # - { "action": "link", "url": "..." } -> opens URL in new tab
         def build_onclick_attr
-          handler = json['onClick']
-          return '' unless handler
-
-          if handler.is_a?(Hash)
-            # Action object: { "action": "link", "url": "..." }
-            if handler['action'] == 'link' && handler['url']
-              url = handler['url']
-              " onClick={() => window.open('#{url}', '_blank')}"
+          # Check onClick (camelCase) first - binding format only
+          if json['onClick']
+            handler = json['onClick']
+            if handler.is_a?(Hash)
+              # Action object: { "action": "link", "url": "..." }
+              if handler['action'] == 'link' && handler['url']
+                url = handler['url']
+                return " onClick={() => window.open('#{url}', '_blank')}"
+              else
+                return ''
+              end
+            elsif is_binding_format?(handler)
+              # Valid binding: @{handleClick} -> {handleClick}
+              return " onClick={#{handler.gsub(/@\{|\}/, '')}}"
             else
-              ''
+              # ERROR: onClick (camelCase) must use binding format
+              return " {/* ERROR: onClick requires binding format @{functionName} */}"
             end
-          elsif handler.start_with?('@{')
-            # Binding: @{handleClick} -> {handleClick}
-            " onClick={#{handler.gsub(/@\{|\}/, '')}}"
-          else
-            # Direct handler name
-            " onClick={#{handler}}"
           end
+
+          # Check onclick (lowercase) - selector format only
+          if json['onclick']
+            handler = json['onclick']
+            if is_binding_format?(handler)
+              # ERROR: onclick (lowercase) must use selector format
+              return " {/* ERROR: onclick requires selector format (string) */}"
+            else
+              # Valid selector: functionName -> {functionName}
+              return " onClick={#{handler}}"
+            end
+          end
+
+          ''
+        end
+
+        # Check if value is binding format (@{...})
+        def is_binding_format?(value)
+          value.is_a?(String) && value.start_with?('@{') && value.end_with?('}')
+        end
+
+        # Extract property from binding format
+        def extract_binding_value(value)
+          return nil unless is_binding_format?(value)
+          value[2...-1]
         end
 
         # Build visibility binding for conditional rendering (gone) or opacity (invisible)
