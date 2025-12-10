@@ -536,10 +536,6 @@
       "type": ["string", "number"],
       "description": "Currently selected value (can be data binding)"
     },
-    "onValueChanged": {
-      "type": "string",
-      "description": "Callback when value changes (data binding expression)"
-    },
     "selectItemType": {
       "type": "string",
       "enum": ["Normal", "Date"],
@@ -585,7 +581,7 @@
         "text": { "type": "string", "description": "Label text" }
       }
     },
-    "onValueChange": { "type": "string", "description": "Value change event" },
+    "onValueChange": { "type": "binding", "description": "Value change handler - binding only (@{functionName})" },
     "multiple": { "type": "boolean", "description": "Allow multiple selection", "mode": "react" },
     "size": { "type": "number", "description": "Number of visible options", "mode": "react" }
   },
@@ -599,8 +595,7 @@
     "tintColor": { "type": "string", "description": "Tint color (alias)" },
     "onTintColor": { "type": "string", "description": "On state tint color" },
     "onToggle": { "type": "string", "description": "Toggle handler function" },
-    "onValueChange": { "type": "string", "description": "Value change handler (alias)" },
-    "onValueChanged": { "type": "string", "description": "Value change handler (alias)" },
+    "onValueChange": { "type": "binding", "description": "Value change handler - binding only (@{functionName})" },
     "labelAttributes": {
       "type": "object",
       "description": "Label styling for Switch",
@@ -622,8 +617,7 @@
     "tintColor": { "type": "string", "description": "Tint color (alias)" },
     "onTintColor": { "type": "string", "description": "On state tint color" },
     "onToggle": { "type": "string", "description": "Toggle handler function" },
-    "onValueChange": { "type": "string", "description": "Value change handler (alias)" },
-    "onValueChanged": { "type": "string", "description": "Value change handler (alias)" },
+    "onValueChange": { "type": "binding", "description": "Value change handler - binding only (@{functionName})" },
     "labelAttributes": {
       "type": "object",
       "description": "Label styling for Toggle",
@@ -649,7 +643,7 @@
     "normalColor": { "type": "string", "description": "Normal state color" },
     "selectedColor": { "type": "string", "description": "Selected state color" },
     "valueChange": { "type": "string", "description": "Value change event" },
-    "onValueChanged": { "type": "string", "description": "Callback when value changes (data binding expression)" }
+    "onValueChange": { "type": "binding", "description": "Value change handler - binding only (@{functionName})" }
   },
   "Slider": {
     "value": { "type": ["number", "string"], "description": "Current value (can be binding)" },
@@ -658,14 +652,7 @@
     "maxValue": { "type": "number", "description": "Maximum value" },
     "maximum": { "type": "number", "description": "Maximum value (alias)" },
     "tintColor": { "type": "string", "description": "Tint color (accent-color)" },
-    "onValueChanged": {
-      "type": "binding",
-      "description": "Value change handler (camelCase) - binding only (@{functionName})"
-    },
-    "onValueChange": {
-      "type": "string",
-      "description": "Value change handler (selector-based) - string only, no binding"
-    },
+    "onValueChange": { "type": "binding", "description": "Value change handler - binding only (@{functionName})" },
     "step": { "type": "number", "description": "Step increment", "mode": "react" }
   },
   "Progress": {
@@ -837,7 +824,7 @@
     "fontColor": { "type": "string", "description": "Text color" },
     "spacing": { "type": "number", "description": "Space between icon and text" },
     "enabled": { "type": ["boolean", "binding"], "description": "Whether enabled (can be data binding)" },
-    "onValueChange": { "type": "string", "description": "Value change handler function name" }
+    "onValueChange": { "type": "binding", "description": "Value change handler - binding only (@{functionName})" }
   },
   "Check": {
     "_alias_of": "CheckBox",
@@ -849,7 +836,7 @@
     "src": { "type": "string", "description": "Image source for unchecked state" },
     "onSrc": { "type": "string", "description": "Image source for checked state" },
     "enabled": { "type": ["boolean", "binding"], "description": "Whether enabled (can be data binding)" },
-    "onValueChange": { "type": "string", "description": "Value change handler function name" }
+    "onValueChange": { "type": "binding", "description": "Value change handler - binding only (@{functionName})" }
   },
   "Indicator": {
     "indicatorStyle": {
