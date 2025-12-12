@@ -46,13 +46,13 @@
       "description": "Height weight for flexible layouts"
     },
     "weight": { "type": "number", "description": "Shorthand for widthWeight" },
-    "background": { "type": "string", "description": "Background color" },
-    "tapBackground": { "type": "string", "description": "Background color when tapped/hovered" },
-    "highlightBackground": { "type": "string", "description": "Background color when highlighted" },
-    "disabledBackground": { "type": "string", "description": "Background when disabled" },
+    "background": { "type": "string", "description": "Background color - hex string (#RRGGBB or #RRGGBBAA) or color name from colors.json" },
+    "tapBackground": { "type": "string", "description": "Background color when tapped/hovered - hex string or color name from colors.json" },
+    "highlightBackground": { "type": "string", "description": "Background color when highlighted - hex string or color name from colors.json" },
+    "disabledBackground": { "type": "string", "description": "Background when disabled - hex string or color name from colors.json" },
     "cornerRadius": { "type": "number", "description": "Corner radius" },
     "borderWidth": { "type": "number", "description": "Border width" },
-    "borderColor": { "type": "string", "description": "Border color" },
+    "borderColor": { "type": "string", "description": "Border color - hex string or color name from colors.json" },
     "alpha": {
       "type": "number",
       "min": 0,
@@ -121,7 +121,7 @@
       "type": ["string", "object"],
       "description": "Shadow configuration (string 'color|offsetX|offsetY|opacity|radius' or object)",
       "properties": {
-        "color": { "type": "string", "description": "Shadow color (hex)" },
+        "color": { "type": "string", "description": "Shadow color - hex string or color name from colors.json" },
         "offsetX": { "type": "number", "description": "Shadow X offset" },
         "offsetY": { "type": "number", "description": "Shadow Y offset" },
         "opacity": { "type": "number", "min": 0, "max": 1, "description": "Shadow opacity (0-1)" },
@@ -148,7 +148,7 @@
       "type": "boolean",
       "description": "Whether component is tappable (cursor: pointer)"
     },
-    "tintColor": { "type": "string", "description": "Tint color" },
+    "tintColor": { "type": "string", "description": "Tint color - hex string or color name from colors.json" },
     "binding": { "type": ["string", "object"], "description": "Data binding expression" },
     "bind": { "type": ["string", "object"], "description": "Data binding expression (alias)" },
     "include": {
@@ -171,7 +171,7 @@
     "text": { "type": "string", "description": "Text content" },
     "font": { "type": "string", "description": "Font family or 'bold'" },
     "fontSize": { "type": "number", "description": "Font size" },
-    "fontColor": { "type": "string", "description": "Font color" },
+    "fontColor": { "type": "string", "description": "Font color - hex string or color name from colors.json" },
     "fontWeight": {
       "type": ["string", "number"],
       "description": "Font weight: 'normal', 'bold', 'semibold', 'light', 'medium', 'heavy', 'black', 'thin', 'ultraLight' or numeric (100-900)"
@@ -256,7 +256,7 @@
     },
     "hintColor": {
       "type": "string",
-      "description": "Hint text color"
+      "description": "Hint text color - hex string or color name from colors.json"
     },
     "highlightAttributes": {
       "type": "object",
@@ -264,14 +264,14 @@
       "properties": {
         "font": { "type": "string", "description": "Font name" },
         "fontSize": { "type": "number", "description": "Font size" },
-        "fontColor": { "type": "string", "description": "Font color" },
+        "fontColor": { "type": "string", "description": "Font color - hex string or color name from colors.json" },
         "lineHeightMultiple": { "type": "number", "description": "Line height multiplier" },
         "textAlign": { "type": "string", "enum": ["Left", "Right", "Center"], "description": "Text alignment" }
       }
     },
     "highlightColor": {
       "type": "string",
-      "description": "Font color when selected"
+      "description": "Font color when selected - hex string or color name from colors.json"
     },
     "partialAttributes": {
       "type": "array",
@@ -281,7 +281,7 @@
         "properties": {
           "font": { "type": "string", "description": "Font name" },
           "fontSize": { "type": "number", "description": "Font size" },
-          "fontColor": { "type": "string", "description": "Font color" },
+          "fontColor": { "type": "string", "description": "Font color - hex string or color name from colors.json" },
           "lineSpacing": { "type": "number", "description": "Line spacing" },
           "lineHeightMultiple": { "type": "number", "description": "Line height multiplier" },
           "lineBreakMode": { "type": "string", "enum": ["Char", "Clip", "Word", "Head", "Middle", "Tail"], "description": "Line break mode" },
@@ -306,7 +306,7 @@
       "properties": {
         "font": { "type": "string", "description": "Font name" },
         "fontSize": { "type": "number", "description": "Font size" },
-        "fontColor": { "type": "string", "description": "Font color" },
+        "fontColor": { "type": "string", "description": "Font color - hex string or color name from colors.json" },
         "lineHeightMultiple": { "type": "number", "description": "Line height multiplier" }
       }
     }
@@ -320,7 +320,7 @@
     },
     "hintColor": {
       "type": "string",
-      "description": "Placeholder color"
+      "description": "Placeholder color - hex string or color name from colors.json"
     },
     "hintFont": {
       "type": "string",
@@ -336,13 +336,13 @@
       "properties": {
         "font": { "type": "string", "description": "Font name" },
         "fontSize": { "type": "number", "description": "Font size" },
-        "fontColor": { "type": "string", "description": "Font color" },
+        "fontColor": { "type": "string", "description": "Font color - hex string or color name from colors.json" },
         "lineHeightMultiple": { "type": "number", "description": "Line height multiplier" }
       }
     },
     "font": { "type": "string", "description": "Font name or 'bold'" },
     "fontSize": { "type": "number", "description": "Font size" },
-    "fontColor": { "type": "string", "description": "Font color" },
+    "fontColor": { "type": "string", "description": "Font color - hex string or color name from colors.json" },
     "textAlign": {
       "type": "string",
       "enum": ["Left", "Center", "Right", "left", "center", "right"],
@@ -421,7 +421,7 @@
     },
     "font": { "type": "string", "description": "Font name or 'bold'" },
     "fontSize": { "type": "number", "description": "Font size" },
-    "fontColor": { "type": "string", "description": "Font color" },
+    "fontColor": { "type": "string", "description": "Font color - hex string or color name from colors.json" },
     "textAlign": {
       "type": "string",
       "enum": ["Left", "Center", "Right", "left", "center", "right", "justified"],
@@ -458,7 +458,7 @@
     "text": { "type": "string", "description": "Button text" },
     "font": { "type": "string", "description": "Font name or 'bold'" },
     "fontSize": { "type": "number", "description": "Font size" },
-    "fontColor": { "type": "string", "description": "Font color" },
+    "fontColor": { "type": "string", "description": "Font color - hex string or color name from colors.json" },
     "textAlign": {
       "type": "string",
       "enum": ["Left", "Center", "Right", "left", "center", "right"],
@@ -466,17 +466,17 @@
     },
     "disabledFontColor": {
       "type": "string",
-      "description": "Font color when disabled"
+      "description": "Font color when disabled - hex string or color name from colors.json"
     },
-    "highlightColor": { "type": "string", "description": "Highlight color (hover)" },
-    "hilightColor": { "type": "string", "description": "Highlight color (typo alias)" },
+    "highlightColor": { "type": "string", "description": "Highlight color (hover) - hex string or color name from colors.json" },
+    "hilightColor": { "type": "string", "description": "Highlight color - hex string or color name from colors.json (typo alias)" },
     "tapBackground": {
       "type": "string",
-      "description": "Background when active"
+      "description": "Background when active - hex string or color name from colors.json"
     },
     "highlightBackground": {
       "type": "string",
-      "description": "Background when hovered"
+      "description": "Background when hovered - hex string or color name from colors.json"
     },
     "image": { "type": "string", "description": "Button image (icon)" },
     "buttonType": { "type": "string", "enum": ["button", "submit", "reset"], "description": "HTML button type", "mode": "react" }
@@ -526,7 +526,7 @@
     "placeholder": { "type": "string", "description": "Placeholder text (alias for prompt)" },
     "hintColor": {
       "type": "string",
-      "description": "Hint text color"
+      "description": "Hint text color - hex string or color name from colors.json"
     },
     "items": {
       "type": ["array", "string"],
@@ -569,14 +569,14 @@
     },
     "font": { "type": "string", "description": "Font name" },
     "fontSize": { "type": "number", "description": "Font size" },
-    "fontColor": { "type": "string", "description": "Font color" },
+    "fontColor": { "type": "string", "description": "Font color - hex string or color name from colors.json" },
     "labelAttributes": {
       "type": "object",
       "description": "Label styling attributes",
       "properties": {
         "font": { "type": "string", "description": "Font name" },
         "fontSize": { "type": "number", "description": "Font size" },
-        "fontColor": { "type": "string", "description": "Font color" },
+        "fontColor": { "type": "string", "description": "Font color - hex string or color name from colors.json" },
         "textAlign": { "type": "string", "enum": ["Left", "Right", "Center"], "description": "Text alignment" },
         "text": { "type": "string", "description": "Label text" }
       }
@@ -639,7 +639,7 @@
       "type": ["number", "string"],
       "description": "Initially selected index (can be binding)"
     },
-    "tintColor": { "type": "string", "description": "Tint color" },
+    "tintColor": { "type": "string", "description": "Tint color - hex string or color name from colors.json" },
     "normalColor": { "type": "string", "description": "Normal state color" },
     "selectedColor": { "type": "string", "description": "Selected state color" },
     "valueChange": { "type": "string", "description": "Value change event" },
@@ -662,7 +662,7 @@
       "max": 1,
       "description": "Progress value (0-1, can be binding)"
     },
-    "tintColor": { "type": "string", "description": "Tint color" },
+    "tintColor": { "type": "string", "description": "Tint color - hex string or color name from colors.json" },
     "progressTintColor": { "type": "string", "description": "Progress portion color" },
     "trackTintColor": { "type": "string", "description": "Track portion color" }
   },
