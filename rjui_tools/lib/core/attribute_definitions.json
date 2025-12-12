@@ -39,11 +39,15 @@
     "maxHeight": { "type": "number", "description": "Maximum height" },
     "widthWeight": {
       "type": "number",
-      "description": "Width weight for flexible layouts"
+      "description": "Width weight for flexible layouts",
+      "platform": "swift",
+      "mode": "uikit"
     },
     "heightWeight": {
       "type": "number",
-      "description": "Height weight for flexible layouts"
+      "description": "Height weight for flexible layouts",
+      "platform": "swift",
+      "mode": "uikit"
     },
     "weight": { "type": "number", "description": "Shorthand for widthWeight" },
     "background": { "type": "string", "description": "Background color - hex string (#RRGGBB or #RRGGBBAA) or color name from colors.json" },
