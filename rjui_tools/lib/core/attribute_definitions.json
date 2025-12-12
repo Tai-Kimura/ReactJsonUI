@@ -153,9 +153,9 @@
     "bind": { "type": ["string", "object"], "description": "Data binding expression (alias)" },
     "include": {
       "type": "string",
-      "description": "Include another JSON layout"
+      "description": "Include another JSON layout (filename without extension)"
     },
-    "variables": { "type": "object", "description": "Variables for include", "mode": "uikit" },
+    "variables": { "type": "object", "description": "Variables for include", "platform": "swift", "mode": "uikit" },
     "shared_data": { "type": "object", "description": "Data passed to included components" },
     "userInteractionEnabled": { "type": "boolean", "description": "Enable user interaction (pointer-events)" },
     "enabled": { "type": ["boolean", "string"], "description": "Whether component is enabled (can be data binding)" },
