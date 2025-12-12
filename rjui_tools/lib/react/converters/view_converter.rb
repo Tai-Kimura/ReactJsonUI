@@ -67,6 +67,20 @@ module RjuiTools
             classes << "gap-#{spacing}"
           end
 
+          # Distribution (justify-content for flex containers)
+          if json['distribution']
+            case json['distribution']
+            when 'fill'
+              classes << 'justify-between'
+            when 'fillEqually'
+              classes << 'justify-evenly'
+            when 'equalSpacing'
+              classes << 'justify-around'
+            when 'equalCentering'
+              classes << 'justify-evenly'
+            end
+          end
+
           # Cursor pointer for clickable items
           classes << 'cursor-pointer' if json['onClick'] || json['onclick']
 

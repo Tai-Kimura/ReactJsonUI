@@ -695,7 +695,7 @@
       "description": "Content gravity (justify-content/align-items)"
     },
     "alignment": { "type": "string", "description": "Alternative child alignment" },
-    "distribution": { "type": "string", "description": "Distribution mode" },
+    "distribution": { "type": "string", "enum": ["fill", "fillEqually", "equalSpacing", "equalCentering"], "description": "Child distribution mode for stacks" },
     "spacing": { "type": "number", "description": "Gap between children" },
     "gradient": { "type": "array", "description": "Gradient colors (linear-gradient)" },
     "gradientDirection": { "type": "string", "description": "Gradient direction" },
