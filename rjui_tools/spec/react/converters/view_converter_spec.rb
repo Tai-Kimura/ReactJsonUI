@@ -4,13 +4,15 @@ require_relative '../../spec_helper'
 require 'react/converters/view_converter'
 
 RSpec.describe RjuiTools::React::Converters::ViewConverter do
-  def create_converter(json_data)
-    described_class.new(json_data)
+  let(:default_config) { { 'use_tailwind' => true } }
+
+  def create_converter(json_data, config = nil)
+    described_class.new(json_data, config || default_config)
   end
 
-  describe '#build_container_classes' do
+  describe '#build_class_name' do
     context 'with spacing' do
-      it 'adds gap class for spacing' do
+      it 'adds gap class for spacing (16px -> gap-4)' do
         converter = create_converter({
           'type' => 'View',
           'orientation' => 'horizontal',
@@ -19,19 +21,21 @@ RSpec.describe RjuiTools::React::Converters::ViewConverter do
             { 'type' => 'Label', 'text' => 'A' }
           ]
         })
-        classes = converter.send(:build_container_classes)
-        expect(classes).to include('gap-16')
+        classes = converter.send(:build_class_name)
+        # 16px maps to Tailwind gap-4
+        expect(classes).to include('gap-4')
       end
 
-      it 'maps spacing to Tailwind gap values' do
+      it 'maps spacing to Tailwind gap values (8px -> gap-2)' do
         converter = create_converter({
           'type' => 'View',
           'orientation' => 'vertical',
           'spacing' => 8,
           'child' => []
         })
-        classes = converter.send(:build_container_classes)
-        expect(classes).to include('gap-8')
+        classes = converter.send(:build_class_name)
+        # 8px maps to Tailwind gap-2
+        expect(classes).to include('gap-2')
       end
     end
 
@@ -43,7 +47,7 @@ RSpec.describe RjuiTools::React::Converters::ViewConverter do
           'distribution' => 'fill',
           'child' => []
         })
-        classes = converter.send(:build_container_classes)
+        classes = converter.send(:build_class_name)
         expect(classes).to include('justify-between')
       end
 
@@ -54,7 +58,7 @@ RSpec.describe RjuiTools::React::Converters::ViewConverter do
           'distribution' => 'fillEqually',
           'child' => []
         })
-        classes = converter.send(:build_container_classes)
+        classes = converter.send(:build_class_name)
         expect(classes).to include('justify-evenly')
       end
 
@@ -65,7 +69,7 @@ RSpec.describe RjuiTools::React::Converters::ViewConverter do
           'distribution' => 'equalSpacing',
           'child' => []
         })
-        classes = converter.send(:build_container_classes)
+        classes = converter.send(:build_class_name)
         expect(classes).to include('justify-around')
       end
 
@@ -76,7 +80,7 @@ RSpec.describe RjuiTools::React::Converters::ViewConverter do
           'distribution' => 'equalCentering',
           'child' => []
         })
-        classes = converter.send(:build_container_classes)
+        classes = converter.send(:build_class_name)
         expect(classes).to include('justify-evenly')
       end
     end
@@ -90,8 +94,9 @@ RSpec.describe RjuiTools::React::Converters::ViewConverter do
           'distribution' => 'equalSpacing',
           'child' => []
         })
-        classes = converter.send(:build_container_classes)
-        expect(classes).to include('gap-12')
+        classes = converter.send(:build_class_name)
+        # 12px maps to Tailwind gap-3
+        expect(classes).to include('gap-3')
         expect(classes).to include('justify-around')
       end
     end

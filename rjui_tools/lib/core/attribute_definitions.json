@@ -695,8 +695,8 @@
       "description": "Content gravity (justify-content/align-items)"
     },
     "alignment": { "type": "string", "description": "Alternative child alignment" },
-    "distribution": { "type": "string", "enum": ["fill", "fillEqually", "equalSpacing", "equalCentering"], "description": "Child distribution mode for stacks" },
-    "spacing": { "type": "number", "description": "Gap between children" },
+    "distribution": { "type": "string", "enum": ["fill", "fillEqually", "equalSpacing", "equalCentering"], "description": "Child distribution mode for stacks", "mode": ["swiftui", "compose", "react"] },
+    "spacing": { "type": ["number", "binding"], "description": "Space between children (binding supported)", "mode": ["swiftui", "compose", "react"] },
     "gradient": { "type": "array", "description": "Gradient colors (linear-gradient)" },
     "gradientDirection": { "type": "string", "description": "Gradient direction" },
     "locations": { "type": "array", "description": "Gradient color stop locations" },
