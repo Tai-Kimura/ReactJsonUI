@@ -682,7 +682,7 @@
       "description": "Layout direction"
     },
     "child": {
-      "type": ["object", "array"],
+      "type": "array",
       "description": "Child component(s)"
     },
     "children": {
@@ -705,7 +705,7 @@
   },
   "ScrollView": {
     "child": {
-      "type": ["object", "array"],
+      "type": "array",
       "description": "Child component(s)"
     },
     "children": { "type": "array", "description": "Child components" },
@@ -901,7 +901,7 @@
       }
     },
     "child": {
-      "type": ["object", "array"],
+      "type": "array",
       "description": "Child component(s)"
     },
     "children": {
