@@ -392,6 +392,70 @@ module RjuiTools
           end
         end
 
+        # Min/Max Width/Height constraints
+        def map_min_width(value)
+          return '' unless value
+          case value
+          when 'matchParent' then 'min-w-full'
+          when Numeric then "min-w-[#{value}px]"
+          else ''
+          end
+        end
+
+        def map_max_width(value)
+          return '' unless value
+          case value
+          when 'matchParent' then 'max-w-full'
+          when Numeric then "max-w-[#{value}px]"
+          else ''
+          end
+        end
+
+        def map_min_height(value)
+          return '' unless value
+          case value
+          when 'matchParent' then 'min-h-full'
+          when Numeric then "min-h-[#{value}px]"
+          else ''
+          end
+        end
+
+        def map_max_height(value)
+          return '' unless value
+          case value
+          when 'matchParent' then 'max-h-full'
+          when Numeric then "max-h-[#{value}px]"
+          else ''
+          end
+        end
+
+        # RTL-aware paddings (paddingStart -> ps-, paddingEnd -> pe-)
+        def map_rtl_paddings(start_pad, end_pad)
+          classes = []
+          classes << "ps-#{closest_padding(start_pad)}" if start_pad
+          classes << "pe-#{closest_padding(end_pad)}" if end_pad
+          classes.join(' ')
+        end
+
+        # RTL-aware margins (startMargin -> ms-, endMargin -> me-)
+        def map_rtl_margins(start_margin, end_margin)
+          classes = []
+          classes << "ms-#{closest_padding(start_margin)}" if start_margin
+          classes << "me-#{closest_padding(end_margin)}" if end_margin
+          classes.join(' ')
+        end
+
+        # Insets (alternative padding format - same as padding array)
+        def map_insets(insets)
+          map_padding(insets)
+        end
+
+        # Inset horizontal
+        def map_inset_horizontal(value)
+          return '' unless value
+          "px-#{closest_padding(value)}"
+        end
+
         private
 
         def closest_padding(value)

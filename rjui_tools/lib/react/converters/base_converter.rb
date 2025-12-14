@@ -31,16 +31,33 @@ module RjuiTools
           classes << TailwindMapper.map_width(json['width'])
           classes << TailwindMapper.map_height(json['height'])
 
+          # Min/Max Width/Height constraints
+          classes << TailwindMapper.map_min_width(json['minWidth']) if json['minWidth']
+          classes << TailwindMapper.map_max_width(json['maxWidth']) if json['maxWidth']
+          classes << TailwindMapper.map_min_height(json['minHeight']) if json['minHeight']
+          classes << TailwindMapper.map_max_height(json['maxHeight']) if json['maxHeight']
+
           # Padding (array format)
           classes << TailwindMapper.map_padding(json['padding'] || json['paddings'])
 
           # Individual paddings (topPadding, bottomPadding, leftPadding, rightPadding)
+          # Also support paddingTop, paddingRight, paddingBottom, paddingLeft format
           classes << TailwindMapper.map_individual_paddings(
-            json['topPadding'],
-            json['rightPadding'],
-            json['bottomPadding'],
-            json['leftPadding']
+            json['topPadding'] || json['paddingTop'],
+            json['rightPadding'] || json['paddingRight'],
+            json['bottomPadding'] || json['paddingBottom'],
+            json['leftPadding'] || json['paddingLeft']
           )
+
+          # RTL-aware paddings (paddingStart, paddingEnd)
+          classes << TailwindMapper.map_rtl_paddings(
+            json['paddingStart'],
+            json['paddingEnd']
+          )
+
+          # Insets (alternative padding format)
+          classes << TailwindMapper.map_insets(json['insets']) if json['insets']
+          classes << TailwindMapper.map_inset_horizontal(json['insetHorizontal']) if json['insetHorizontal']
 
           # Margin (array format)
           classes << TailwindMapper.map_margin(json['margins'])
@@ -51,6 +68,12 @@ module RjuiTools
             json['rightMargin'],
             json['bottomMargin'],
             json['leftMargin']
+          )
+
+          # RTL-aware margins (startMargin, endMargin)
+          classes << TailwindMapper.map_rtl_margins(
+            json['startMargin'],
+            json['endMargin']
           )
 
           # Background - check for dynamic binding or gradient
@@ -118,6 +141,17 @@ module RjuiTools
             classes << 'hidden' unless json['visibility']
           end
 
+          # Disabled state
+          if json['enabled'] == false
+            classes << 'opacity-50'
+            classes << 'pointer-events-none'
+          end
+
+          # User interaction enabled
+          if json['userInteractionEnabled'] == false
+            classes << 'pointer-events-none'
+          end
+
           # Clip to bounds
           classes << TailwindMapper.map_overflow(json['clipToBounds']) if json['clipToBounds']
 
@@ -135,6 +169,18 @@ module RjuiTools
 
           # Additional className from JSON
           classes << json['className'] if json['className']
+
+          # Offset (position adjustment) - handled as dynamic style
+          if json['offsetX'] || json['offsetY']
+            offset_x = json['offsetX'] || 0
+            offset_y = json['offsetY'] || 0
+            @dynamic_styles['transform'] = "'translate(#{offset_x}px, #{offset_y}px)'"
+          end
+
+          # Tint color (accent color for interactive elements)
+          if json['tintColor']
+            @dynamic_styles['accentColor'] = "'#{json['tintColor']}'"
+          end
 
           classes.compact.reject(&:empty?).join(' ')
         end
@@ -360,6 +406,20 @@ module RjuiTools
 
         def extract_id
           json['id'] || json['propertyName']
+        end
+
+        # Build data-testid attribute for testing
+        def build_testid_attr
+          test_id = json['testId']
+          return '' unless test_id
+          " data-testid=\"#{test_id}\""
+        end
+
+        # Build tag attribute (as data-tag for reference)
+        def build_tag_attr
+          tag = json['tag']
+          return '' unless tag
+          " data-tag=\"#{tag}\""
         end
 
         # Build onClick attribute
