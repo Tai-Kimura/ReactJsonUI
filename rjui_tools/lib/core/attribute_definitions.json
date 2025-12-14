@@ -25,7 +25,8 @@
         },
         "binding"
       ],
-      "description": "Width (number, 'matchParent', 'wrapContent') - binding supported"
+      "required": true,
+      "description": "Width (number, 'matchParent', 'wrapContent') - binding supported. Not required if weight is specified."
     },
     "height": {
       "type": [
@@ -38,7 +39,8 @@
         },
         "binding"
       ],
-      "description": "Height (number, 'matchParent', 'wrapContent') - binding supported"
+      "required": true,
+      "description": "Height (number, 'matchParent', 'wrapContent') - binding supported. Not required if weight is specified."
     },
     "minWidth": {
       "type": [
