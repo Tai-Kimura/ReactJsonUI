@@ -123,10 +123,12 @@ module RjuiTools
 
         # Check for extension definitions in various locations
         extension_paths = [
-          # Main ReactJsonUI structure
-          File.join(Dir.pwd, 'rjui_tools', 'lib', 'react', 'components', 'extensions', 'attribute_definitions'),
-          # Test app structure
-          File.join(Dir.pwd, 'app', 'rjui_tools', 'lib', 'react', 'components', 'extensions', 'attribute_definitions')
+          # Main ReactJsonUI structure (converters/extensions)
+          File.join(Dir.pwd, 'rjui_tools', 'lib', 'react', 'converters', 'extensions', 'attribute_definitions'),
+          # Project with rjui_tools at root
+          File.join(Dir.pwd, 'lib', 'react', 'converters', 'extensions', 'attribute_definitions'),
+          # Legacy path (components/extensions) for backwards compatibility
+          File.join(Dir.pwd, 'rjui_tools', 'lib', 'react', 'components', 'extensions', 'attribute_definitions')
         ]
 
         extension_paths.each do |ext_dir|

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'fileutils'
+require 'json'
 require_relative '../../core/logger'
 require_relative 'react_component_generator'
 
@@ -29,6 +30,9 @@ module RjuiTools
           # Create React component skeleton
           component_generator = ReactComponentGenerator.new(@name, @options, @config, @command_line)
           component_generator.generate
+
+          # Generate attribute definition file for validation
+          generate_attribute_definition_file
 
           @logger.success "Successfully generated converter: #{@class_name}"
           @logger.info "Converter file: #{converter_file_path}"
@@ -237,18 +241,90 @@ module RjuiTools
         def generate_props_lines
           return ['            # No custom props'] if @options[:attributes].empty?
 
-          @options[:attributes].map do |key, type|
+          lines = []
+          @options[:attributes].each do |key, type|
+            # Generate binding-aware prop handling
+            lines << "            if #{key}_value"
+            lines << "              if #{key}_value.is_a?(String) && #{key}_value.start_with?('@{') && #{key}_value.end_with?('}')"
+            lines << "                # Handle binding - extract property name"
+            lines << "                prop_name = #{key}_value[2..-2]"
+            lines << "                props << \"#{key}={\#{prop_name}}\""
+            lines << "              else"
             case type.downcase
             when 'string'
-              "            props << %(#{key}=\"\#{#{key}_value}\") if #{key}_value"
+              lines << "                props << %(#{key}=\"\#{#{key}_value}\")"
             when 'bool', 'boolean'
-              "            props << \"#{key}={\#{#{key}_value}}\" unless #{key}_value.nil?"
+              lines << "                props << \"#{key}={\#{#{key}_value}}\""
             when 'int', 'integer', 'number', 'double', 'float'
-              "            props << \"#{key}={\#{#{key}_value}}\" if #{key}_value"
+              lines << "                props << \"#{key}={\#{#{key}_value}}\""
             else
-              "            props << %(#{key}={\#{#{key}_value.inspect}}) if #{key}_value"
+              lines << "                props << %(#{key}={\#{#{key}_value.inspect}})"
             end
+            lines << "              end"
+            lines << "            end"
           end
+          lines
+        end
+
+        # Generate attribute definition file for validation
+        def generate_attribute_definition_file
+          # Skip if no attributes
+          return if !@options[:attributes] || @options[:attributes].empty?
+
+          # Determine directory path based on project structure
+          if File.exist?(File.join(Dir.pwd, 'rjui_tools'))
+            attr_defs_dir = File.join(Dir.pwd, 'rjui_tools', 'lib', 'react', 'converters', 'extensions', 'attribute_definitions')
+          else
+            attr_defs_dir = File.join(Dir.pwd, 'lib', 'react', 'converters', 'extensions', 'attribute_definitions')
+          end
+
+          # Create directory if it doesn't exist
+          FileUtils.mkdir_p(attr_defs_dir)
+
+          # Build attribute definitions
+          attributes = {}
+          @options[:attributes].each do |key, type|
+            # Remove @ prefix if this is a binding attribute
+            actual_key = key.start_with?('@') ? key[1..-1] : key
+            attributes[actual_key] = build_attribute_definition(actual_key, type)
+          end
+
+          # Build JSON structure
+          json_content = {
+            @name => attributes
+          }
+
+          # Write to file
+          file_path = File.join(attr_defs_dir, "#{@name}.json")
+          File.write(file_path, JSON.pretty_generate(json_content))
+
+          @logger.info "Created attribute definition file: attribute_definitions/#{@name}.json"
+        end
+
+        # Map type string to JSON schema type (supports binding for all types)
+        # @param type [String] The type string from options
+        # @return [Array, String] JSON schema type(s) - array for binding support
+        def map_type_to_json_type(type)
+          case type.downcase
+          when 'string'
+            ['string', 'binding']
+          when 'int', 'integer'
+            ['number', 'binding']
+          when 'double', 'float'
+            ['number', 'binding']
+          when 'bool', 'boolean'
+            ['boolean', 'binding']
+          else
+            # Custom class types must use binding syntax (@{propertyName})
+            'binding'
+          end
+        end
+
+        def build_attribute_definition(actual_key, type)
+          {
+            "type" => map_type_to_json_type(type),
+            "description" => "#{actual_key} attribute"
+          }
         end
 
         def to_snake_case(string)
