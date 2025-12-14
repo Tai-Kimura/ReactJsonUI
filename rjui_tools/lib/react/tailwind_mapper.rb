@@ -236,7 +236,7 @@ module RjuiTools
           OPACITY_MAP[closest]
         end
 
-        def map_border(border_width, border_color, corner_radius = 0)
+        def map_border(border_width, border_color, border_style = nil)
           classes = []
 
           if border_width
@@ -251,7 +251,21 @@ module RjuiTools
           end
 
           classes << map_color(border_color, 'border') if border_color
+          classes << map_border_style(border_style) if border_style
           classes.compact.reject(&:empty?).join(' ')
+        end
+
+        def map_border_style(style)
+          case style&.downcase
+          when 'dashed'
+            'border-dashed'
+          when 'dotted'
+            'border-dotted'
+          when 'solid'
+            'border-solid'
+          else
+            ''
+          end
         end
 
         def map_font_weight(weight)

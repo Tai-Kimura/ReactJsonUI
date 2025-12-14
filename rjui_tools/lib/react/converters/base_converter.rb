@@ -92,8 +92,18 @@ module RjuiTools
           # Shadow
           classes << TailwindMapper.map_shadow(json['shadow']) if json['shadow']
 
-          # Border
-          classes << TailwindMapper.map_border(json['borderWidth'], json['borderColor']) if json['borderWidth'] || json['borderColor']
+          # Border (static)
+          if json['borderWidth'] || json['borderColor'] || json['borderStyle']
+            # Check for dynamic binding on borderStyle
+            if json['borderStyle'] && has_binding?(json['borderStyle'])
+              # borderStyle with binding - handle dynamically
+              @dynamic_styles['borderStyle'] = convert_binding(json['borderStyle'])
+              # Still add static border width/color classes
+              classes << TailwindMapper.map_border(json['borderWidth'], json['borderColor'], nil)
+            else
+              classes << TailwindMapper.map_border(json['borderWidth'], json['borderColor'], json['borderStyle'])
+            end
+          end
 
           # Opacity/Alpha
           opacity = json['opacity'] || json['alpha']
