@@ -8,10 +8,14 @@ module RjuiTools
       class SliderConverter < BaseConverter
         def convert(indent = 2)
           class_name = build_class_name
+          base_style_attr = build_base_style_attr
           id_attr = extract_id ? " id=\"#{extract_id}\"" : ''
+          testid_attr = build_testid_attr
+          tag_attr = build_tag_attr
 
           min_value = json['minimumValue'] || 0
           max_value = json['maximumValue'] || 100
+          step_value = json['step']
 
           # Handle range array format: [min, max]
           if json['range'].is_a?(Array) && json['range'].length == 2
@@ -21,14 +25,17 @@ module RjuiTools
 
           value_attr = build_value_attr
           on_change = build_on_change
-          disabled = json['enabled'] == false ? ' disabled' : ''
+          disabled_attr = build_disabled_attr
+          step_attr = step_value ? " step={#{step_value}}" : ''
 
           # Accent color via style
-          style_attr = build_style_attr
+          slider_style_attr = build_slider_style_attr
 
-          <<~JSX.chomp
-            #{indent_str(indent)}<input#{id_attr} type="range" className="#{class_name}" min={#{min_value}} max={#{max_value}}#{value_attr}#{on_change}#{disabled}#{style_attr} />
+          jsx = <<~JSX.chomp
+            #{indent_str(indent)}<input#{id_attr} type="range" className="#{class_name}" min={#{min_value}} max={#{max_value}}#{step_attr}#{value_attr}#{on_change}#{disabled_attr}#{slider_style_attr}#{base_style_attr}#{testid_attr}#{tag_attr} />
           JSX
+
+          wrap_with_visibility(jsx, indent)
         end
 
         protected
@@ -40,7 +47,12 @@ module RjuiTools
           classes << 'cursor-pointer'
 
           # Disabled state
-          classes << 'opacity-50 cursor-not-allowed' if json['enabled'] == false
+          if json['enabled'] == false
+            classes << 'opacity-50 cursor-not-allowed'
+          elsif has_binding?(json['enabled'])
+            binding_expr = extract_binding_property(json['enabled'])
+            classes << "${!#{binding_expr} ? 'opacity-50 cursor-not-allowed' : ''}"
+          end
 
           classes.compact.reject(&:empty?).join(' ')
         end
@@ -48,7 +60,7 @@ module RjuiTools
         def build_value_attr
           value = json['value']
 
-          if value && is_binding?(value)
+          if value && has_binding?(value)
             prop = extract_binding_property(value)
             " value={#{prop}}"
           elsif value
@@ -59,33 +71,45 @@ module RjuiTools
         end
 
         def build_on_change
-          # onValueChange (camelCase) -> binding format only (@{functionName})
           handler = json['onValueChange']
           return '' unless handler
 
-          if is_binding?(handler)
-            " onChange={#{handler.gsub(/@\{|\}/, '')}}"
+          if has_binding?(handler)
+            " onChange={#{extract_binding_property(handler)}}"
           else
-            # ERROR: onValueChange requires binding format
             " {/* ERROR: onValueChange requires binding format @{functionName} */}"
           end
         end
 
-        def build_style_attr
-          tint_color = json['tintColor']
-          return '' unless tint_color
+        def build_disabled_attr
+          enabled = json['enabled']
+          return '' if enabled.nil?
 
-          " style={{ accentColor: '#{tint_color}' }}"
+          if has_binding?(enabled)
+            " disabled={!#{extract_binding_property(enabled)}}"
+          elsif enabled == false
+            ' disabled'
+          else
+            ''
+          end
         end
 
-        def is_binding?(value)
-          value.is_a?(String) && value.start_with?('@{') && value.end_with?('}')
+        def build_slider_style_attr
+          style_parts = []
+
+          tint_color = json['tintColor'] || json['minimumTrackTintColor']
+          style_parts << "accentColor: '#{tint_color}'" if tint_color
+
+          max_track_color = json['maximumTrackTintColor']
+          style_parts << "backgroundColor: '#{max_track_color}'" if max_track_color
+
+          return '' if style_parts.empty?
+
+          " style={{ #{style_parts.join(', ')} }}"
         end
 
-        def extract_binding_property(value)
-          return nil unless is_binding?(value)
-
-          value[2...-1]
+        def build_base_style_attr
+          build_style_attr
         end
       end
     end

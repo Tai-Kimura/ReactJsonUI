@@ -474,6 +474,11 @@ module RjuiTools
           value[2...-1]
         end
 
+        # Alias for extract_binding_value (commonly used in converters)
+        def extract_binding_property(value)
+          extract_binding_value(value)
+        end
+
         # Build visibility binding for conditional rendering (gone) or opacity (invisible)
         # Returns: { type: :gone, condition: "..." } or { type: :invisible, condition: "...", invert: bool } or nil
         def build_visibility_info

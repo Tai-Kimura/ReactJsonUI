@@ -11,13 +11,15 @@ module RjuiTools
           style_attr = build_blur_style
           children = convert_children(indent)
           id_attr = extract_id ? " id=\"#{extract_id}\"" : ''
+          testid_attr = build_testid_attr
+          tag_attr = build_tag_attr
           onclick_attr = build_onclick_attr
 
           jsx = if children.empty?
-            "#{indent_str(indent)}<div#{id_attr} className=\"#{class_name}\"#{style_attr}#{onclick_attr} />"
+            "#{indent_str(indent)}<div#{id_attr} className=\"#{class_name}\"#{style_attr}#{onclick_attr}#{testid_attr}#{tag_attr} />"
           else
             <<~JSX.chomp
-              #{indent_str(indent)}<div#{id_attr} className="#{class_name}"#{style_attr}#{onclick_attr}>
+              #{indent_str(indent)}<div#{id_attr} className="#{class_name}"#{style_attr}#{onclick_attr}#{testid_attr}#{tag_attr}>
               #{children}
               #{indent_str(indent)}</div>
             JSX
@@ -30,6 +32,13 @@ module RjuiTools
 
         def build_class_name
           classes = [super]
+
+          # Corner radius
+          corner_radius = json['cornerRadius']
+          classes << "rounded-[#{corner_radius}px]" if corner_radius
+
+          # Overflow hidden for corner radius
+          classes << 'overflow-hidden' if corner_radius
 
           # Cursor pointer for clickable items
           classes << 'cursor-pointer' if json['onClick'] || json['onclick']
@@ -46,7 +55,7 @@ module RjuiTools
           style_parts << "WebkitBackdropFilter: 'blur(#{blur_amount}px)'" # Safari support
 
           # Get background color based on effect style
-          bg_color = get_background_color
+          bg_color = json['backgroundColor'] || get_background_color
           style_parts << "backgroundColor: '#{bg_color}'" if bg_color
 
           existing_style = build_style_attr
@@ -58,6 +67,9 @@ module RjuiTools
         end
 
         def get_blur_amount
+          # Use blurRadius if provided directly
+          return json['blurRadius'] if json['blurRadius']
+
           # Use intensity if provided (0.0 to 1.0 mapped to 0 to 20px)
           if json['intensity']
             (json['intensity'] * 20).round
@@ -106,7 +118,7 @@ module RjuiTools
         end
 
         def get_effect_style
-          (json['effectStyle'] || 'regular').downcase.gsub(/\s+/, '')
+          (json['effectStyle'] || json['style'] || 'regular').downcase.gsub(/\s+/, '')
         end
       end
     end

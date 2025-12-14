@@ -8,15 +8,20 @@ module RjuiTools
       class CollectionConverter < BaseConverter
         def convert(indent = 2)
           class_name = build_class_name
+          style_attr = build_style_attr
           id_attr = extract_id ? " id=\"#{extract_id}\"" : ''
+          testid_attr = build_testid_attr
+          tag_attr = build_tag_attr
 
           content = generate_collection_content(indent + 2)
 
-          <<~JSX.chomp
-            #{indent_str(indent)}<div#{id_attr} className="#{class_name}">
+          jsx = <<~JSX.chomp
+            #{indent_str(indent)}<div#{id_attr} className="#{class_name}"#{style_attr}#{testid_attr}#{tag_attr}>
             #{content}
             #{indent_str(indent)}</div>
           JSX
+
+          wrap_with_visibility(jsx, indent)
         end
 
         protected
@@ -25,23 +30,37 @@ module RjuiTools
           classes = [super]
 
           columns = json['columnCount'] || json['columns'] || 1
-          layout = json['layout'] || 'vertical'
-          is_horizontal = layout == 'horizontal'
+          layout = json['layout'] || json['scrollDirection'] || 'vertical'
+          is_horizontal = layout.to_s.downcase == 'horizontal'
 
           if is_horizontal
             # Horizontal scroll collection
             classes << 'overflow-x-auto'
             classes << 'flex flex-row'
-            classes << "gap-#{TailwindMapper::PADDING_MAP[json['itemSpacing']] || '2'}" if json['itemSpacing']
+            classes << 'flex-nowrap' if json['scrollEnabled'] != false
+            spacing = json['itemSpacing'] || json['spacing']
+            classes << "gap-[#{spacing}px]" if spacing
           elsif columns == 1
             # List style (single column)
             classes << 'flex flex-col'
-            classes << "gap-#{TailwindMapper::PADDING_MAP[json['itemSpacing']] || '2'}" if json['itemSpacing']
+            spacing = json['itemSpacing'] || json['spacing']
+            classes << "gap-[#{spacing}px]" if spacing
           else
             # Grid layout
             classes << 'grid'
             classes << "grid-cols-#{columns}"
-            classes << "gap-#{TailwindMapper::PADDING_MAP[json['itemSpacing']] || '2'}" if json['itemSpacing']
+            spacing = json['itemSpacing'] || json['spacing']
+            classes << "gap-[#{spacing}px]" if spacing
+          end
+
+          # Content insets as padding
+          content_inset = json['contentInset']
+          if content_inset.is_a?(Array) && content_inset.length == 4
+            top, left, bottom, right = content_inset
+            classes << "pt-[#{top}px]" if top&.positive?
+            classes << "pl-[#{left}px]" if left&.positive?
+            classes << "pb-[#{bottom}px]" if bottom&.positive?
+            classes << "pr-[#{right}px]" if right&.positive?
           end
 
           classes.compact.reject(&:empty?).join(' ')
@@ -51,7 +70,7 @@ module RjuiTools
 
         def generate_collection_content(indent)
           sections = json['sections'] || []
-          items_binding = extract_binding_property(json['items'])
+          items_binding = extract_collection_binding(json['items'])
 
           content_lines = []
 
@@ -117,7 +136,7 @@ module RjuiTools
 
           # Cells placeholder
           if cell_view
-            items_binding = extract_binding_property(json['items'])
+            items_binding = extract_collection_binding(json['items'])
             if items_binding
               lines << "#{indent_str(indent)}{#{items_binding}?.map((item, index) => ("
               lines << "#{indent_str(indent + 2)}<#{cell_view} key={index} data={item} />"
@@ -183,8 +202,8 @@ module RjuiTools
           string.split('_').map(&:capitalize).join
         end
 
-        def extract_binding_property(items_property)
-          return nil unless items_property
+        def extract_collection_binding(items_property)
+          return nil unless items_property.is_a?(String)
 
           if items_property.start_with?('@{') && items_property.end_with?('}')
             items_property[2...-1]

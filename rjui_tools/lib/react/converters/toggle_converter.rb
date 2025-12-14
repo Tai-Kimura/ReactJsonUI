@@ -11,27 +11,34 @@ module RjuiTools
       class ToggleConverter < BaseConverter
         def convert(indent = 2)
           class_name = build_class_name
+          style_attr = build_style_attr
           id_attr = extract_id ? " id=\"#{extract_id}\"" : ''
+          testid_attr = build_testid_attr
+          tag_attr = build_tag_attr
           text = json['text'] || json['label'] || ''
 
           # Get state binding
           checked_attr = build_checked_attr
           on_change = build_on_change
+          disabled_attr = build_disabled_attr
+          checkbox_style = build_checkbox_style
 
-          if text.empty?
+          jsx = if text.empty?
             # Checkbox only (no label)
             <<~JSX.chomp
-              #{indent_str(indent)}<input#{id_attr} type="checkbox" className="#{class_name}"#{checked_attr}#{on_change} />
+              #{indent_str(indent)}<input#{id_attr} type="checkbox" className="#{class_name}"#{checked_attr}#{on_change}#{disabled_attr}#{checkbox_style}#{style_attr}#{testid_attr}#{tag_attr} />
             JSX
           else
             # Checkbox with label
             <<~JSX.chomp
-              #{indent_str(indent)}<label#{id_attr} className="#{class_name}">
-              #{indent_str(indent + 2)}<input type="checkbox"#{checked_attr}#{on_change} />
+              #{indent_str(indent)}<label#{id_attr} className="#{class_name}"#{style_attr}#{testid_attr}#{tag_attr}>
+              #{indent_str(indent + 2)}<input type="checkbox"#{checked_attr}#{on_change}#{disabled_attr}#{checkbox_style} />
               #{indent_str(indent + 2)}<span>#{convert_binding(text)}</span>
               #{indent_str(indent)}</label>
             JSX
           end
+
+          wrap_with_visibility(jsx, indent)
         end
 
         protected
@@ -43,7 +50,12 @@ module RjuiTools
           classes << 'cursor-pointer'
 
           # Disabled state
-          classes << 'opacity-50 cursor-not-allowed' if json['enabled'] == false
+          if json['enabled'] == false
+            classes << 'opacity-50 cursor-not-allowed'
+          elsif has_binding?(json['enabled'])
+            binding_expr = extract_binding_property(json['enabled'])
+            classes << "${!#{binding_expr} ? 'opacity-50 cursor-not-allowed' : ''}"
+          end
 
           classes.compact.reject(&:empty?).join(' ')
         end
@@ -51,7 +63,7 @@ module RjuiTools
         def build_checked_attr
           is_on = json['isOn'] || json['checked']
 
-          if is_on && is_binding?(is_on)
+          if is_on && has_binding?(is_on)
             prop = extract_binding_property(is_on)
             " checked={#{prop}}"
           elsif is_on
@@ -62,26 +74,34 @@ module RjuiTools
         end
 
         def build_on_change
-          # onValueChange (camelCase) -> binding format only (@{functionName})
           handler = json['onValueChange']
           return '' unless handler
 
-          if is_binding?(handler)
-            " onChange={#{handler.gsub(/@\{|\}/, '')}}"
+          if has_binding?(handler)
+            " onChange={#{extract_binding_property(handler)}}"
           else
-            # ERROR: onValueChange requires binding format
             " {/* ERROR: onValueChange requires binding format @{functionName} */}"
           end
         end
 
-        def is_binding?(value)
-          value.is_a?(String) && value.start_with?('@{') && value.end_with?('}')
+        def build_disabled_attr
+          enabled = json['enabled']
+          return '' if enabled.nil?
+
+          if has_binding?(enabled)
+            " disabled={!#{extract_binding_property(enabled)}}"
+          elsif enabled == false
+            ' disabled'
+          else
+            ''
+          end
         end
 
-        def extract_binding_property(value)
-          return nil unless is_binding?(value)
+        def build_checkbox_style
+          tint_color = json['tintColor'] || json['onTintColor']
+          return '' unless tint_color
 
-          value[2...-1]
+          " style={{ accentColor: '#{tint_color}' }}"
         end
       end
     end

@@ -170,7 +170,7 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
       it 'accepts valid number type' do
         component = {
           'type' => 'View',
-          'padding' => 10
+          'cornerRadius' => 10
         }
         warnings = validator.validate(component)
         expect(warnings).to be_empty
@@ -346,7 +346,7 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
         component = {
           'type' => 'Button',
           'text' => 'Click Me',
-          'onClick' => 'handleClick'
+          'onClick' => '@{handleClick}'
         }
         warnings = validator.validate(component)
         expect(warnings).to be_empty

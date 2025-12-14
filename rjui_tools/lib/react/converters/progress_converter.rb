@@ -8,17 +8,19 @@ module RjuiTools
       class ProgressConverter < BaseConverter
         def convert(indent = 2)
           class_name = build_class_name
+          base_style_attr = build_base_style_attr
           id_attr = extract_id ? " id=\"#{extract_id}\"" : ''
+          testid_attr = build_testid_attr
+          tag_attr = build_tag_attr
 
           value_attr = build_value_attr
           max_attr = " max={#{json['maximumValue'] || 100}}"
 
-          # Tint color via style
-          style_attr = build_style_attr
-
-          <<~JSX.chomp
-            #{indent_str(indent)}<progress#{id_attr} className="#{class_name}"#{value_attr}#{max_attr}#{style_attr} />
+          jsx = <<~JSX.chomp
+            #{indent_str(indent)}<progress#{id_attr} className="#{class_name}"#{value_attr}#{max_attr}#{base_style_attr}#{testid_attr}#{tag_attr} />
           JSX
+
+          wrap_with_visibility(jsx, indent)
         end
 
         protected
@@ -27,13 +29,29 @@ module RjuiTools
           classes = [super]
 
           classes << 'w-full'
-          classes << 'h-2'
+
+          # Height
+          height = json['progressHeight'] || json['barHeight']
+          if height
+            classes << "h-[#{height}px]"
+          else
+            classes << 'h-2'
+          end
+
           classes << 'rounded-full'
           classes << 'appearance-none'
 
           # Custom progress bar styling
           classes << '[&::-webkit-progress-bar]:rounded-full'
-          classes << '[&::-webkit-progress-bar]:bg-gray-200'
+
+          # Track color
+          track_color = json['trackTintColor'] || json['trackColor']
+          if track_color
+            classes << "[&::-webkit-progress-bar]:bg-[#{track_color}]"
+          else
+            classes << '[&::-webkit-progress-bar]:bg-gray-200'
+          end
+
           classes << '[&::-webkit-progress-value]:rounded-full'
 
           # Progress color
@@ -52,7 +70,7 @@ module RjuiTools
         def build_value_attr
           value = json['value'] || json['progress'] || 0
 
-          if is_binding?(value)
+          if has_binding?(value)
             prop = extract_binding_property(value)
             " value={#{prop}}"
           else
@@ -60,19 +78,8 @@ module RjuiTools
           end
         end
 
-        def build_style_attr
-          # Additional styling not supported by Tailwind classes
-          ''
-        end
-
-        def is_binding?(value)
-          value.is_a?(String) && value.start_with?('@{') && value.end_with?('}')
-        end
-
-        def extract_binding_property(value)
-          return nil unless is_binding?(value)
-
-          value[2...-1]
+        def build_base_style_attr
+          build_style_attr
         end
       end
     end
