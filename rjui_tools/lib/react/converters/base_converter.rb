@@ -343,8 +343,25 @@ module RjuiTools
 
           # Check if it's a binding expression @{propName} or @{prop.name}
           if value.match?(/@\{[^}]+\}/)
-            # Convert @{propName} or @{prop.name} to {propName} or {prop.name}
-            converted = value.gsub(/@\{([^}]+)\}/, '{\1}')
+            # Convert @{propName} to {viewModel.data.propName}
+            # Special cases:
+            # - @{viewModel.xxx} -> {viewModel.xxx} (already has viewModel prefix)
+            # - @{data.xxx} -> {viewModel.data.xxx} (data is the standard prop name)
+            # - @{xxx.yyy} -> {viewModel.data.xxx.yyy} (nested property)
+            # - @{xxx} -> {viewModel.data.xxx} (simple property)
+            converted = value.gsub(/@\{([^}]+)\}/) do |_match|
+              prop = $1
+              if prop.start_with?('viewModel.')
+                # Already prefixed with viewModel, use as-is
+                "{#{prop}}"
+              elsif prop.start_with?('data.')
+                # data.xxx -> viewModel.data.xxx
+                "{viewModel.#{prop}}"
+              else
+                # Add viewModel.data. prefix for data properties
+                "{viewModel.data.#{prop}}"
+              end
+            end
             # Also escape any remaining literal braces (not part of binding expressions)
             return escape_jsx_braces_with_bindings(converted)
           end
@@ -446,8 +463,13 @@ module RjuiTools
                 return ''
               end
             elsif is_binding_format?(handler)
-              # Valid binding: @{handleClick} -> {handleClick}
-              return " onClick={#{handler.gsub(/@\{|\}/, '')}}"
+              # Valid binding: @{handleClick} -> viewModel.data.handleClick
+              prop = handler.gsub(/@\{|\}/, '')
+              if prop.start_with?('viewModel.')
+                return " onClick={#{prop}}"
+              else
+                return " onClick={viewModel.data.#{prop}}"
+              end
             else
               # ERROR: onClick (camelCase) must use binding format
               return " {/* ERROR: onClick requires binding format @{functionName} */}"
@@ -461,8 +483,8 @@ module RjuiTools
               # ERROR: onclick (lowercase) must use selector format
               return " {/* ERROR: onclick requires selector format (string) */}"
             else
-              # Valid selector: functionName -> {functionName}
-              return " onClick={#{handler}}"
+              # Valid selector: functionName -> viewModel.data.functionName
+              return " onClick={viewModel.data.#{handler}}"
             end
           end
 

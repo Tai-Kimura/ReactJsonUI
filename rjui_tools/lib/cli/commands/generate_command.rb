@@ -230,14 +230,15 @@ module RjuiTools
               import #{view_name} from "@/generated/components/#{view_name}";
               import { HeaderViewModel } from "@/viewmodels/HeaderViewModel";
               import { #{view_name}ViewModel } from "@/viewmodels/#{view_name}ViewModel";
+              import { #{view_name}Data, create#{view_name}Data } from "@/generated/data/#{view_name}Data";
 
               export default function #{view_name}Page() {
                 const router = useRouter();
-                const [currentTab, setCurrentTab] = useState(0);
+                const [data, setData] = useState<#{view_name}Data>(create#{view_name}Data());
                 const headerViewModel = useMemo(() => new HeaderViewModel(router), [router]);
                 const viewModel = useMemo(
-                  () => new #{view_name}ViewModel(router, currentTab, setCurrentTab),
-                  [router, currentTab]
+                  () => new #{view_name}ViewModel(router, data, setData),
+                  [router, data]
                 );
 
                 return (
@@ -253,19 +254,24 @@ module RjuiTools
               "use client";
 
               import { useRouter } from "next/navigation";
-              import { useMemo } from "react";
+              import { useMemo, useState } from "react";
               import Header from "@/generated/components/Header";
               import #{view_name} from "@/generated/components/#{view_name}";
               import { HeaderViewModel } from "@/viewmodels/HeaderViewModel";
+              import { #{view_name}Data, create#{view_name}Data } from "@/generated/data/#{view_name}Data";
 
               export default function #{view_name}Page() {
                 const router = useRouter();
+                const [data, setData] = useState<#{view_name}Data>(create#{view_name}Data());
                 const headerViewModel = useMemo(() => new HeaderViewModel(router), [router]);
+
+                // Create a simple viewModel with just data
+                const viewModel = useMemo(() => ({ data }), [data]);
 
                 return (
                   <>
                     <Header viewModel={headerViewModel} />
-                    <#{view_name} />
+                    <#{view_name} viewModel={viewModel} />
                   </>
                 );
               }
@@ -289,28 +295,30 @@ module RjuiTools
 
           viewmodel_content = <<~TS
             import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
+            import { #{view_name}Data, create#{view_name}Data } from "@/generated/data/#{view_name}Data";
 
             export class #{view_name}ViewModel {
               private router: AppRouterInstance;
-              private _currentTab: number;
-              private _setCurrentTab: (tab: number) => void;
+              private _data: #{view_name}Data;
+              private _setData: (data: #{view_name}Data) => void;
 
               constructor(
                 router: AppRouterInstance,
-                currentTab: number,
-                setCurrentTab: (tab: number) => void
+                data: #{view_name}Data,
+                setData: (data: #{view_name}Data) => void
               ) {
                 this.router = router;
-                this._currentTab = currentTab;
-                this._setCurrentTab = setCurrentTab;
+                this._data = data;
+                this._setData = setData;
               }
 
-              get currentTab(): number {
-                return this._currentTab;
+              get data(): #{view_name}Data {
+                return this._data;
               }
 
-              onTabChange = (index: number) => {
-                this._setCurrentTab(index);
+              // Update data and trigger re-render
+              updateData = (updates: Partial<#{view_name}Data>) => {
+                this._setData({ ...this._data, ...updates });
               };
             }
           TS
@@ -331,9 +339,28 @@ module RjuiTools
           FileUtils.mkdir_p(viewmodel_dir)
 
           viewmodel_content = <<~TS
+            import { #{view_name}Data, create#{view_name}Data } from "@/generated/data/#{view_name}Data";
+
             export class #{view_name}ViewModel {
-              constructor() {
+              private _data: #{view_name}Data;
+              private _setData: (data: #{view_name}Data) => void;
+
+              constructor(
+                data: #{view_name}Data,
+                setData: (data: #{view_name}Data) => void
+              ) {
+                this._data = data;
+                this._setData = setData;
               }
+
+              get data(): #{view_name}Data {
+                return this._data;
+              }
+
+              // Update data and trigger re-render
+              updateData = (updates: Partial<#{view_name}Data>) => {
+                this._setData({ ...this._data, ...updates });
+              };
             }
           TS
 

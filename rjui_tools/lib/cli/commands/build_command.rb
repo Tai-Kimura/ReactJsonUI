@@ -6,6 +6,7 @@ require_relative '../../core/config_manager'
 require_relative '../../core/logger'
 require_relative '../../core/attribute_validator'
 require_relative '../../react/react_generator'
+require_relative '../../react/data_model_generator'
 
 module RjuiTools
   module CLI
@@ -31,6 +32,9 @@ module RjuiTools
 
           # Update StringManager from Strings directory
           update_string_manager
+
+          # Update Data models from JSON data sections
+          update_data_models
 
           json_files = Dir.glob(File.join(layouts_dir, '**', '*.json'))
 
@@ -121,6 +125,14 @@ module RjuiTools
             end
           end
           puts
+        end
+
+        def update_data_models
+          Core::Logger.info('Generating Data models...')
+          data_generator = React::DataModelGenerator.new
+          data_generator.update_data_models
+        rescue StandardError => e
+          Core::Logger.error("Error generating data models: #{e.message}")
         end
 
         def update_string_manager
