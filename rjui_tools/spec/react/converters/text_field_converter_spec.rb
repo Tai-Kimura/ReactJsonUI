@@ -42,7 +42,7 @@ RSpec.describe RjuiTools::React::Converters::TextFieldConverter do
           'text' => '@{username}'
         })
         result = converter.convert
-        expect(result).to include('value={username}')
+        expect(result).to include('value={viewModel.data.username}')
       end
     end
 

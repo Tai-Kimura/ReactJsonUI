@@ -25,13 +25,13 @@ RSpec.describe RjuiTools::React::Converters::LabelConverter do
     end
 
     context 'with binding expression' do
-      it 'converts binding to JSX expression' do
+      it 'converts binding to JSX expression with viewModel.data prefix' do
         converter = create_converter({
           'type' => 'Label',
           'text' => '@{userName}'
         })
         result = converter.convert
-        expect(result).to include('{userName}')
+        expect(result).to include('{viewModel.data.userName}')
       end
     end
   end

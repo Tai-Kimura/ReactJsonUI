@@ -24,7 +24,7 @@ RSpec.describe RjuiTools::React::Converters::NetworkImageConverter do
       it 'generates dynamic src' do
         converter = create_converter({ 'class' => 'NetworkImage', 'src' => '@{imageUrl}' })
         result = converter.convert
-        expect(result).to include('src={imageUrl}')
+        expect(result).to include('src={viewModel.data.imageUrl}')
       end
     end
 
@@ -90,7 +90,7 @@ RSpec.describe RjuiTools::React::Converters::NetworkImageConverter do
       it 'adds onClick binding' do
         converter = create_converter({ 'class' => 'NetworkImage', 'url' => 'https://example.com/image.jpg', 'onClick' => '@{handleImageClick}' })
         result = converter.convert
-        expect(result).to include('onClick={handleImageClick}')
+        expect(result).to include('onClick={viewModel.data.handleImageClick}')
       end
     end
 

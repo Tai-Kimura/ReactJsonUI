@@ -33,7 +33,7 @@ RSpec.describe RjuiTools::React::Converters::CircleViewConverter do
       it 'generates dynamic background color' do
         converter = create_converter({ 'class' => 'CircleView', 'fillColor' => '@{circleColor}' })
         result = converter.convert
-        expect(result).to include('backgroundColor: circleColor')
+        expect(result).to include('backgroundColor: viewModel.data.circleColor')
       end
     end
 
@@ -82,7 +82,7 @@ RSpec.describe RjuiTools::React::Converters::CircleViewConverter do
       it 'adds onClick and cursor-pointer' do
         converter = create_converter({ 'class' => 'CircleView', 'onClick' => '@{handleCircleClick}' })
         result = converter.convert
-        expect(result).to include('onClick={handleCircleClick}')
+        expect(result).to include('onClick={viewModel.data.handleCircleClick}')
         expect(result).to include('cursor-pointer')
       end
     end

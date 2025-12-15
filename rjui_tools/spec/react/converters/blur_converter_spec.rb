@@ -90,7 +90,7 @@ RSpec.describe RjuiTools::React::Converters::BlurConverter do
       it 'adds onClick and cursor-pointer' do
         converter = create_converter({ 'class' => 'Blur', 'onClick' => '@{handleClick}' })
         result = converter.convert
-        expect(result).to include('onClick={handleClick}')
+        expect(result).to include('onClick={viewModel.data.handleClick}')
         expect(result).to include('cursor-pointer')
       end
     end
