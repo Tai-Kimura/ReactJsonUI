@@ -879,14 +879,6 @@
       ],
       "description": "Font color - hex string or color name from colors.json (can be data binding)"
     },
-    "fontWeight": {
-      "type": [
-        "string",
-        "number"
-      ],
-      "description": "Font weight: 'normal', 'bold', 'semibold', 'light', 'medium', 'heavy', 'black', 'thin', 'ultraLight' or numeric (100-900)",
-      "platform": "react"
-    },
     "fontFamily": {
       "type": "string",
       "description": "Font family name",

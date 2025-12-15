@@ -103,7 +103,13 @@ module RjuiTools
           # Font size
           classes << TailwindMapper.map_font_size(json['fontSize']) if json['fontSize']
 
-          # Font weight
+          # Font - can be weight name (bold, semibold) or font family (monospace)
+          if json['font']
+            font_class = TailwindMapper.map_font(json['font'])
+            classes << font_class if font_class && !font_class.empty?
+          end
+
+          # Font weight (fontWeight attribute takes precedence if both specified)
           classes << TailwindMapper.map_font_weight(json['fontWeight']) if json['fontWeight']
 
           # Text align

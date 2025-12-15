@@ -274,6 +274,32 @@ module RjuiTools
           FONT_WEIGHT_MAP[weight.to_s.downcase] || ''
         end
 
+        # Map font attribute - can be weight name or font family
+        def map_font(font)
+          return '' unless font
+
+          font_lower = font.to_s.downcase
+
+          # Weight names that should map to font-weight
+          weight_names = %w[bold semibold medium light thin extralight heavy black normal]
+          if weight_names.include?(font_lower)
+            return FONT_WEIGHT_MAP[font_lower] || ''
+          end
+
+          # Font family names
+          case font_lower
+          when 'monospace', 'mono'
+            'font-mono'
+          when 'sans', 'sans-serif'
+            'font-sans'
+          when 'serif'
+            'font-serif'
+          else
+            # Custom font - return empty, would need CSS custom font-family
+            ''
+          end
+        end
+
         def map_gap(spacing)
           return '' unless spacing
 

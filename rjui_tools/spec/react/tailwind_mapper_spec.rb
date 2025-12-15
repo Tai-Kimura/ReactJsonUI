@@ -252,4 +252,59 @@ RSpec.describe RjuiTools::React::TailwindMapper do
       expect(described_class.map_flex_grow(nil)).to eq('')
     end
   end
+
+  describe '.map_font' do
+    context 'with weight names' do
+      it 'maps bold to font-bold' do
+        expect(described_class.map_font('bold')).to eq('font-bold')
+      end
+
+      it 'maps semibold to font-semibold' do
+        expect(described_class.map_font('semibold')).to eq('font-semibold')
+      end
+
+      it 'maps medium to font-medium' do
+        expect(described_class.map_font('medium')).to eq('font-medium')
+      end
+
+      it 'maps light to font-light' do
+        expect(described_class.map_font('light')).to eq('font-light')
+      end
+
+      it 'is case insensitive' do
+        expect(described_class.map_font('BOLD')).to eq('font-bold')
+        expect(described_class.map_font('Bold')).to eq('font-bold')
+      end
+    end
+
+    context 'with font family names' do
+      it 'maps monospace to font-mono' do
+        expect(described_class.map_font('monospace')).to eq('font-mono')
+      end
+
+      it 'maps mono to font-mono' do
+        expect(described_class.map_font('mono')).to eq('font-mono')
+      end
+
+      it 'maps sans to font-sans' do
+        expect(described_class.map_font('sans')).to eq('font-sans')
+      end
+
+      it 'maps serif to font-serif' do
+        expect(described_class.map_font('serif')).to eq('font-serif')
+      end
+    end
+
+    context 'with unknown font' do
+      it 'returns empty string for custom font names' do
+        expect(described_class.map_font('Helvetica')).to eq('')
+      end
+    end
+
+    context 'with nil' do
+      it 'returns empty string' do
+        expect(described_class.map_font(nil)).to eq('')
+      end
+    end
+  end
 end
