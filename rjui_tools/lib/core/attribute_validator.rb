@@ -8,7 +8,7 @@ module RjuiTools
     # Used by React converters to ensure JSON layout correctness
     class AttributeValidator
       attr_reader :definitions, :warnings, :infos
-      attr_accessor :mode
+      attr_accessor :mode, :styles_dir
 
       # Valid modes for this platform
       MODES = [:react, :all].freeze
@@ -19,11 +19,13 @@ module RjuiTools
       # All supported platforms across JsonUI libraries
       ALL_PLATFORMS = ['swift', 'kotlin', 'react'].freeze
 
-      def initialize(mode = :all)
+      def initialize(mode = :all, styles_dir = nil)
         @definitions = load_definitions
         @warnings = []
         @infos = []
         @mode = mode
+        @styles_dir = styles_dir
+        @styles_cache = {}
       end
 
       # Validate a component and return warnings
@@ -34,15 +36,19 @@ module RjuiTools
       def validate(component, component_type = nil, parent_orientation = nil)
         @warnings = []
         @infos = []
-        type = component_type || component['type']
+
+        # Merge style attributes before validation
+        merged_component = merge_style_attributes(component)
+
+        type = component_type || merged_component['type']
 
         return @warnings unless type
 
         # Get valid attributes for this component type
         valid_attrs = get_valid_attributes(type)
 
-        # Check each attribute in the component
-        component.each do |key, value|
+        # Check each attribute in the merged component
+        merged_component.each do |key, value|
           next if key == 'type' || key == 'child' || key == 'children'
 
           if valid_attrs.key?(key)
@@ -70,9 +76,9 @@ module RjuiTools
         # Check for required attributes (only for current platform)
         valid_attrs.each do |attr_name, attr_def|
           next unless platform_compatible?(attr_def)
-          if attr_def['required'] && !component.key?(attr_name)
+          if attr_def['required'] && !merged_component.key?(attr_name)
             # Skip width/height required check if weight is set and parent orientation allows it
-            next if skip_dimension_required?(attr_name, component, parent_orientation)
+            next if skip_dimension_required?(attr_name, merged_component, parent_orientation)
 
             add_warning("Required attribute '#{attr_name}' is missing for component type '#{type}'")
           end
@@ -481,6 +487,93 @@ module RjuiTools
         platform_str = attr_platforms.map { |p| p.capitalize }.join('/')
 
         add_info("Attribute '#{attr_name}' in '#{component_type}' is for #{platform_str} platform (current: #{PLATFORM.capitalize})")
+      end
+
+      # Merge style attributes into component for validation
+      # Style provides base attributes, component attributes override
+      # @param component [Hash] The component to process
+      # @return [Hash] Component with style attributes merged
+      def merge_style_attributes(component)
+        return component unless component.is_a?(Hash)
+        return component unless component['style']
+
+        style_name = component['style']
+        style_data = load_style_file(style_name)
+
+        return component unless style_data
+
+        # Create merged result: style as base, component overrides
+        component_without_style = component.dup
+        component_without_style.delete('style')
+
+        # If component has type, ignore style's type
+        style_data_for_merge = style_data.dup
+        if component_without_style['type']
+          style_data_for_merge.delete('type')
+        end
+
+        # Deep merge: style as base, component properties override
+        deep_merge(style_data_for_merge, component_without_style)
+      end
+
+      # Load style file from styles directory
+      # @param style_name [String] Name of the style file (without .json extension)
+      # @return [Hash, nil] Parsed style data or nil if not found
+      def load_style_file(style_name)
+        return @styles_cache[style_name] if @styles_cache.key?(style_name)
+
+        styles_dir = determine_styles_dir
+        return nil unless styles_dir
+
+        style_file = File.join(styles_dir, "#{style_name}.json")
+        return nil unless File.exist?(style_file)
+
+        begin
+          style_data = JSON.parse(File.read(style_file))
+          @styles_cache[style_name] = style_data
+          style_data
+        rescue JSON::ParserError
+          nil
+        end
+      end
+
+      # Determine the styles directory path
+      # @return [String, nil] Path to styles directory or nil
+      def determine_styles_dir
+        return @styles_dir if @styles_dir && Dir.exist?(@styles_dir)
+
+        # Try common locations for React projects
+        possible_dirs = [
+          File.join(Dir.pwd, 'Styles'),
+          File.join(Dir.pwd, 'styles'),
+          File.join(Dir.pwd, 'src', 'Styles'),
+          File.join(Dir.pwd, 'src', 'styles'),
+          File.join(Dir.pwd, 'Layouts', 'Styles'),
+          File.join(Dir.pwd, 'Layouts', 'styles')
+        ]
+
+        possible_dirs.find { |dir| Dir.exist?(dir) }
+      end
+
+      # Deep merge two hashes
+      # @param hash1 [Hash] Base hash
+      # @param hash2 [Hash] Override hash
+      # @return [Hash] Merged hash
+      def deep_merge(hash1, hash2)
+        return hash2 if hash1.nil?
+        return hash1 if hash2.nil?
+
+        result = hash1.dup
+
+        hash2.each do |key, value|
+          if result[key].is_a?(Hash) && value.is_a?(Hash)
+            result[key] = deep_merge(result[key], value)
+          else
+            result[key] = value
+          end
+        end
+
+        result
       end
     end
   end
