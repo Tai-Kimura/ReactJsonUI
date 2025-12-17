@@ -2,6 +2,7 @@
 
 require_relative '../../lib/core/attribute_validator'
 require 'json'
+require 'fileutils'
 
 RSpec.describe RjuiTools::Core::AttributeValidator do
   let(:validator) { described_class.new(:all) }
@@ -642,6 +643,100 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
         expect(warnings).to include(
           "Attribute 'shadow.color' in 'Label' has invalid binding syntax (starts with '@{' but doesn't end with '}')"
         )
+      end
+    end
+  end
+
+  # NEW: Tests for style merging
+  describe 'Style merging validation' do
+    let(:styles_dir) { File.join(Dir.pwd, 'spec', 'fixtures', 'styles') }
+
+    before(:all) do
+      # Create test styles directory and files
+      @styles_dir = File.join(Dir.pwd, 'spec', 'fixtures', 'styles')
+      FileUtils.mkdir_p(@styles_dir)
+
+      # Create a test style file
+      File.write(File.join(@styles_dir, 'TestStyle.json'), JSON.pretty_generate({
+        'width' => 'matchParent',
+        'height' => 100,
+        'cornerRadius' => 8,
+        'background' => '#FFFFFF'
+      }))
+
+      # Create a style with nested properties
+      File.write(File.join(@styles_dir, 'ShadowStyle.json'), JSON.pretty_generate({
+        'width' => 'matchParent',
+        'height' => 100,
+        'shadow' => {
+          'color' => '#000000',
+          'offsetX' => 2,
+          'offsetY' => 2,
+          'radius' => 4
+        }
+      }))
+    end
+
+    after(:all) do
+      FileUtils.rm_rf(File.join(Dir.pwd, 'spec', 'fixtures', 'styles'))
+    end
+
+    context 'with style reference' do
+      subject(:validator) { described_class.new(:all, @styles_dir) }
+
+      it 'merges style attributes into component' do
+        component = {
+          'type' => 'View',
+          'style' => 'TestStyle'
+        }
+        warnings = validator.validate(component)
+        # Should not warn about missing width/height because they come from style
+        expect(warnings.none? { |w| w.include?("'width'") && w.include?('missing') }).to be true
+        expect(warnings.none? { |w| w.include?("'height'") && w.include?('missing') }).to be true
+      end
+
+      it 'allows component attributes to override style attributes' do
+        component = {
+          'type' => 'View',
+          'style' => 'TestStyle',
+          'cornerRadius' => 16
+        }
+        warnings = validator.validate(component)
+        expect(warnings).to be_empty
+      end
+
+      it 'validates merged style attributes' do
+        component = {
+          'type' => 'View',
+          'style' => 'ShadowStyle'
+        }
+        warnings = validator.validate(component)
+        expect(warnings).to be_empty
+      end
+
+      it 'ignores non-existent style' do
+        component = {
+          'type' => 'View',
+          'style' => 'NonExistentStyle'
+        }
+        warnings = validator.validate(component)
+        # Should warn about missing required attributes since style doesn't exist
+        expect(warnings.any? { |w| w.include?('missing') }).to be true
+      end
+    end
+
+    context 'without styles_dir' do
+      subject(:validator) { described_class.new }
+
+      it 'works without style merging when no styles_dir configured' do
+        component = {
+          'type' => 'View',
+          'style' => 'TestStyle',
+          'width' => 'matchParent',
+          'height' => 100
+        }
+        warnings = validator.validate(component)
+        expect(warnings).to be_empty
       end
     end
   end
