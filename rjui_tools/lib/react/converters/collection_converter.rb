@@ -204,12 +204,9 @@ module RjuiTools
 
         def extract_collection_binding(items_property)
           return nil unless items_property.is_a?(String)
+          return nil unless has_binding?(items_property)
 
-          if items_property.start_with?('@{') && items_property.end_with?('}')
-            items_property[2...-1]
-          else
-            nil
-          end
+          extract_binding_property(items_property)
         end
       end
     end

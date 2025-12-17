@@ -45,8 +45,8 @@ RSpec.describe RjuiTools::React::Converters::RadioConverter do
       it 'uses binding for selection state' do
         converter = create_converter({ 'class' => 'Radio', 'items' => ['A', 'B'], 'selectedValue' => '@{selectedOption}' })
         result = converter.convert
-        expect(result).to include('checked={selectedOption === "A"}')
-        expect(result).to include('checked={selectedOption === "B"}')
+        expect(result).to include('checked={data.selectedOption === "A"}')
+        expect(result).to include('checked={data.selectedOption === "B"}')
       end
     end
 
@@ -54,8 +54,8 @@ RSpec.describe RjuiTools::React::Converters::RadioConverter do
       it 'uses handler for onChange' do
         converter = create_converter({ 'class' => 'Radio', 'items' => ['A', 'B'], 'onValueChange' => '@{handleSelect}' })
         result = converter.convert
-        expect(result).to include('onChange={() => handleSelect("A")}')
-        expect(result).to include('onChange={() => handleSelect("B")}')
+        expect(result).to include('onChange={() => data.handleSelect("A")}')
+        expect(result).to include('onChange={() => data.handleSelect("B")}')
       end
     end
 
@@ -98,7 +98,7 @@ RSpec.describe RjuiTools::React::Converters::RadioConverter do
       it 'wraps with conditional rendering' do
         converter = create_converter({ 'class' => 'Radio', 'items' => ['A'], 'visibility' => '@{showOptions}' })
         result = converter.convert
-        expect(result).to include('{showOptions &&')
+        expect(result).to include('{data.showOptions &&')
       end
     end
   end

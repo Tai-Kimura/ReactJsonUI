@@ -42,7 +42,7 @@ RSpec.describe RjuiTools::React::Converters::TextViewConverter do
           'text' => '@{description}'
         })
         result = converter.convert
-        expect(result).to include('value={viewModel.data.description}')
+        expect(result).to include('value={data.description}')
       end
     end
 

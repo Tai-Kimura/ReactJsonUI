@@ -5,6 +5,7 @@ require 'fileutils'
 require_relative '../../core/config_manager'
 require_relative '../../core/logger'
 require_relative '../../core/attribute_validator'
+require_relative '../../core/binding_validator'
 require_relative '../../react/react_generator'
 require_relative '../../react/data_model_generator'
 
@@ -16,7 +17,9 @@ module RjuiTools
           @args = args
           @config = Core::ConfigManager.load_config
           @validator = Core::AttributeValidator.new(:react)
+          @binding_validator = Core::BindingValidator.new
           @all_warnings = []
+          @binding_warnings = []
         end
 
         def execute
@@ -56,6 +59,9 @@ module RjuiTools
               # Validate JSON attributes
               validate_component(json_content, json_file)
 
+              # Validate binding expressions for business logic
+              validate_bindings(json_content, json_file)
+
               output = generator.generate(component_name, json_content)
 
               output_path = File.join(
@@ -76,6 +82,7 @@ module RjuiTools
 
           # Print all collected warnings at the end
           print_validation_summary
+          print_binding_warnings
 
           Core::Logger.success('Build completed!')
         end
@@ -87,7 +94,10 @@ module RjuiTools
         end
 
         # Validate component and its children recursively
-        def validate_component(component, file_path)
+        # @param component [Hash] The component to validate
+        # @param file_path [String] The file path for error messages
+        # @param parent_orientation [String] The parent's orientation ('horizontal' or 'vertical')
+        def validate_component(component, file_path, parent_orientation = nil)
           return unless component.is_a?(Hash)
 
           # Skip style-only entries and data declarations
@@ -95,16 +105,19 @@ module RjuiTools
           return if component.key?('data') && !component.key?('type')
 
           if component['type']
-            warnings = @validator.validate(component)
+            warnings = @validator.validate(component, nil, parent_orientation)
             warnings.each do |warning|
               @all_warnings << { file: file_path, message: warning }
             end
           end
 
+          # Get this component's orientation for children validation
+          current_orientation = component['orientation']
+
           # Validate children recursively
           if component['child']
             children = component['child'].is_a?(Array) ? component['child'] : [component['child']]
-            children.each { |child| validate_component(child, file_path) }
+            children.each { |child| validate_component(child, file_path, current_orientation) }
           end
         end
 
@@ -123,6 +136,30 @@ module RjuiTools
             warnings.each do |w|
               puts "\e[33m    ⚠️  #{w[:message]}\e[0m"
             end
+          end
+          puts
+        end
+
+        # Validate binding expressions for business logic
+        def validate_bindings(json_content, file_path)
+          file_name = File.basename(file_path)
+          warnings = @binding_validator.validate(json_content, file_name)
+          warnings.each do |warning|
+            @binding_warnings << warning
+          end
+        end
+
+        # Print binding warnings at the end of build
+        def print_binding_warnings
+          return if @binding_warnings.empty?
+
+          puts
+          Core::Logger.warn("Binding warnings found: #{@binding_warnings.size}")
+          puts "  Business logic detected in bindings. Move this logic to ViewModel."
+          puts
+
+          @binding_warnings.each do |warning|
+            puts "\e[33m  ⚠️  #{warning}\e[0m"
           end
           puts
         end

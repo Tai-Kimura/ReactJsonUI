@@ -111,7 +111,7 @@ RSpec.describe RjuiTools::React::Converters::GradientViewConverter do
       it 'adds onClick and cursor-pointer' do
         converter = create_converter({ 'class' => 'GradientView', 'gradient' => ['#FF0000', '#0000FF'], 'onClick' => '@{handleClick}' })
         result = converter.convert
-        expect(result).to include('onClick={viewModel.data.handleClick}')
+        expect(result).to include('onClick={data.handleClick}')
         expect(result).to include('cursor-pointer')
       end
     end
@@ -128,7 +128,7 @@ RSpec.describe RjuiTools::React::Converters::GradientViewConverter do
       it 'wraps with conditional rendering' do
         converter = create_converter({ 'class' => 'GradientView', 'gradient' => ['#FF0000', '#0000FF'], 'visibility' => '@{showGradient}' })
         result = converter.convert
-        expect(result).to include('{showGradient &&')
+        expect(result).to include('{data.showGradient &&')
       end
     end
   end

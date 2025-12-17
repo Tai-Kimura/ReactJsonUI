@@ -24,7 +24,7 @@ RSpec.describe RjuiTools::React::Converters::NetworkImageConverter do
       it 'generates dynamic src' do
         converter = create_converter({ 'class' => 'NetworkImage', 'src' => '@{imageUrl}' })
         result = converter.convert
-        expect(result).to include('src={viewModel.data.imageUrl}')
+        expect(result).to include('src={data.imageUrl}')
       end
     end
 
@@ -90,7 +90,7 @@ RSpec.describe RjuiTools::React::Converters::NetworkImageConverter do
       it 'adds onClick binding' do
         converter = create_converter({ 'class' => 'NetworkImage', 'url' => 'https://example.com/image.jpg', 'onClick' => '@{handleImageClick}' })
         result = converter.convert
-        expect(result).to include('onClick={viewModel.data.handleImageClick}')
+        expect(result).to include('onClick={data.handleImageClick}')
       end
     end
 
@@ -98,7 +98,7 @@ RSpec.describe RjuiTools::React::Converters::NetworkImageConverter do
       it 'adds onLoad binding' do
         converter = create_converter({ 'class' => 'NetworkImage', 'url' => 'https://example.com/image.jpg', 'onLoad' => '@{handleLoad}' })
         result = converter.convert
-        expect(result).to include('onLoad={handleLoad}')
+        expect(result).to include('onLoad={data.handleLoad}')
       end
     end
 
@@ -106,7 +106,7 @@ RSpec.describe RjuiTools::React::Converters::NetworkImageConverter do
       it 'adds onError binding' do
         converter = create_converter({ 'class' => 'NetworkImage', 'url' => 'https://example.com/image.jpg', 'onError' => '@{handleError}' })
         result = converter.convert
-        expect(result).to include('onError={handleError}')
+        expect(result).to include('onError={data.handleError}')
       end
     end
 
@@ -130,7 +130,7 @@ RSpec.describe RjuiTools::React::Converters::NetworkImageConverter do
       it 'wraps with conditional rendering' do
         converter = create_converter({ 'class' => 'NetworkImage', 'url' => 'https://example.com/image.jpg', 'visibility' => '@{showImage}' })
         result = converter.convert
-        expect(result).to include('{showImage &&')
+        expect(result).to include('{data.showImage &&')
       end
     end
   end

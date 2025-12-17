@@ -39,25 +39,25 @@ RSpec.describe RjuiTools::React::Converters::ButtonConverter do
     end
 
     context 'with onclick' do
-      it 'adds onClick attribute with viewModel.data prefix' do
+      it 'adds onClick attribute with data prefix' do
         converter = create_converter({
           'type' => 'Button',
           'text' => 'Submit',
           'onclick' => 'handleSubmit'
         })
         result = converter.convert
-        expect(result).to include('onClick={viewModel.data.handleSubmit}')
+        expect(result).to include('onClick={data.handleSubmit}')
       end
     end
 
     context 'with binding expression' do
-      it 'converts text binding with viewModel.data prefix' do
+      it 'converts text binding with data prefix' do
         converter = create_converter({
           'type' => 'Button',
           'text' => '@{buttonLabel}'
         })
         result = converter.convert
-        expect(result).to include('{viewModel.data.buttonLabel}')
+        expect(result).to include('{data.buttonLabel}')
       end
     end
   end

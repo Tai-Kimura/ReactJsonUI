@@ -25,7 +25,7 @@ RSpec.describe RjuiTools::React::Converters::WebConverter do
       it 'generates dynamic src' do
         converter = create_converter({ 'class' => 'Web', 'url' => '@{pageUrl}' })
         result = converter.convert
-        expect(result).to include('src={pageUrl}')
+        expect(result).to include('src={data.pageUrl}')
       end
     end
 
@@ -41,7 +41,7 @@ RSpec.describe RjuiTools::React::Converters::WebConverter do
       it 'generates dynamic srcDoc' do
         converter = create_converter({ 'class' => 'Web', 'html' => '@{htmlContent}' })
         result = converter.convert
-        expect(result).to include('srcDoc={htmlContent}')
+        expect(result).to include('srcDoc={data.htmlContent}')
       end
     end
 
@@ -114,7 +114,7 @@ RSpec.describe RjuiTools::React::Converters::WebConverter do
       it 'wraps with conditional rendering' do
         converter = create_converter({ 'class' => 'Web', 'url' => 'https://example.com', 'visibility' => '@{showWebView}' })
         result = converter.convert
-        expect(result).to include('{showWebView &&')
+        expect(result).to include('{data.showWebView &&')
       end
     end
   end

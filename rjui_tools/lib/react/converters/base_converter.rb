@@ -344,23 +344,10 @@ module RjuiTools
           # Check if it's a binding expression @{propName} or @{prop.name}
           if value.match?(/@\{[^}]+\}/)
             # Convert @{propName} to {viewModel.data.propName}
-            # Special cases:
-            # - @{viewModel.xxx} -> {viewModel.xxx} (already has viewModel prefix)
-            # - @{data.xxx} -> {viewModel.data.xxx} (data is the standard prop name)
-            # - @{xxx.yyy} -> {viewModel.data.xxx.yyy} (nested property)
-            # - @{xxx} -> {viewModel.data.xxx} (simple property)
+            # All properties are converted to viewModel.data.xxx format
             converted = value.gsub(/@\{([^}]+)\}/) do |_match|
               prop = $1
-              if prop.start_with?('viewModel.')
-                # Already prefixed with viewModel, use as-is
-                "{#{prop}}"
-              elsif prop.start_with?('data.')
-                # data.xxx -> viewModel.data.xxx
-                "{viewModel.#{prop}}"
-              else
-                # Add viewModel.data. prefix for data properties
-                "{viewModel.data.#{prop}}"
-              end
+              "{#{add_viewmodel_data_prefix(prop)}}"
             end
             # Also escape any remaining literal braces (not part of binding expressions)
             return escape_jsx_braces_with_bindings(converted)
@@ -465,11 +452,7 @@ module RjuiTools
             elsif is_binding_format?(handler)
               # Valid binding: @{handleClick} -> viewModel.data.handleClick
               prop = handler.gsub(/@\{|\}/, '')
-              if prop.start_with?('viewModel.')
-                return " onClick={#{prop}}"
-              else
-                return " onClick={viewModel.data.#{prop}}"
-              end
+              return " onClick={#{add_viewmodel_data_prefix(prop)}}"
             else
               # ERROR: onClick (camelCase) must use binding format
               return " {/* ERROR: onClick requires binding format @{functionName} */}"
@@ -483,8 +466,8 @@ module RjuiTools
               # ERROR: onclick (lowercase) must use selector format
               return " {/* ERROR: onclick requires selector format (string) */}"
             else
-              # Valid selector: functionName -> viewModel.data.functionName
-              return " onClick={viewModel.data.#{handler}}"
+              # Valid selector: functionName -> data.functionName
+              return " onClick={data.#{handler}}"
             end
           end
 
@@ -502,75 +485,68 @@ module RjuiTools
           value[2...-1]
         end
 
-        # Alias for extract_binding_value (commonly used in converters)
+        # Extract binding property and add viewModel.data. prefix
+        # This is the main method converters should use for binding values
         def extract_binding_property(value)
+          prop = extract_binding_value(value)
+          add_viewmodel_data_prefix(prop)
+        end
+
+        # Extract raw binding value without prefix (for internal use or special cases)
+        def extract_raw_binding_property(value)
           extract_binding_value(value)
         end
 
-        # Build visibility binding for conditional rendering (gone) or opacity (invisible)
-        # Returns: { type: :gone, condition: "..." } or { type: :invisible, condition: "...", invert: bool } or nil
+        # Add data. prefix to a property name for binding expressions
+        # All properties are converted to data.xxx format
+        def add_viewmodel_data_prefix(prop)
+          if prop.start_with?('data.')
+            # Already has data. prefix, use as-is
+            prop
+          elsif prop.start_with?('viewModel.data.')
+            # viewModel.data.xxx -> data.xxx
+            prop.sub('viewModel.data.', 'data.')
+          elsif prop.start_with?('viewModel.')
+            # viewModel.xxx -> data.xxx
+            "data.#{prop.sub('viewModel.', '')}"
+          else
+            # Add data. prefix for data properties
+            "data.#{prop}"
+          end
+        end
+
+        # Build visibility binding for conditional rendering
+        # Only supports simple property binding like "@{isVisible}" - no ternary operators
+        # Returns: { type: :gone, condition: "..." } or nil
         def build_visibility_info
           visibility = json['visibility']
           return nil unless visibility && has_binding?(visibility)
 
           binding_expr = visibility.gsub(/@\{|\}/, '')
 
-          # Check for ternary patterns: condition ? 'value1' : 'value2'
-          # Supports both 'visible' and '.visible' formats
-          # Pattern: condition ? 'visible' : 'gone' or condition ? '.visible' : '.gone'
-          if binding_expr =~ /^(.+?)\s*\?\s*'\.?visible'\s*:\s*'\.?gone'\s*$/
-            { type: :gone, condition: $1.strip }
-          # Pattern: condition ? 'gone' : 'visible'
-          elsif binding_expr =~ /^(.+?)\s*\?\s*'\.?gone'\s*:\s*'\.?visible'\s*$/
-            { type: :gone, condition: "!#{$1.strip}" }
-          # Pattern: condition ? 'visible' : 'invisible'
-          elsif binding_expr =~ /^(.+?)\s*\?\s*'\.?visible'\s*:\s*'\.?invisible'\s*$/
-            { type: :invisible, condition: $1.strip, invert: true }
-          # Pattern: condition ? 'invisible' : 'visible'
-          elsif binding_expr =~ /^(.+?)\s*\?\s*'\.?invisible'\s*:\s*'\.?visible'\s*$/
-            { type: :invisible, condition: $1.strip, invert: false }
-          # Simple boolean variable like "viewModel.isVisible"
-          elsif binding_expr =~ /^[\w.]+$/
-            { type: :gone, condition: binding_expr }
+          # Only support simple property binding (no ternary operators / business logic)
+          if binding_expr =~ /^[\w.]+$/
+            { type: :gone, condition: add_viewmodel_data_prefix(binding_expr) }
           else
             nil
           end
         end
 
-        # Wrap JSX with visibility condition (for 'gone' type - conditional render)
+        # Wrap JSX with visibility condition (conditional render)
         def wrap_with_visibility(jsx, indent)
           vis_info = build_visibility_info
           return jsx unless vis_info
 
-          case vis_info[:type]
-          when :gone
-            <<~JSX.chomp
-              #{indent_str(indent)}{#{vis_info[:condition]} && (
-              #{jsx}
-              #{indent_str(indent)})}
-            JSX
-          when :invisible
-            # For invisible, we add opacity style instead of conditional rendering
-            # The opacity is handled in build_visibility_style
-            jsx
-          else
-            jsx
-          end
+          <<~JSX.chomp
+            #{indent_str(indent)}{#{vis_info[:condition]} && (
+            #{jsx}
+            #{indent_str(indent)})}
+          JSX
         end
 
-        # Build style for invisible visibility (opacity: 0)
+        # Build style for visibility (no longer supports invisible type)
         def build_visibility_style
-          vis_info = build_visibility_info
-          return nil unless vis_info && vis_info[:type] == :invisible
-
-          condition = vis_info[:condition]
-          if vis_info[:invert]
-            # condition ? 'visible' : 'invisible' -> opacity: condition ? 1 : 0
-            "opacity: #{condition} ? 1 : 0"
-          else
-            # condition ? 'invisible' : 'visible' -> opacity: condition ? 0 : 1
-            "opacity: #{condition} ? 0 : 1"
-          end
+          nil
         end
 
         # Get default value from config

@@ -243,34 +243,34 @@ RSpec.describe RjuiTools::React::Converters::BaseConverter do
 
   describe '#convert_binding' do
     context 'with simple property binding' do
-      it 'converts @{title} to {viewModel.data.title}' do
+      it 'converts @{title} to {data.title}' do
         converter = create_converter({ 'type' => 'View' })
         result = converter.send(:convert_binding, '@{title}')
-        expect(result).to eq('{viewModel.data.title}')
+        expect(result).to eq('{data.title}')
       end
     end
 
     context 'with data prefix binding' do
-      it 'converts @{data.name} to {viewModel.data.name}' do
+      it 'converts @{data.name} to {data.name}' do
         converter = create_converter({ 'type' => 'View' })
         result = converter.send(:convert_binding, '@{data.name}')
-        expect(result).to eq('{viewModel.data.name}')
+        expect(result).to eq('{data.name}')
       end
     end
 
     context 'with viewModel prefix binding' do
-      it 'keeps @{viewModel.onTap} as {viewModel.onTap}' do
+      it 'converts @{viewModel.onTap} to {data.onTap}' do
         converter = create_converter({ 'type' => 'View' })
         result = converter.send(:convert_binding, '@{viewModel.onTap}')
-        expect(result).to eq('{viewModel.onTap}')
+        expect(result).to eq('{data.onTap}')
       end
     end
 
     context 'with nested property binding' do
-      it 'converts @{item.name} to {viewModel.data.item.name}' do
+      it 'converts @{item.name} to {data.item.name}' do
         converter = create_converter({ 'type' => 'View' })
         result = converter.send(:convert_binding, '@{item.name}')
-        expect(result).to eq('{viewModel.data.item.name}')
+        expect(result).to eq('{data.item.name}')
       end
     end
 
@@ -285,33 +285,33 @@ RSpec.describe RjuiTools::React::Converters::BaseConverter do
 
   describe '#build_onclick_attr' do
     context 'with onClick binding format' do
-      it 'converts @{onTap} to viewModel.data.onTap' do
+      it 'converts @{onTap} to data.onTap' do
         converter = create_converter({
           'type' => 'View',
           'onClick' => '@{onTap}'
         })
         attr = converter.send(:build_onclick_attr)
-        expect(attr).to eq(' onClick={viewModel.data.onTap}')
+        expect(attr).to eq(' onClick={data.onTap}')
       end
 
-      it 'keeps @{viewModel.onTap} as viewModel.onTap' do
+      it 'converts @{viewModel.onTap} to data.onTap' do
         converter = create_converter({
           'type' => 'View',
           'onClick' => '@{viewModel.onTap}'
         })
         attr = converter.send(:build_onclick_attr)
-        expect(attr).to eq(' onClick={viewModel.onTap}')
+        expect(attr).to eq(' onClick={data.onTap}')
       end
     end
 
     context 'with onclick selector format' do
-      it 'converts selector to viewModel.data.selector' do
+      it 'converts selector to data.selector' do
         converter = create_converter({
           'type' => 'View',
           'onclick' => 'handleClick'
         })
         attr = converter.send(:build_onclick_attr)
-        expect(attr).to eq(' onClick={viewModel.data.handleClick}')
+        expect(attr).to eq(' onClick={data.handleClick}')
       end
     end
 

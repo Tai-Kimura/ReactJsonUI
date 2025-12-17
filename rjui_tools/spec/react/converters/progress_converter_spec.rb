@@ -33,7 +33,7 @@ RSpec.describe RjuiTools::React::Converters::ProgressConverter do
       it 'generates value binding' do
         converter = create_converter({ 'class' => 'Progress', 'value' => '@{progressValue}' })
         result = converter.convert
-        expect(result).to include('value={progressValue}')
+        expect(result).to include('value={data.progressValue}')
       end
     end
 
@@ -98,7 +98,7 @@ RSpec.describe RjuiTools::React::Converters::ProgressConverter do
       it 'wraps with conditional rendering' do
         converter = create_converter({ 'class' => 'Progress', 'value' => 50, 'visibility' => '@{showProgress}' })
         result = converter.convert
-        expect(result).to include('{showProgress &&')
+        expect(result).to include('{data.showProgress &&')
       end
     end
   end

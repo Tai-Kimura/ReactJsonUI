@@ -36,8 +36,8 @@ RSpec.describe RjuiTools::React::Converters::SegmentConverter do
       it 'uses handler for onClick' do
         converter = create_converter({ 'class' => 'Segment', 'items' => ['A', 'B'], 'onValueChange' => '@{handleTabChange}' })
         result = converter.convert
-        expect(result).to include('onClick={() => handleTabChange(0)}')
-        expect(result).to include('onClick={() => handleTabChange(1)}')
+        expect(result).to include('onClick={() => data.handleTabChange(0)}')
+        expect(result).to include('onClick={() => data.handleTabChange(1)}')
       end
     end
 
@@ -78,7 +78,7 @@ RSpec.describe RjuiTools::React::Converters::SegmentConverter do
       it 'wraps with conditional rendering' do
         converter = create_converter({ 'class' => 'Segment', 'items' => ['A'], 'visibility' => '@{showTabs}' })
         result = converter.convert
-        expect(result).to include('{showTabs &&')
+        expect(result).to include('{data.showTabs &&')
       end
     end
   end

@@ -52,7 +52,7 @@ RSpec.describe RjuiTools::React::Converters::SliderConverter do
       it 'generates value binding' do
         converter = create_converter({ 'class' => 'Slider', 'value' => '@{sliderValue}' })
         result = converter.convert
-        expect(result).to include('value={sliderValue}')
+        expect(result).to include('value={data.sliderValue}')
       end
     end
 
@@ -68,7 +68,7 @@ RSpec.describe RjuiTools::React::Converters::SliderConverter do
       it 'generates onChange binding' do
         converter = create_converter({ 'class' => 'Slider', 'onValueChange' => '@{handleSlide}' })
         result = converter.convert
-        expect(result).to include('onChange={handleSlide}')
+        expect(result).to include('onChange={data.handleSlide}')
       end
     end
 
@@ -102,7 +102,7 @@ RSpec.describe RjuiTools::React::Converters::SliderConverter do
       it 'generates dynamic disabled attribute' do
         converter = create_converter({ 'class' => 'Slider', 'enabled' => '@{canSlide}' })
         result = converter.convert
-        expect(result).to include('disabled={!canSlide}')
+        expect(result).to include('disabled={!data.canSlide}')
       end
     end
 
@@ -118,7 +118,7 @@ RSpec.describe RjuiTools::React::Converters::SliderConverter do
       it 'wraps with conditional rendering' do
         converter = create_converter({ 'class' => 'Slider', 'visibility' => '@{showSlider}' })
         result = converter.convert
-        expect(result).to include('{showSlider &&')
+        expect(result).to include('{data.showSlider &&')
       end
     end
   end

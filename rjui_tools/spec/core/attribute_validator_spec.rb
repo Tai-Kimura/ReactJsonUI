@@ -11,6 +11,8 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
       it 'accepts valid single enum value in array' do
         component = {
           'type' => 'View',
+          'width' => 'matchParent',
+          'height' => 100,
           'gravity' => ['centerVertical']
         }
         warnings = validator.validate(component)
@@ -20,6 +22,8 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
       it 'accepts valid multiple enum values in array' do
         component = {
           'type' => 'View',
+          'width' => 'matchParent',
+          'height' => 100,
           'gravity' => ['centerVertical', 'left']
         }
         warnings = validator.validate(component)
@@ -53,6 +57,8 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
       it 'accepts binding expression for visibility' do
         component = {
           'type' => 'View',
+          'width' => 'matchParent',
+          'height' => 100,
           'visibility' => '@{isVisible}'
         }
         warnings = validator.validate(component)
@@ -62,6 +68,8 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
       it 'accepts binding expression for enum attribute' do
         component = {
           'type' => 'View',
+          'width' => 'matchParent',
+          'height' => 100,
           'gravity' => '@{gravityValue}'
         }
         warnings = validator.validate(component)
@@ -71,7 +79,8 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
       it 'accepts binding expression for width' do
         component = {
           'type' => 'View',
-          'width' => '@{dynamicWidth}'
+          'width' => '@{dynamicWidth}',
+          'height' => 100
         }
         warnings = validator.validate(component)
         expect(warnings).to be_empty
@@ -80,6 +89,7 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
       it 'accepts binding expression for height' do
         component = {
           'type' => 'View',
+          'width' => 'matchParent',
           'height' => '@{dynamicHeight}'
         }
         warnings = validator.validate(component)
@@ -91,7 +101,8 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
       it 'accepts valid enum string value for width' do
         component = {
           'type' => 'View',
-          'width' => 'matchParent'
+          'width' => 'matchParent',
+          'height' => 100
         }
         warnings = validator.validate(component)
         expect(warnings).to be_empty
@@ -100,6 +111,7 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
       it 'accepts valid enum string value for height' do
         component = {
           'type' => 'View',
+          'width' => 'matchParent',
           'height' => 'wrapContent'
         }
         warnings = validator.validate(component)
@@ -109,7 +121,8 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
       it 'accepts numeric value for width' do
         component = {
           'type' => 'View',
-          'width' => 100
+          'width' => 100,
+          'height' => 100
         }
         warnings = validator.validate(component)
         expect(warnings).to be_empty
@@ -118,6 +131,7 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
       it 'accepts numeric value for height' do
         component = {
           'type' => 'View',
+          'width' => 100,
           'height' => 200
         }
         warnings = validator.validate(component)
@@ -149,6 +163,8 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
       it 'accepts valid enum string value' do
         component = {
           'type' => 'View',
+          'width' => 'matchParent',
+          'height' => 100,
           'visibility' => 'visible'
         }
         warnings = validator.validate(component)
@@ -158,6 +174,8 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
       it 'accepts valid textAlign value' do
         component = {
           'type' => 'Label',
+          'width' => 'matchParent',
+          'height' => 100,
           'text' => 'Test',
           'textAlign' => 'center'
         }
@@ -170,6 +188,8 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
       it 'accepts valid number type' do
         component = {
           'type' => 'View',
+          'width' => 'matchParent',
+          'height' => 100,
           'cornerRadius' => 10
         }
         warnings = validator.validate(component)
@@ -179,6 +199,8 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
       it 'accepts valid string type' do
         component = {
           'type' => 'Label',
+          'width' => 'matchParent',
+          'height' => 100,
           'text' => 'Hello World'
         }
         warnings = validator.validate(component)
@@ -188,6 +210,8 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
       it 'accepts valid boolean type' do
         component = {
           'type' => 'View',
+          'width' => 'matchParent',
+          'height' => 100,
           'hidden' => false
         }
         warnings = validator.validate(component)
@@ -197,6 +221,8 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
       it 'accepts valid array type for padding' do
         component = {
           'type' => 'View',
+          'width' => 'matchParent',
+          'height' => 100,
           'padding' => [10, 20, 10, 20]
         }
         warnings = validator.validate(component)
@@ -208,6 +234,8 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
       it 'accepts valid alpha value within range' do
         component = {
           'type' => 'View',
+          'width' => 'matchParent',
+          'height' => 100,
           'alpha' => 0.5
         }
         warnings = validator.validate(component)
@@ -251,7 +279,59 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
     context 'with required attributes' do
       it 'does not require type when already provided' do
         component = {
-          'type' => 'View'
+          'type' => 'View',
+          'width' => 'matchParent',
+          'height' => 100
+        }
+        warnings = validator.validate(component)
+        expect(warnings).to be_empty
+      end
+
+      it 'does not require height when weight is set in vertical parent' do
+        component = {
+          'type' => 'View',
+          'width' => 'matchParent',
+          'weight' => 1
+        }
+        warnings = validator.validate(component, nil, 'vertical')
+        expect(warnings).to be_empty
+      end
+
+      it 'does not require width when weight is set in horizontal parent' do
+        component = {
+          'type' => 'View',
+          'height' => 100,
+          'weight' => 1
+        }
+        warnings = validator.validate(component, nil, 'horizontal')
+        expect(warnings).to be_empty
+      end
+
+      it 'still requires width when weight is set in vertical parent' do
+        component = {
+          'type' => 'View',
+          'weight' => 1
+        }
+        warnings = validator.validate(component, nil, 'vertical')
+        expect(warnings.any? { |w| w.include?("'width'") && w.include?('missing') }).to be true
+        expect(warnings.none? { |w| w.include?("'height'") && w.include?('missing') }).to be true
+      end
+
+      it 'still requires height when weight is set in horizontal parent' do
+        component = {
+          'type' => 'View',
+          'weight' => 1
+        }
+        warnings = validator.validate(component, nil, 'horizontal')
+        expect(warnings.any? { |w| w.include?("'height'") && w.include?('missing') }).to be true
+        expect(warnings.none? { |w| w.include?("'width'") && w.include?('missing') }).to be true
+      end
+
+      it 'does not require height when weight is set without parent orientation (defaults to vertical)' do
+        component = {
+          'type' => 'View',
+          'width' => 'matchParent',
+          'weight' => 1
         }
         warnings = validator.validate(component)
         expect(warnings).to be_empty
@@ -262,6 +342,8 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
       it 'accepts valid shadow object' do
         component = {
           'type' => 'View',
+          'width' => 'matchParent',
+          'height' => 100,
           'shadow' => {
             'color' => '#000000',
             'offsetX' => 2,
@@ -277,6 +359,8 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
       it 'accepts shadow as string' do
         component = {
           'type' => 'View',
+          'width' => 'matchParent',
+          'height' => 100,
           'shadow' => '#000000|2|2|0.5|4'
         }
         warnings = validator.validate(component)
@@ -290,6 +374,8 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
       it 'accepts react-specific attributes in react mode' do
         component = {
           'type' => 'View',
+          'width' => 'matchParent',
+          'height' => 100,
           'className' => 'custom-class'
         }
         warnings = react_validator.validate(component)
@@ -299,6 +385,8 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
       it 'accepts react-specific testId in react mode' do
         component = {
           'type' => 'View',
+          'width' => 'matchParent',
+          'height' => 100,
           'testId' => 'test-view'
         }
         warnings = react_validator.validate(component)
@@ -310,6 +398,8 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
       it 'accepts valid font attributes' do
         component = {
           'type' => 'Label',
+          'width' => 'matchParent',
+          'height' => 100,
           'text' => 'Test',
           'font' => 'Arial',
           'fontSize' => 16,
@@ -322,6 +412,8 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
       it 'accepts valid textTransform value' do
         component = {
           'type' => 'Label',
+          'width' => 'matchParent',
+          'height' => 100,
           'text' => 'Test',
           'textTransform' => 'uppercase'
         }
@@ -345,6 +437,8 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
       it 'accepts valid button attributes' do
         component = {
           'type' => 'Button',
+          'width' => 'matchParent',
+          'height' => 100,
           'text' => 'Click Me',
           'onClick' => '@{handleClick}'
         }
@@ -357,6 +451,8 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
       it 'accepts valid input type' do
         component = {
           'type' => 'TextField',
+          'width' => 'matchParent',
+          'height' => 100,
           'hint' => 'Enter email',
           'input' => 'email'
         }
@@ -380,6 +476,8 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
       it 'accepts valid columns value' do
         component = {
           'type' => 'Collection',
+          'width' => 'matchParent',
+          'height' => 100,
           'columns' => 2
         }
         warnings = validator.validate(component)
@@ -389,6 +487,8 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
       it 'accepts valid layout value' do
         component = {
           'type' => 'Collection',
+          'width' => 'matchParent',
+          'height' => 100,
           'layout' => 'vertical'
         }
         warnings = validator.validate(component)
@@ -399,7 +499,7 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
 
   describe '#has_warnings?' do
     it 'returns false when no warnings' do
-      component = { 'type' => 'View' }
+      component = { 'type' => 'View', 'width' => 'matchParent', 'height' => 100 }
       validator.validate(component)
       expect(validator.has_warnings?).to be false
     end
@@ -434,6 +534,8 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
       let(:component) do
         {
           'type' => 'Label',
+          'width' => 'matchParent',
+          'height' => 100,
           'text' => '@{userName}'
         }
       end
@@ -480,6 +582,8 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
       let(:component) do
         {
           'type' => 'Label',
+          'width' => 'matchParent',
+          'height' => 100,
           'text' => 'Hello World'
         }
       end
@@ -494,6 +598,8 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
       let(:component) do
         {
           'type' => 'Label',
+          'width' => 'matchParent',
+          'height' => 100,
           'text' => 'Email: @{email}'
         }
       end

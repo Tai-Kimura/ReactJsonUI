@@ -105,16 +105,18 @@ module RjuiTools
         def build_on_change
           handler = json['onValueChange']
 
-          if handler
-            if has_binding?(handler)
-              extract_binding_property(handler)
-            else
-              binding = build_selected_binding
-              "set#{binding[0].upcase}#{binding[1..]}"
-            end
+          if handler && has_binding?(handler)
+            extract_binding_property(handler)
           else
-            binding = build_selected_binding
-            "set#{binding[0].upcase}#{binding[1..]}"
+            # Generate setter from the raw binding name (without viewModel.data. prefix)
+            selected = json['selectedValue']
+            raw_binding = if selected && has_binding?(selected)
+                            extract_raw_binding_property(selected)
+                          else
+                            'selectedValue'
+                          end
+            setter_name = "set#{raw_binding[0].upcase}#{raw_binding[1..]}"
+            add_viewmodel_data_prefix(setter_name)
           end
         end
 

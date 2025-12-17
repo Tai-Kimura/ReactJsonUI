@@ -35,7 +35,7 @@ RSpec.describe RjuiTools::React::Converters::SwitchConverter do
       it 'generates checked binding' do
         converter = create_converter({ 'class' => 'Switch', 'isOn' => '@{isEnabled}' })
         result = converter.convert
-        expect(result).to include('checked={isEnabled}')
+        expect(result).to include('checked={data.isEnabled}')
       end
     end
 
@@ -51,7 +51,7 @@ RSpec.describe RjuiTools::React::Converters::SwitchConverter do
       it 'generates onChange binding' do
         converter = create_converter({ 'class' => 'Switch', 'onValueChange' => '@{toggleSwitch}' })
         result = converter.convert
-        expect(result).to include('onChange={toggleSwitch}')
+        expect(result).to include('onChange={data.toggleSwitch}')
       end
     end
 
@@ -93,7 +93,7 @@ RSpec.describe RjuiTools::React::Converters::SwitchConverter do
       it 'generates dynamic disabled attribute' do
         converter = create_converter({ 'class' => 'Switch', 'enabled' => '@{canToggle}' })
         result = converter.convert
-        expect(result).to include('disabled={!canToggle}')
+        expect(result).to include('disabled={!data.canToggle}')
       end
     end
 
@@ -117,7 +117,7 @@ RSpec.describe RjuiTools::React::Converters::SwitchConverter do
       it 'wraps with conditional rendering' do
         converter = create_converter({ 'class' => 'Switch', 'visibility' => '@{showSwitch}' })
         result = converter.convert
-        expect(result).to include('{showSwitch &&')
+        expect(result).to include('{data.showSwitch &&')
       end
     end
   end

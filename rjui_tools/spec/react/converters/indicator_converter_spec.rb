@@ -91,7 +91,7 @@ RSpec.describe RjuiTools::React::Converters::IndicatorConverter do
       it 'wraps with conditional rendering' do
         converter = create_converter({ 'class' => 'Indicator', 'visibility' => '@{isLoading}' })
         result = converter.convert
-        expect(result).to include('{isLoading &&')
+        expect(result).to include('{data.isLoading &&')
       end
     end
   end

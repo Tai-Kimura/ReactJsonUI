@@ -26,7 +26,7 @@
         "binding"
       ],
       "required": true,
-      "description": "Width (number, 'matchParent', 'wrapContent') - binding supported. Not required if weight is specified."
+      "description": "Width (number, 'matchParent', 'wrapContent') - binding supported"
     },
     "height": {
       "type": [
@@ -40,7 +40,7 @@
         "binding"
       ],
       "required": true,
-      "description": "Height (number, 'matchParent', 'wrapContent') - binding supported. Not required if weight is specified."
+      "description": "Height (number, 'matchParent', 'wrapContent') - binding supported"
     },
     "minWidth": {
       "type": [
@@ -250,12 +250,14 @@
     },
     "paddings": {
       "type": [
+        "number",
         "array"
       ],
       "description": "Padding as single value or [top, right, bottom, left]"
     },
     "padding": {
       "type": [
+        "number",
         "array"
       ],
       "description": "Padding as single value or [top, right, bottom, left] (alias for paddings)"
@@ -883,6 +885,13 @@
       "type": "string",
       "description": "Font family name",
       "platform": "react"
+    },
+    "fontWeight": {
+      "type": [
+        "string",
+        "number"
+      ],
+      "description": "Font weight (e.g., 'bold', 'semibold', '500', 600)"
     },
     "lineHeight": {
       "type": "number",
@@ -2181,6 +2190,17 @@
       "type": "binding",
       "description": "Value change handler - binding only (@{functionName})"
     },
+    "onValueChanged": {
+      "type": "binding",
+      "description": "Value change handler (alias) - binding only (@{functionName})"
+    },
+    "selectedValue": {
+      "type": [
+        "string",
+        "binding"
+      ],
+      "description": "Selected value (binding for two-way)"
+    },
     "multiple": {
       "type": "boolean",
       "description": "Allow multiple selection",
@@ -2418,6 +2438,14 @@
     "valueChange": {
       "type": "string",
       "description": "Value change event"
+    },
+    "onValueChange": {
+      "type": "binding",
+      "description": "Value change handler - binding only (@{functionName})"
+    },
+    "onValueChanged": {
+      "type": "binding",
+      "description": "Value change handler (alias) - binding only (@{functionName})"
     },
     "momentary": {
       "type": "boolean",

@@ -295,11 +295,11 @@ module RjuiTools
 
           viewmodel_content = <<~TS
             import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
-            import { #{view_name}Data, create#{view_name}Data } from "@/generated/data/#{view_name}Data";
+            import { #{view_name}Data } from "@/generated/data/#{view_name}Data";
 
             export class #{view_name}ViewModel {
               private router: AppRouterInstance;
-              private _data: #{view_name}Data;
+              data: #{view_name}Data;
               private _setData: (data: #{view_name}Data) => void;
 
               constructor(
@@ -308,17 +308,13 @@ module RjuiTools
                 setData: (data: #{view_name}Data) => void
               ) {
                 this.router = router;
-                this._data = data;
+                this.data = data;
                 this._setData = setData;
-              }
-
-              get data(): #{view_name}Data {
-                return this._data;
               }
 
               // Update data and trigger re-render
               updateData = (updates: Partial<#{view_name}Data>) => {
-                this._setData({ ...this._data, ...updates });
+                this._setData({ ...this.data, ...updates });
               };
             }
           TS
@@ -339,27 +335,23 @@ module RjuiTools
           FileUtils.mkdir_p(viewmodel_dir)
 
           viewmodel_content = <<~TS
-            import { #{view_name}Data, create#{view_name}Data } from "@/generated/data/#{view_name}Data";
+            import { #{view_name}Data } from "@/generated/data/#{view_name}Data";
 
             export class #{view_name}ViewModel {
-              private _data: #{view_name}Data;
+              data: #{view_name}Data;
               private _setData: (data: #{view_name}Data) => void;
 
               constructor(
                 data: #{view_name}Data,
                 setData: (data: #{view_name}Data) => void
               ) {
-                this._data = data;
+                this.data = data;
                 this._setData = setData;
-              }
-
-              get data(): #{view_name}Data {
-                return this._data;
               }
 
               // Update data and trigger re-render
               updateData = (updates: Partial<#{view_name}Data>) => {
-                this._setData({ ...this._data, ...updates });
+                this._setData({ ...this.data, ...updates });
               };
             }
           TS

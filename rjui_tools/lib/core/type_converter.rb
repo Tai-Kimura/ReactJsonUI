@@ -41,7 +41,16 @@ module RjuiTools
         'Object' => 'Record<string, any>',
         'object' => 'Record<string, any>',
         'Hash' => 'Record<string, any>',
-        'hash' => 'Record<string, any>'
+        'hash' => 'Record<string, any>',
+        # Function types (cross-platform: Swift uses () -> Void, Kotlin uses () -> Unit)
+        '() -> Void' => '() => void',
+        '(() -> Void)?' => '(() => void) | undefined',
+        '() -> Unit' => '() => void',
+        '(() -> Unit)?' => '(() => void) | undefined',
+        '(Int) -> Void' => '(index: number) => void',
+        '((Int) -> Void)?' => '((index: number) => void) | undefined',
+        '(Int) -> Unit' => '(index: number) => void',
+        '((Int) -> Unit)?' => '((index: number) => void) | undefined'
       }.freeze
 
       # Default values for each TypeScript type
@@ -94,8 +103,23 @@ module RjuiTools
         def to_typescript_type(json_type)
           return 'any' if json_type.nil? || json_type.to_s.empty?
 
+          type_str = json_type.to_s
+
+          # Check for Array(ElementType) syntax -> ElementType[]
+          if (match = type_str.match(/^Array\((.+)\)$/))
+            element_type = to_typescript_type(match[1].strip)
+            return "#{element_type}[]"
+          end
+
+          # Check for Dictionary(KeyType,ValueType) syntax -> Record<KeyType, ValueType>
+          if (match = type_str.match(/^Dictionary\((.+),\s*(.+)\)$/))
+            key_type = to_typescript_type(match[1].strip)
+            value_type = to_typescript_type(match[2].strip)
+            return "Record<#{key_type}, #{value_type}>"
+          end
+
           # Return mapped type, or original type as-is if not found
-          TYPE_MAPPING[json_type.to_s] || json_type.to_s
+          TYPE_MAPPING[type_str] || type_str
         end
 
         # Check if the type is a primitive type

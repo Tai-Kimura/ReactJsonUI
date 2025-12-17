@@ -74,7 +74,7 @@ RSpec.describe RjuiTools::React::Converters::ImageConverter do
           'src' => '@{imageUrl}'
         })
         result = converter.convert
-        expect(result).to include('src={viewModel.data.imageUrl}')
+        expect(result).to include('src={data.imageUrl}')
       end
     end
 

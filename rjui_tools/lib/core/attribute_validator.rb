@@ -29,8 +29,9 @@ module RjuiTools
       # Validate a component and return warnings
       # @param component [Hash] The component to validate
       # @param component_type [String] The type of component (e.g., "Label", "TextField")
+      # @param parent_orientation [String] The parent's orientation ('horizontal' or 'vertical')
       # @return [Array<String>] Array of warning messages
-      def validate(component, component_type = nil)
+      def validate(component, component_type = nil, parent_orientation = nil)
         @warnings = []
         @infos = []
         type = component_type || component['type']
@@ -70,6 +71,9 @@ module RjuiTools
         valid_attrs.each do |attr_name, attr_def|
           next unless platform_compatible?(attr_def)
           if attr_def['required'] && !component.key?(attr_name)
+            # Skip width/height required check if weight is set and parent orientation allows it
+            next if skip_dimension_required?(attr_name, component, parent_orientation)
+
             add_warning("Required attribute '#{attr_name}' is missing for component type '#{type}'")
           end
         end
@@ -421,6 +425,27 @@ module RjuiTools
         return if value.end_with?('}')
 
         add_warning("Attribute '#{path}' in '#{component_type}' has invalid binding syntax (starts with '@{' but doesn't end with '}')")
+      end
+
+      # Check if width/height required warning should be skipped
+      # When weight is set, the dimension in the parent's orientation direction is not required
+      # - parent orientation: horizontal -> width not required if weight is set
+      # - parent orientation: vertical -> height not required if weight is set
+      def skip_dimension_required?(attr_name, component, parent_orientation)
+        return false unless component.key?('weight')
+        return false unless %w[width height].include?(attr_name)
+
+        case parent_orientation
+        when 'horizontal'
+          # In horizontal layout, weight determines width
+          attr_name == 'width'
+        when 'vertical'
+          # In vertical layout, weight determines height
+          attr_name == 'height'
+        else
+          # Default orientation is vertical, so height is determined by weight
+          attr_name == 'height'
+        end
       end
 
       # Check if attribute is compatible with current platform

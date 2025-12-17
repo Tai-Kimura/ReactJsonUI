@@ -34,7 +34,7 @@ RSpec.describe RjuiTools::React::Converters::ToggleConverter do
       it 'generates checked binding' do
         converter = create_converter({ 'class' => 'CheckBox', 'isOn' => '@{isChecked}' })
         result = converter.convert
-        expect(result).to include('checked={isChecked}')
+        expect(result).to include('checked={data.isChecked}')
       end
     end
 
@@ -50,7 +50,7 @@ RSpec.describe RjuiTools::React::Converters::ToggleConverter do
       it 'generates onChange binding' do
         converter = create_converter({ 'class' => 'CheckBox', 'onValueChange' => '@{handleChange}' })
         result = converter.convert
-        expect(result).to include('onChange={handleChange}')
+        expect(result).to include('onChange={data.handleChange}')
       end
     end
 
@@ -68,7 +68,7 @@ RSpec.describe RjuiTools::React::Converters::ToggleConverter do
       it 'generates dynamic disabled attribute' do
         converter = create_converter({ 'class' => 'CheckBox', 'enabled' => '@{isEnabled}' })
         result = converter.convert
-        expect(result).to include('disabled={!isEnabled}')
+        expect(result).to include('disabled={!data.isEnabled}')
       end
     end
 
@@ -100,7 +100,7 @@ RSpec.describe RjuiTools::React::Converters::ToggleConverter do
       it 'wraps with conditional rendering' do
         converter = create_converter({ 'class' => 'CheckBox', 'visibility' => '@{showCheckbox}' })
         result = converter.convert
-        expect(result).to include('{showCheckbox &&')
+        expect(result).to include('{data.showCheckbox &&')
       end
     end
   end

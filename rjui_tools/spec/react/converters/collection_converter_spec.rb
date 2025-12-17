@@ -50,7 +50,7 @@ RSpec.describe RjuiTools::React::Converters::CollectionConverter do
       it 'generates map rendering' do
         converter = create_converter({ 'class' => 'Collection', 'cellClasses' => ['ItemCell'], 'items' => '@{listItems}' })
         result = converter.convert
-        expect(result).to include('{listItems?.map((item, index) =>')
+        expect(result).to include('{data.listItems?.map((item, index) =>')
         expect(result).to include('key={index}')
         expect(result).to include('data={item}')
       end
@@ -138,7 +138,7 @@ RSpec.describe RjuiTools::React::Converters::CollectionConverter do
       it 'wraps with conditional rendering' do
         converter = create_converter({ 'class' => 'Collection', 'cellClasses' => ['ItemCell'], 'visibility' => '@{showList}' })
         result = converter.convert
-        expect(result).to include('{showList &&')
+        expect(result).to include('{data.showList &&')
       end
     end
   end

@@ -35,7 +35,7 @@ RSpec.describe RjuiTools::React::Converters::SelectBoxConverter do
       it 'generates dynamic options mapping' do
         converter = create_converter({ 'class' => 'SelectBox', 'items' => '@{options}' })
         result = converter.convert
-        expect(result).to include('{options?.map((item) =>')
+        expect(result).to include('{data.options?.map((item) =>')
         expect(result).to include('{item.text || item.label}')
       end
     end
@@ -52,7 +52,7 @@ RSpec.describe RjuiTools::React::Converters::SelectBoxConverter do
       it 'generates value binding' do
         converter = create_converter({ 'class' => 'SelectBox', 'items' => ['A', 'B'], 'selectedValue' => '@{selected}' })
         result = converter.convert
-        expect(result).to include('value={selected}')
+        expect(result).to include('value={data.selected}')
       end
     end
 
@@ -68,7 +68,7 @@ RSpec.describe RjuiTools::React::Converters::SelectBoxConverter do
       it 'generates onChange with event handler' do
         converter = create_converter({ 'class' => 'SelectBox', 'items' => ['A', 'B'], 'onChange' => '@{handleChange}' })
         result = converter.convert
-        expect(result).to include('onChange={(e) => handleChange(e.target.value)}')
+        expect(result).to include('onChange={(e) => data.handleChange(e.target.value)}')
       end
     end
 
@@ -110,7 +110,7 @@ RSpec.describe RjuiTools::React::Converters::SelectBoxConverter do
       it 'wraps with conditional rendering' do
         converter = create_converter({ 'class' => 'SelectBox', 'items' => ['A'], 'visibility' => '@{showSelect}' })
         result = converter.convert
-        expect(result).to include('{showSelect &&')
+        expect(result).to include('{data.showSelect &&')
       end
     end
   end
