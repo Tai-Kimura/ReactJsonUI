@@ -255,13 +255,6 @@
       ],
       "description": "Padding as single value or [top, right, bottom, left]"
     },
-    "padding": {
-      "type": [
-        "number",
-        "array"
-      ],
-      "description": "Padding as single value or [top, right, bottom, left] (alias for paddings)"
-    },
     "paddingTop": {
       "type": [
         "number",
