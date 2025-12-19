@@ -243,7 +243,12 @@ module RjuiTools
 
         case ts_type
         when 'string'
-          value.is_a?(String) ? "\"#{value}\"" : "\"#{value}\""
+          # Handle '' as empty string (common shorthand)
+          if value == "''"
+            '""'
+          else
+            value.is_a?(String) ? "\"#{value}\"" : "\"#{value}\""
+          end
         when 'number'
           value.to_s
         when 'boolean'
