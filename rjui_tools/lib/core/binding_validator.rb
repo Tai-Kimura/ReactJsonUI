@@ -233,6 +233,10 @@ module RjuiTools
       end
 
       def check_value_for_bindings(value, attribute_name, component_type)
+        # Check visibility attribute for Boolean type (should use String enum: visible, gone, invisible)
+        # Must be called for all value types including TrueClass/FalseClass
+        check_visibility_type(value, attribute_name, component_type)
+
         case value
         when String
           if value.start_with?('@{') && value.end_with?('}')
@@ -328,6 +332,30 @@ module RjuiTools
 
       def allowed_pattern?(binding)
         ALLOWED_PATTERNS.any? { |pattern| binding.match?(pattern) }
+      end
+
+      # Check if visibility attribute is using Boolean instead of String enum
+      # Valid values: "visible", "gone", "invisible"
+      # Invalid: true, false, @{booleanProperty}
+      def check_visibility_type(value, attribute_name, component_type)
+        return unless attribute_name == 'visibility'
+
+        # Check for literal boolean values
+        if value == true || value == false || value == 'true' || value == 'false'
+          context = @current_file ? "[#{@current_file}] " : ""
+          @warnings << "#{context}'#{component_type}.visibility' should use String enum (\"visible\", \"gone\", \"invisible\"), not Boolean. Use a String property in data section with visibility values."
+          return
+        end
+
+        # Check for binding to boolean property (isXxx, hasXxx, etc.)
+        if value.is_a?(String) && value.start_with?('@{') && value.end_with?('}')
+          binding_expr = value[2..-2]
+          # Check if binding name suggests boolean (isXxx, hasXxx, canXxx, shouldXxx)
+          if binding_expr.match?(/^(is|has|can|should)[A-Z]/)
+            context = @current_file ? "[#{@current_file}] " : ""
+            @warnings << "#{context}'#{component_type}.visibility' binding '@{#{binding_expr}}' appears to be Boolean. Use String property with values: \"visible\", \"gone\", or \"invisible\"."
+          end
+        end
       end
     end
   end

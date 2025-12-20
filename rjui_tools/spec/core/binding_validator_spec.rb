@@ -166,7 +166,7 @@ RSpec.describe RjuiTools::Core::BindingValidator do
               { 'name' => 'isLoggedIn', 'type' => 'Boolean' },
               { 'name' => 'hasPermission', 'type' => 'Boolean' }
             ] },
-            { 'type' => 'View', 'visibility' => '@{isLoggedIn && hasPermission}' }
+            { 'type' => 'View', 'hidden' => '@{isLoggedIn && hasPermission}' }
           ]
         }
         warnings = validator.validate(component)
