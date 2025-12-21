@@ -670,7 +670,7 @@
     },
     "style": {
       "type": "string",
-      "description": "Style class name"
+      "description": "Style file name (without extension)"
     },
     "compressHorizontal": {
       "type": "string",
@@ -2569,7 +2569,7 @@
         "horizontal",
         "vertical"
       ],
-      "description": "Stack orientation"
+      "description": "Stack orientation (default: zstack)"
     },
     "direction": {
       "type": "string",
@@ -3291,7 +3291,7 @@
         "horizontal",
         "vertical"
       ],
-      "description": "Stack orientation"
+      "description": "Stack orientation (default: zstack)"
     },
     "safeAreaInsetPositions": {
       "type": "array",

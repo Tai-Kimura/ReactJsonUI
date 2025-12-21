@@ -270,7 +270,7 @@ module RjuiTools
         variables.each do |var|
           unless @data_properties.include?(var)
             context = @current_file ? "[#{@current_file}] " : ""
-            @warnings << "#{context}Binding variable '#{var}' in '#{component_type}.#{attribute_name}' is not defined in data. Add: { \"class\": \"#{infer_type(var, attribute_name)}\", \"name\": \"#{var}\" }"
+            @warnings << "#{context}Binding variable '#{var}' in '#{component_type}.#{attribute_name}' is not defined in data. Add: { \"class\": \"#{infer_type(var, attribute_name, component_type)}\", \"name\": \"#{var}\" }"
           end
         end
       end
@@ -297,7 +297,7 @@ module RjuiTools
 
       # Infer type from variable name and attribute context
       # Returns cross-platform type format (works with Swift, Kotlin, React)
-      def infer_type(var_name, attribute_name)
+      def infer_type(var_name, attribute_name, component_type = nil)
         # onClick, onXxx -> (() -> Void)? (cross-platform callback type)
         return '(() -> Void)?' if var_name.start_with?('on') && var_name[2]&.match?(/[A-Z]/)
 
@@ -325,6 +325,13 @@ module RjuiTools
           'Int'
         when 'hidden', 'enabled', 'disabled'
           'Bool'
+        when 'src', 'srcName'
+          # NetworkImage uses URL string, Image/CircleImage uses Image type
+          if component_type&.include?('Network')
+            'String'
+          else
+            'Image'
+          end
         else
           'any'
         end
