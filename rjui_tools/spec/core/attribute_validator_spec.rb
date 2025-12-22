@@ -328,14 +328,16 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
         expect(warnings.none? { |w| w.include?("'width'") && w.include?('missing') }).to be true
       end
 
-      it 'does not require height when weight is set without parent orientation (defaults to vertical)' do
+      it 'warns about weight when no parent orientation (ZStack)' do
         component = {
           'type' => 'View',
           'width' => 'matchParent',
+          'height' => 'wrapContent',
           'weight' => 1
         }
         warnings = validator.validate(component)
-        expect(warnings).to be_empty
+        # Weight is not applicable in ZStack (no orientation)
+        expect(warnings.any? { |w| w.include?("'weight'") && w.include?('ZStack') }).to be true
       end
     end
 
@@ -643,6 +645,82 @@ RSpec.describe RjuiTools::Core::AttributeValidator do
         expect(warnings).to include(
           "Attribute 'shadow.color' in 'Label' has invalid binding syntax (starts with '@{' but doesn't end with '}')"
         )
+      end
+    end
+  end
+
+  # NEW: Tests for weight dimension conflict
+  describe '#check_weight_dimension_conflict' do
+    let(:validator) { described_class.new(:all) }
+
+    context 'with horizontal parent orientation' do
+      it 'warns when component has both weight and width' do
+        component = {
+          'type' => 'View',
+          'width' => 100,
+          'height' => 'wrapContent',
+          'weight' => 1
+        }
+        warnings = validator.validate(component, nil, 'horizontal')
+        expect(warnings.any? { |w| w.include?("'weight' and 'width'") && w.include?('horizontal') }).to be true
+      end
+
+      it 'does not warn when component has weight and height (cross direction)' do
+        component = {
+          'type' => 'View',
+          'height' => 100,
+          'weight' => 1
+        }
+        warnings = validator.validate(component, nil, 'horizontal')
+        expect(warnings.none? { |w| w.include?("'weight' and 'height'") }).to be true
+      end
+    end
+
+    context 'with vertical parent orientation' do
+      it 'warns when component has both weight and height' do
+        component = {
+          'type' => 'View',
+          'width' => 'wrapContent',
+          'height' => 100,
+          'weight' => 1
+        }
+        warnings = validator.validate(component, nil, 'vertical')
+        expect(warnings.any? { |w| w.include?("'weight' and 'height'") && w.include?('vertical') }).to be true
+      end
+
+      it 'does not warn when component has weight and width (cross direction)' do
+        component = {
+          'type' => 'View',
+          'width' => 100,
+          'weight' => 1
+        }
+        warnings = validator.validate(component, nil, 'vertical')
+        expect(warnings.none? { |w| w.include?("'weight' and 'width'") }).to be true
+      end
+    end
+
+    context 'with no parent orientation (ZStack)' do
+      it 'warns that weight is not applicable' do
+        component = {
+          'type' => 'View',
+          'width' => 'wrapContent',
+          'height' => 'wrapContent',
+          'weight' => 1
+        }
+        warnings = validator.validate(component, nil, nil)
+        expect(warnings.any? { |w| w.include?("'weight'") && w.include?('ZStack') }).to be true
+      end
+    end
+
+    context 'without weight' do
+      it 'does not warn' do
+        component = {
+          'type' => 'View',
+          'width' => 100,
+          'height' => 100
+        }
+        warnings = validator.validate(component, nil, 'horizontal')
+        expect(warnings.none? { |w| w.include?('weight') }).to be true
       end
     end
   end

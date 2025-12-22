@@ -87,6 +87,9 @@ module RjuiTools
         # Check for conflicting attributes
         check_spacing_gravity_conflict(merged_component, type)
 
+        # Check for weight + dimension conflict
+        check_weight_dimension_conflict(merged_component, type, parent_orientation)
+
         @warnings
       end
 
@@ -444,6 +447,28 @@ module RjuiTools
 
         if has_spacing && has_gravity
           add_warning("Component '#{component_type}' has both 'spacing'/'distribution' and 'gravity' set. This combination may cause unexpected layout behavior. Consider using only one of these attributes.")
+        end
+      end
+
+      # Check for weight + dimension conflict in the same direction as parent orientation
+      # - parent orientation: horizontal + width + weight -> warning
+      # - parent orientation: vertical + height + weight -> warning
+      # - no orientation (ZStack) + weight -> warning (weight is invalid)
+      def check_weight_dimension_conflict(component, component_type, parent_orientation)
+        return unless component.key?('weight')
+
+        case parent_orientation
+        when 'horizontal'
+          if component.key?('width')
+            add_warning("Component '#{component_type}' has both 'weight' and 'width' in horizontal layout. 'weight' will override 'width'. Consider removing 'width'.")
+          end
+        when 'vertical'
+          if component.key?('height')
+            add_warning("Component '#{component_type}' has both 'weight' and 'height' in vertical layout. 'weight' will override 'height'. Consider removing 'height'.")
+          end
+        else
+          # No orientation means ZStack - weight is not applicable
+          add_warning("Component '#{component_type}' has 'weight' but parent has no orientation (ZStack). 'weight' only works in horizontal/vertical layouts. Consider removing 'weight'.")
         end
       end
 
