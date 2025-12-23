@@ -39,7 +39,10 @@ module RjuiTools
           # Update Data models from JSON data sections
           update_data_models
 
-          json_files = Dir.glob(File.join(layouts_dir, '**', '*.json'))
+          json_files = Dir.glob(File.join(layouts_dir, '**', '*.json')).reject do |file|
+            # Skip Resources folder (colors.json, strings.json, etc.)
+            file.include?(File.join(layouts_dir, 'Resources'))
+          end
 
           if json_files.empty?
             Core::Logger.warn('No JSON layout files found')
