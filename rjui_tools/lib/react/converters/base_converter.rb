@@ -209,8 +209,11 @@ module RjuiTools
 
         def convert_children(indent)
           # Support both 'children' and 'child' keys
-          child_array = json['children'] || json['child']
-          return '' unless child_array.is_a?(Array)
+          child_data = json['children'] || json['child']
+          return '' unless child_data
+
+          # Normalize to array (support both single object and array)
+          child_array = child_data.is_a?(Array) ? child_data : [child_data]
 
           child_array.filter_map do |child|
             # Skip data-only elements (they define props, not rendered content)
