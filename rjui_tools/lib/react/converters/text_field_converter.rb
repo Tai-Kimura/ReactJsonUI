@@ -100,7 +100,9 @@ module RjuiTools
 
           style_pairs = @dynamic_styles.map do |key, value|
             clean_value = value.gsub(/^\{|\}$/, '')
-            "#{key}: #{clean_value}"
+            # CSS custom properties (--xxx) need to be quoted as object keys
+            formatted_key = key.start_with?('--') ? "'#{key}'" : key
+            "#{formatted_key}: #{clean_value}"
           end
 
           " style={{ #{style_pairs.join(', ')} }}"
