@@ -38,8 +38,8 @@ module RjuiTools
             classes << 'overflow-x-auto'
             classes << 'flex flex-row'
             classes << 'flex-nowrap' if json['scrollEnabled'] != false
-            # For horizontal: lineSpacing = horizontal gap between items
-            spacing = json['lineSpacing'] || json['itemSpacing'] || json['spacing']
+            # For horizontal: columnSpacing (or lineSpacing/itemSpacing) = gap between items
+            spacing = json['columnSpacing'] || json['lineSpacing'] || json['itemSpacing'] || json['spacing']
             classes << "gap-[#{spacing}px]" if spacing
           elsif columns == 1
             # List style (single column)

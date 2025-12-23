@@ -344,13 +344,18 @@ module RjuiTools
 
       def uses_string_manager?(json)
         # Check text attributes for snake_case string keys
-        %w[text hint placeholder label title].each do |attr|
+        %w[text hint placeholder label title src url].each do |attr|
           return true if json[attr] && string_key?(json[attr])
         end
 
-        # Recurse into children
-        json['child']&.each do |child|
-          return true if child.is_a?(Hash) && uses_string_manager?(child)
+        # Recurse into children (handle both array and single object)
+        children = json['child']
+        if children.is_a?(Array)
+          children.each do |child|
+            return true if child.is_a?(Hash) && uses_string_manager?(child)
+          end
+        elsif children.is_a?(Hash)
+          return true if uses_string_manager?(children)
         end
 
         false

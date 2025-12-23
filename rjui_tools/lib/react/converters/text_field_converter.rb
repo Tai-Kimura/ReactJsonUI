@@ -38,19 +38,20 @@ module RjuiTools
         def build_class_name
           classes = [super]
 
-          # Default input styles
-          classes << 'border'
+          # Default input styles (no border unless explicitly set via borderWidth)
           classes << 'outline-none'
           classes << 'focus:ring-2 focus:ring-blue-500'
 
-          # Border style
-          case json['borderStyle']&.downcase
-          when 'roundedrect'
-            classes << 'rounded-md'
-          when 'line'
-            classes << 'border-b border-t-0 border-l-0 border-r-0 rounded-none'
-          when 'none'
-            classes << 'border-0'
+          # Border style (only when borderWidth is set)
+          if json['borderWidth'] || json['borderStyle']
+            case json['borderStyle']&.downcase
+            when 'roundedrect'
+              classes << 'rounded-md'
+            when 'line'
+              classes << 'border-b border-t-0 border-l-0 border-r-0 rounded-none'
+            when 'none'
+              classes << 'border-0'
+            end
           end
 
           # Disabled state
@@ -123,10 +124,17 @@ module RjuiTools
           attrs << " placeholder=\"#{placeholder}\"" if placeholder
 
           # Value binding
+          # Use 'value' only when onChange handler is provided (controlled component)
+          # Otherwise use 'defaultValue' to avoid React warning
           if json['text']
             value = convert_binding(json['text'])
+            has_change_handler = json['onTextChange'] || json['onChange']
             if value.include?('{')
-              attrs << " value={#{value.gsub(/[{}]/, '')}}"
+              if has_change_handler
+                attrs << " value={#{value.gsub(/[{}]/, '')}}"
+              else
+                attrs << " defaultValue={#{value.gsub(/[{}]/, '')}}"
+              end
             else
               attrs << " defaultValue=\"#{value}\""
             end

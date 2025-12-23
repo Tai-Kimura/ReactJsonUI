@@ -27,9 +27,27 @@ module RjuiTools
           classes = []
           @dynamic_styles = {}
 
-          # Width/Height
-          classes << TailwindMapper.map_width(json['width'])
+          # Width/Height - handle matchParent with horizontal margin
+          left_margin = json['leftMargin'] || json['startMargin'] || 0
+          right_margin = json['rightMargin'] || json['endMargin'] || 0
+          has_horizontal_margin = left_margin.is_a?(Numeric) && left_margin > 0 ||
+                                  right_margin.is_a?(Numeric) && right_margin > 0
+
+          if json['width'] == 'matchParent' && has_horizontal_margin
+            # Use calc to account for margins
+            total_margin = (left_margin.is_a?(Numeric) ? left_margin : 0) +
+                          (right_margin.is_a?(Numeric) ? right_margin : 0)
+            @dynamic_styles['width'] = "'calc(100% - #{total_margin}px)'"
+          else
+            classes << TailwindMapper.map_width(json['width'])
+          end
           classes << TailwindMapper.map_height(json['height'])
+
+          # Prevent flex shrinking when fixed dimensions are specified
+          # This ensures elements maintain their specified size in flex containers
+          if json['width'].is_a?(Numeric) || json['height'].is_a?(Numeric)
+            classes << 'shrink-0'
+          end
 
           # Min/Max Width/Height constraints
           classes << TailwindMapper.map_min_width(json['minWidth']) if json['minWidth']
@@ -166,6 +184,16 @@ module RjuiTools
 
           # Flex grow (weight)
           classes << TailwindMapper.map_flex_grow(json['weight']) if json['weight']
+
+          # Self-centering (for non-View elements like Image, Label)
+          # centerHorizontal: center this element horizontally within parent
+          # centerVertical: center this element vertically within parent
+          classes << 'mx-auto' if json['centerHorizontal']
+          classes << 'my-auto' if json['centerVertical']
+          if json['centerInParent']
+            classes << 'mx-auto'
+            classes << 'my-auto'
+          end
 
           # Gravity alignment - pass orientation for correct flexbox mapping
           classes.concat(TailwindMapper.map_gravity(json['gravity'], json['orientation'])) if json['gravity']
