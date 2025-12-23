@@ -112,7 +112,8 @@ module RjuiTools
           end
 
           # Get this component's orientation for children validation
-          current_orientation = component['orientation']
+          # If not specified, inherit from parent
+          current_orientation = component['orientation'] || parent_orientation
 
           # Validate children recursively
           if component['child']
