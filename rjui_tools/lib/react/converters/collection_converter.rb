@@ -96,7 +96,7 @@ module RjuiTools
 
           # Header
           if header_view
-            lines << "#{indent_str(indent)}<#{header_view} />"
+            lines << "#{indent_str(indent)}<#{header_view} data={#{items_binding}?.sections?.[#{section_index}]?.header || {}} />"
           end
 
           # Cells with map
@@ -112,7 +112,7 @@ module RjuiTools
 
           # Footer
           if footer_view
-            lines << "#{indent_str(indent)}<#{footer_view} />"
+            lines << "#{indent_str(indent)}<#{footer_view} data={#{items_binding}?.sections?.[#{section_index}]?.footer || {}} />"
           end
 
           lines.join("\n")
@@ -129,14 +129,19 @@ module RjuiTools
           header_view = extract_view_name(header_classes.first) if header_classes.any?
           footer_view = extract_view_name(footer_classes.first) if footer_classes.any?
 
+          items_binding = extract_collection_binding(json['items'])
+
           # Header
           if header_view
-            lines << "#{indent_str(indent)}<#{header_view} />"
+            if items_binding
+              lines << "#{indent_str(indent)}<#{header_view} data={#{items_binding}?.header || {}} />"
+            else
+              lines << "#{indent_str(indent)}<#{header_view} />"
+            end
           end
 
           # Cells placeholder
           if cell_view
-            items_binding = extract_collection_binding(json['items'])
             if items_binding
               lines << "#{indent_str(indent)}{#{items_binding}?.map((item, index) => ("
               lines << "#{indent_str(indent + 2)}<#{cell_view} key={index} data={item} />"
@@ -151,7 +156,11 @@ module RjuiTools
 
           # Footer
           if footer_view
-            lines << "#{indent_str(indent)}<#{footer_view} />"
+            if items_binding
+              lines << "#{indent_str(indent)}<#{footer_view} data={#{items_binding}?.footer || {}} />"
+            else
+              lines << "#{indent_str(indent)}<#{footer_view} />"
+            end
           end
 
           lines.join("\n")
