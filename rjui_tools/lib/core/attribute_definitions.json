@@ -2747,6 +2747,14 @@
     }
   },
   "Collection": {
+    "orientation": {
+      "type": "string",
+      "enum": [
+        "horizontal",
+        "vertical"
+      ],
+      "description": "Scroll direction (horizontal or vertical)"
+    },
     "cellClasses": {
       "type": "array",
       "description": "Cell class definitions"

@@ -30,7 +30,7 @@ module RjuiTools
           classes = [super]
 
           columns = json['columnCount'] || json['columns'] || 1
-          layout = json['layout'] || json['scrollDirection'] || 'vertical'
+          layout = json['orientation'] || json['layout'] || json['scrollDirection'] || 'vertical'
           is_horizontal = layout.to_s.downcase == 'horizontal'
 
           if is_horizontal
