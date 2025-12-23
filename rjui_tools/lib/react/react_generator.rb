@@ -329,6 +329,11 @@ module RjuiTools
           components << type
         end
 
+        # Check for NetworkImage type (built-in but requires separate import)
+        if type == 'NetworkImage'
+          components << 'NetworkImage'
+        end
+
         # Recurse into children
         json['child']&.each do |child|
           extract_extension_components(child, components) if child.is_a?(Hash)
