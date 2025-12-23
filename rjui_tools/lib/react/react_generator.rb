@@ -294,6 +294,25 @@ module RjuiTools
           end
         end
 
+        # Check for Collection sections (SwiftUI/Compose/React style)
+        json['sections']&.each do |section|
+          next unless section.is_a?(Hash)
+
+          %w[header cell footer].each do |key|
+            class_name = section[key]
+            next unless class_name.is_a?(String)
+
+            base_name = class_name.split('/').last
+            # If already PascalCase (starts with uppercase and no underscores), use as-is
+            component_name = if base_name.match?(/^[A-Z]/) && !base_name.include?('_')
+                               base_name
+                             else
+                               base_name.split('_').map(&:capitalize).join
+                             end
+            components << component_name
+          end
+        end
+
         # Recurse into children
         json['child']&.each do |child|
           extract_included_components(child, components) if child.is_a?(Hash)
