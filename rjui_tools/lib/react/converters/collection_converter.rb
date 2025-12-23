@@ -38,19 +38,29 @@ module RjuiTools
             classes << 'overflow-x-auto'
             classes << 'flex flex-row'
             classes << 'flex-nowrap' if json['scrollEnabled'] != false
-            spacing = json['itemSpacing'] || json['spacing']
+            # For horizontal: lineSpacing = horizontal gap between items
+            spacing = json['lineSpacing'] || json['itemSpacing'] || json['spacing']
             classes << "gap-[#{spacing}px]" if spacing
           elsif columns == 1
             # List style (single column)
             classes << 'flex flex-col'
-            spacing = json['itemSpacing'] || json['spacing']
+            # lineSpacing for vertical spacing between items
+            spacing = json['lineSpacing'] || json['itemSpacing'] || json['spacing']
             classes << "gap-[#{spacing}px]" if spacing
           else
             # Grid layout
             classes << 'grid'
             classes << "grid-cols-#{columns}"
-            spacing = json['itemSpacing'] || json['spacing']
-            classes << "gap-[#{spacing}px]" if spacing
+            # lineSpacing for row gap, itemSpacing for column gap
+            row_gap = json['lineSpacing']
+            col_gap = json['itemSpacing'] || json['spacing']
+            if row_gap && col_gap
+              classes << "gap-x-[#{col_gap}px] gap-y-[#{row_gap}px]"
+            elsif row_gap
+              classes << "gap-y-[#{row_gap}px]"
+            elsif col_gap
+              classes << "gap-[#{col_gap}px]"
+            end
           end
 
           # Content insets as padding
