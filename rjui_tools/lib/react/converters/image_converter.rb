@@ -99,8 +99,13 @@ module RjuiTools
           return '' unless onclick
 
           if onclick.end_with?(':')
+            # Selector format: "methodName:"
             method_name = onclick.chomp(':')
             " onClick={() => #{method_name}(this)}"
+          elsif has_binding?(onclick)
+            # Binding format: "@{functionName}"
+            handler = extract_binding_property(onclick)
+            " onClick={#{handler}}"
           else
             " onClick={#{onclick}}"
           end
