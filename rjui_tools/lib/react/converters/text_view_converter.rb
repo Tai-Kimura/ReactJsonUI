@@ -160,8 +160,8 @@ module RjuiTools
           handler = json['onTextChange'] || json['onChange']
           return '' unless handler
 
-          if handler.start_with?('@{')
-            " onChange={#{handler.gsub(/@\{|\}/, '')}}"
+          if has_binding?(handler)
+            " onChange={#{extract_binding_property(handler)}}"
           else
             " onChange={#{handler}}"
           end
