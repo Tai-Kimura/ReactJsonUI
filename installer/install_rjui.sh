@@ -8,7 +8,7 @@ set -e
 # Default values
 GITHUB_REPO="Tai-Kimura/ReactJsonUI"
 DEFAULT_BRANCH="main"
-INSTALL_DIR=".."
+INSTALL_DIR="."
 
 # Colors for output
 RED='\033[0;31m'
