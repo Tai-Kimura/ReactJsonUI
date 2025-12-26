@@ -262,4 +262,83 @@ RSpec.describe RjuiTools::Core::TypeConverter do
       expect(described_class.format_value(nil, 'string')).to eq('undefined')
     end
   end
+
+  describe '.to_typescript_type with function types' do
+    context 'with simple function types' do
+      it 'converts () -> Void to arrow function' do
+        expect(described_class.to_typescript_type('() -> Void')).to eq('(() => void) | undefined')
+      end
+
+      it 'converts () -> Unit (Kotlin) to arrow function' do
+        expect(described_class.to_typescript_type('() -> Unit')).to eq('(() => void) | undefined')
+      end
+
+      it 'converts optional function type (() -> Void)?' do
+        expect(described_class.to_typescript_type('(() -> Void)?')).to eq('(() => void) | undefined')
+      end
+
+      it 'converts optional function type (() -> Unit)?' do
+        expect(described_class.to_typescript_type('(() -> Unit)?')).to eq('(() => void) | undefined')
+      end
+    end
+
+    context 'with function types with parameters' do
+      it 'converts (Int) -> Void' do
+        result = described_class.to_typescript_type('(Int) -> Void')
+        expect(result).to eq('((arg0: number) => void) | undefined')
+      end
+
+      it 'converts ((Int) -> Void)?' do
+        result = described_class.to_typescript_type('((Int) -> Void)?')
+        expect(result).to eq('((arg0: number) => void) | undefined')
+      end
+
+      it 'converts (String, Int) -> Bool' do
+        result = described_class.to_typescript_type('(String, Int) -> Bool')
+        expect(result).to eq('((arg0: string, arg1: number) => boolean) | undefined')
+      end
+    end
+
+    context 'with complex function types' do
+      it 'converts ((Image) -> Color) with type mapping' do
+        result = described_class.to_typescript_type('((Image) -> Color)')
+        expect(result).to eq('((arg0: string) => string) | undefined')
+      end
+
+      it 'converts ((String, Int) -> Bool)?' do
+        result = described_class.to_typescript_type('((String, Int) -> Bool)?')
+        expect(result).to eq('((arg0: string, arg1: number) => boolean) | undefined')
+      end
+
+      it 'converts function with nested function parameter' do
+        result = described_class.to_typescript_type('((Int) -> String, Bool) -> Void')
+        expect(result).to include('=> void) | undefined')
+      end
+    end
+
+    context 'with optional parameter types' do
+      it 'converts (String?) -> Int' do
+        result = described_class.to_typescript_type('(String?) -> Int')
+        expect(result).to eq('((arg0: string | undefined) => number) | undefined')
+      end
+    end
+  end
+
+  describe '.to_typescript_type with optional types' do
+    it 'converts String? to string | undefined' do
+      expect(described_class.to_typescript_type('String?')).to eq('string | undefined')
+    end
+
+    it 'converts Int? to number | undefined' do
+      expect(described_class.to_typescript_type('Int?')).to eq('number | undefined')
+    end
+
+    it 'converts Bool? to boolean | undefined' do
+      expect(described_class.to_typescript_type('Bool?')).to eq('boolean | undefined')
+    end
+
+    it 'converts Array(String)? to string[] | undefined' do
+      expect(described_class.to_typescript_type('Array(String)?')).to eq('string[] | undefined')
+    end
+  end
 end

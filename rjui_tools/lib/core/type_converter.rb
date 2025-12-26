@@ -42,15 +42,16 @@ module RjuiTools
         'object' => 'Record<string, any>',
         'Hash' => 'Record<string, any>',
         'hash' => 'Record<string, any>',
-        # Function types (cross-platform: Swift uses () -> Void, Kotlin uses () -> Unit)
-        '() -> Void' => '() => void',
-        '(() -> Void)?' => '(() => void) | undefined',
-        '() -> Unit' => '() => void',
-        '(() -> Unit)?' => '(() => void) | undefined',
-        '(Int) -> Void' => '(index: number) => void',
-        '((Int) -> Void)?' => '((index: number) => void) | undefined',
-        '(Int) -> Unit' => '(index: number) => void',
-        '((Int) -> Unit)?' => '((index: number) => void) | undefined'
+        # Void/Unit types (Swift -> Kotlin -> TypeScript)
+        'Void' => 'void',
+        'void' => 'void',
+        'Unit' => 'void',
+        'unit' => 'void',
+        # Color/Image types
+        'Color' => 'string',
+        'color' => 'string',
+        'Image' => 'string',
+        'image' => 'string'
       }.freeze
 
       # Default values for each TypeScript type
@@ -103,23 +104,159 @@ module RjuiTools
         def to_typescript_type(json_type)
           return 'any' if json_type.nil? || json_type.to_s.empty?
 
-          type_str = json_type.to_s
+          type_str = json_type.to_s.strip
+
+          # Check for optional type suffix
+          is_optional = type_str.end_with?('?')
+          base_type = is_optional ? type_str[0...-1] : type_str
 
           # Check for Array(ElementType) syntax -> ElementType[]
-          if (match = type_str.match(/^Array\((.+)\)$/))
+          if (match = base_type.match(/^Array\((.+)\)$/))
             element_type = to_typescript_type(match[1].strip)
-            return "#{element_type}[]"
+            result = "#{element_type}[]"
+            return is_optional ? "#{result} | undefined" : result
           end
 
           # Check for Dictionary(KeyType,ValueType) syntax -> Record<KeyType, ValueType>
-          if (match = type_str.match(/^Dictionary\((.+),\s*(.+)\)$/))
+          if (match = base_type.match(/^Dictionary\((.+),\s*(.+)\)$/))
             key_type = to_typescript_type(match[1].strip)
             value_type = to_typescript_type(match[2].strip)
-            return "Record<#{key_type}, #{value_type}>"
+            result = "Record<#{key_type}, #{value_type}>"
+            return is_optional ? "#{result} | undefined" : result
           end
 
+          # Check for function type: (params) -> ReturnType or ((params) -> ReturnType)?
+          func_result = parse_function_type(type_str)
+          return func_result if func_result
+
           # Return mapped type, or original type as-is if not found
-          TYPE_MAPPING[type_str] || type_str
+          result = TYPE_MAPPING[base_type] || base_type
+          is_optional ? "#{result} | undefined" : result
+        end
+
+        # Parse a function type string and convert to TypeScript
+        # Handles: (Int) -> Void, ((Image) -> Color), (() -> Unit)?, etc.
+        # All function types are converted to optional by default (for callbacks)
+        # @param type_str [String] the type string to parse
+        # @return [String, nil] the TypeScript function type or nil if not a function type
+        def parse_function_type(type_str)
+          working_str = type_str.strip
+
+          # Check for optional wrapper: ((...) -> ...)? or (() -> ...)?
+          if working_str.end_with?(')?')
+            if working_str.start_with?('(')
+              inner = extract_balanced_content(working_str[1...-2], '(', ')')
+              if inner && inner == working_str[1...-2]
+                working_str = working_str[1...-2]
+              end
+            end
+          # Check for grouping parentheses: ((params) -> ReturnType) without ?
+          elsif working_str.start_with?('(') && working_str.end_with?(')')
+            inner = working_str[1...-1]
+            if find_arrow_position(inner)
+              working_str = inner
+            end
+          end
+
+          # Now try to parse as function: (params) -> ReturnType
+          arrow_pos = find_arrow_position(working_str)
+          return nil unless arrow_pos
+
+          params_part = working_str[0...arrow_pos].strip
+          return_part = working_str[(arrow_pos + 2)..].strip
+
+          # params_part should be (...)
+          return nil unless params_part.start_with?('(') && params_part.end_with?(')')
+
+          params_inner = params_part[1...-1].strip
+
+          # Parse parameters (handling nested types)
+          converted_params = parse_parameter_list(params_inner)
+
+          # Convert return type (Void/Unit -> void)
+          converted_return = convert_single_type(return_part)
+
+          # Build result - all function types become optional (for callbacks)
+          "((#{converted_params}) => #{converted_return}) | undefined"
+        end
+
+        # Convert a single type without making it optional
+        def convert_single_type(type_str)
+          return type_str if type_str.nil? || type_str.to_s.empty?
+
+          str = type_str.to_s.strip
+          is_optional = str.end_with?('?')
+          base = is_optional ? str[0...-1] : str
+
+          result = TYPE_MAPPING[base] || base
+          is_optional ? "#{result} | undefined" : result
+        end
+
+        # Parse parameter list and convert types
+        def parse_parameter_list(params_str)
+          return '' if params_str.nil? || params_str.empty?
+
+          params = split_parameters(params_str)
+          params.each_with_index.map do |p, i|
+            converted = convert_single_type(p.strip)
+            "arg#{i}: #{converted}"
+          end.join(', ')
+        end
+
+        # Find the position of the arrow (->) that separates params from return type
+        def find_arrow_position(str)
+          depth = 0
+          i = 0
+          while i < str.length
+            char = str[i]
+            if char == '('
+              depth += 1
+            elsif char == ')'
+              depth -= 1
+            elsif char == '-' && str[i + 1] == '>' && depth == 0
+              return i
+            end
+            i += 1
+          end
+          nil
+        end
+
+        # Split parameters by comma, respecting nested parentheses and generics
+        def split_parameters(str)
+          return [] if str.nil? || str.empty?
+
+          params = []
+          current = ''
+          depth = 0
+
+          str.each_char do |char|
+            if char == '(' || char == '<' || char == '['
+              depth += 1
+              current += char
+            elsif char == ')' || char == '>' || char == ']'
+              depth -= 1
+              current += char
+            elsif char == ',' && depth == 0
+              params << current.strip unless current.strip.empty?
+              current = ''
+            else
+              current += char
+            end
+          end
+
+          params << current.strip unless current.strip.empty?
+          params
+        end
+
+        # Extract balanced content
+        def extract_balanced_content(str, open_char, close_char)
+          depth = 0
+          str.each_char do |char|
+            depth += 1 if char == open_char
+            depth -= 1 if char == close_char
+            return nil if depth < 0
+          end
+          depth == 0 ? str : nil
         end
 
         # Check if the type is a primitive type

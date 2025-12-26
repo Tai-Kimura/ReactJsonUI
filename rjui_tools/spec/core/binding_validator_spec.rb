@@ -123,6 +123,32 @@ RSpec.describe RjuiTools::Core::BindingValidator do
         expect(warnings).not_to be_empty
         expect(warnings.first).to include('"class": "Bool"')
       end
+
+      it 'suggests ((Int) -> Void)? for onTabChange variable' do
+        component = {
+          'type' => 'View',
+          'child' => [
+            { 'data' => [{ 'name' => 'otherVar', 'class' => 'String' }] },
+            { 'type' => 'TabView', 'onTabChange' => '@{handleTabChange}' }
+          ]
+        }
+        warnings = validator.validate(component)
+        expect(warnings).not_to be_empty
+        expect(warnings.first).to include('"class": "((Int) -> Void)?"')
+      end
+
+      it 'suggests ((Int) -> Void)? for onTabChange attribute' do
+        component = {
+          'type' => 'View',
+          'child' => [
+            { 'data' => [{ 'name' => 'otherVar', 'class' => 'String' }] },
+            { 'type' => 'TabView', 'onTabChange' => '@{tabHandler}' }
+          ]
+        }
+        warnings = validator.validate(component)
+        expect(warnings).not_to be_empty
+        expect(warnings.first).to include('"class": "((Int) -> Void)?"')
+      end
     end
 
     context 'without data definitions (ViewModel provides bindings)' do

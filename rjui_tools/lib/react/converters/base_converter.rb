@@ -325,6 +325,7 @@ module RjuiTools
           require_relative 'web_converter'
           require_relative 'switch_converter'
           require_relative 'network_image_converter'
+          require_relative 'tab_view_converter'
 
           {
             'View' => ViewConverter,
@@ -356,7 +357,8 @@ module RjuiTools
             'GradientView' => GradientViewConverter,
             'Blur' => BlurConverter,
             'CircleView' => CircleViewConverter,
-            'Web' => WebConverter
+            'Web' => WebConverter,
+            'TabView' => TabViewConverter
           }[type] || ViewConverter
         end
 
