@@ -19,6 +19,7 @@ require_relative 'converters/progress_converter'
 require_relative 'converters/indicator_converter'
 require_relative 'converters/select_box_converter'
 require_relative 'converters/include_converter'
+require_relative 'converters/tab_view_converter'
 require_relative 'tailwind_mapper'
 require_relative 'helpers/string_manager_helper'
 
@@ -58,7 +59,8 @@ module RjuiTools
         'Progress' => Converters::ProgressConverter,
         'Indicator' => Converters::IndicatorConverter,
         'SelectBox' => Converters::SelectBoxConverter,
-        'Include' => Converters::IncludeConverter
+        'Include' => Converters::IncludeConverter,
+        'TabView' => Converters::TabViewConverter
       }.freeze
 
       def initialize(config)
@@ -311,6 +313,22 @@ module RjuiTools
                              end
             components << component_name
           end
+        end
+
+        # Check for TabView tabs (view references)
+        json['tabs']&.each do |tab|
+          next unless tab.is_a?(Hash)
+          view_name = tab['view']
+          next unless view_name.is_a?(String)
+
+          base_name = view_name.split('/').last
+          # Convert snake_case to PascalCase, add View suffix
+          component_name = if base_name.match?(/^[A-Z]/) && !base_name.include?('_')
+                             "#{base_name}View"
+                           else
+                             "#{base_name.split('_').map(&:capitalize).join}View"
+                           end
+          components << component_name
         end
 
         # Recurse into children
