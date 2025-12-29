@@ -292,6 +292,61 @@ RSpec.describe RjuiTools::Core::Resources::ColorManager do
           expect(data[1]['background']).not_to eq('#0000FF')
         end
       end
+
+      context 'with data Color defaultValue' do
+        before do
+          colors_file = File.join(resources_dir, 'colors.json')
+          File.write(colors_file, '{"light_pink": "#D4A574"}')
+        end
+
+        it 'replaces hex defaultValue with color key' do
+          new_manager = described_class.new(config, source_path, resources_dir)
+          data = {
+            'data' => [
+              { 'name' => 'selectedTabColor', 'class' => 'Color', 'defaultValue' => '#D4A574' }
+            ]
+          }
+          new_manager.send(:replace_colors_recursive, data)
+          expect(data['data'][0]['defaultValue']).to eq('light_pink')
+        end
+
+        it 'skips binding expressions in defaultValue' do
+          data = {
+            'data' => [
+              { 'name' => 'backgroundColor', 'class' => 'Color', 'defaultValue' => '@{viewModel.themeColor}' }
+            ]
+          }
+          manager.send(:replace_colors_recursive, data)
+          expect(data['data'][0]['defaultValue']).to eq('@{viewModel.themeColor}')
+        end
+
+        it 'does not modify defaultValue when class is not Color' do
+          data = {
+            'data' => [
+              { 'name' => 'hexValue', 'class' => 'String', 'defaultValue' => '#D4A574' }
+            ]
+          }
+          manager.send(:replace_colors_recursive, data)
+          expect(data['data'][0]['defaultValue']).to eq('#D4A574')
+        end
+
+        it 'processes data Color in nested structures' do
+          new_manager = described_class.new(config, source_path, resources_dir)
+          data = {
+            'type' => 'View',
+            'children' => [
+              {
+                'type' => 'TabView',
+                'data' => [
+                  { 'name' => 'tabColor', 'class' => 'Color', 'defaultValue' => '#D4A574' }
+                ]
+              }
+            ]
+          }
+          new_manager.send(:replace_colors_recursive, data)
+          expect(data['children'][0]['data'][0]['defaultValue']).to eq('light_pink')
+        end
+      end
     end
 
     describe '#generate_color_manager_js' do

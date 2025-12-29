@@ -146,6 +146,20 @@ module RjuiTools
 
           case data
           when Hash
+            # Check if this is a data property with class: Color
+            if data['class'] == 'Color' && data['defaultValue'].is_a?(String)
+              value = data['defaultValue']
+              # Skip binding expressions (starting with @{)
+              unless value.start_with?('@{') && value.end_with?('}')
+                new_value = process_and_replace_color(value)
+                if new_value != value
+                  data['defaultValue'] = new_value
+                  modified = true
+                  Core::Logger.debug "Replaced data defaultValue #{value} with #{new_value}"
+                end
+              end
+            end
+
             data.each do |key, value|
               # Check if this key is a color property and value is a string
               if is_color_property?(key) && value.is_a?(String)

@@ -1,12 +1,65 @@
 # frozen_string_literal: true
 
 require 'json'
+require_relative 'config_manager'
 
 module RjuiTools
   module Core
     # Converts JSON primitive types to TypeScript types
     # This ensures cross-platform compatibility with SwiftJsonUI and KotlinJsonUI
     class TypeConverter
+      # Cache for colors.json data
+      @colors_data = nil
+      @colors_file_path = nil
+
+      class << self
+        attr_accessor :colors_data, :colors_file_path
+
+        # Load colors.json from the specified path or auto-detect from project config
+        # @param path [String, nil] optional path to colors.json
+        # @return [Hash] the colors data
+        def load_colors_json(path = nil)
+          return @colors_data if @colors_data && (@colors_file_path == path || path.nil?)
+
+          if path
+            @colors_file_path = path
+          else
+            # Use ConfigManager to get correct path
+            config = ConfigManager.load_config
+            layouts_dir = config['layouts_directory'] || 'src/Layouts'
+            resources_path = File.join(Dir.pwd, layouts_dir, 'Resources', 'colors.json')
+            @colors_file_path = resources_path
+          end
+
+          if @colors_file_path && File.exist?(@colors_file_path)
+            begin
+              @colors_data = JSON.parse(File.read(@colors_file_path))
+            rescue JSON::ParserError => e
+              warn "[TypeConverter] Warning: Failed to parse colors.json: #{e.message}"
+              @colors_data = {}
+            end
+          else
+            @colors_data = {}
+          end
+
+          @colors_data
+        end
+
+        # Check if a color name exists in colors.json
+        # @param color_name [String] the color name to check
+        # @return [Boolean] true if the color exists
+        def color_exists?(color_name)
+          load_colors_json
+          @colors_data.key?(color_name)
+        end
+
+        # Clear the cached colors data (useful for testing)
+        def clear_colors_cache
+          @colors_data = nil
+          @colors_file_path = nil
+        end
+      end
+
       # Language key for this platform
       LANGUAGE = 'react'
 
@@ -308,17 +361,72 @@ module RjuiTools
           normalized = data_prop.dup
 
           # Extract platform-specific class
+          raw_class = nil
           if normalized['class']
             raw_class = extract_platform_value(normalized['class'], mode)
             normalized['tsType'] = to_typescript_type(raw_class)
           end
 
-          # Extract platform-specific defaultValue
+          # Extract platform-specific defaultValue and convert for special types
           if normalized['defaultValue']
-            normalized['defaultValue'] = extract_platform_value(normalized['defaultValue'], mode)
+            raw_value = extract_platform_value(normalized['defaultValue'], mode)
+            normalized['defaultValue'] = convert_default_value(raw_value, raw_class, mode)
           end
 
           normalized
+        end
+
+        # Convert defaultValue based on the type
+        # For Color: convert hex/color name to CSS format
+        # For Image: convert image name to path string
+        # @param value [Object] the raw default value
+        # @param raw_class [String] the original class type from JSON
+        # @param mode [String] the mode (react)
+        # @return [Object] the converted default value
+        def convert_default_value(value, raw_class, mode = nil)
+          return value unless value.is_a?(String) && raw_class.is_a?(String)
+
+          base_class = raw_class.end_with?('?') ? raw_class[0...-1] : raw_class
+
+          case base_class.downcase
+          when 'color'
+            convert_color_default_value(value)
+          when 'image'
+            convert_image_default_value(value)
+          else
+            value
+          end
+        end
+
+        # Convert color value (hex or color name) to CSS color string
+        # @param value [String] hex string (#RRGGBB or #RRGGBBAA) or color name
+        # @return [String] CSS color string (quoted)
+        def convert_color_default_value(value)
+          # Already formatted as quoted string
+          return value if value.start_with?('"') || value.start_with?("'")
+
+          if value.start_with?('#')
+            # Hex color - keep as-is but quote it
+            "\"#{value}\""
+          else
+            # Color name - validate against colors.json and warn if not found
+            unless color_exists?(value)
+              warn "[TypeConverter] Warning: Color '#{value}' is not defined in colors.json"
+            end
+            # Keep as CSS color name
+            "\"#{value}\""
+          end
+        end
+
+        # Convert image name to image path string
+        # @param value [String] image name
+        # @return [String] image path string (quoted)
+        def convert_image_default_value(value)
+          # Already formatted as quoted string
+          return value if value.start_with?('"') || value.start_with?("'")
+
+          # For React, images are typically paths or URLs
+          "\"/images/#{value}\""
         end
 
         # Convert array of data properties
