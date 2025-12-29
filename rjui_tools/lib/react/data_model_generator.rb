@@ -87,12 +87,13 @@ module RjuiTools
         actions.to_a
       end
 
-      def extract_data_properties(json_data, properties = [])
+      def extract_data_properties(json_data, properties = [], is_root = true)
         if json_data.is_a?(Hash)
-          # Check for data section (data-only element)
+          # Check for data section
           if json_data['data'] && json_data['data'].is_a?(Array)
-            # Only extract from data-only elements (no type, just data key)
-            if json_data.keys == ['data'] || (json_data.keys - ['data', 'type']).empty?
+            # Extract from root element OR data-only elements (no type, just data key)
+            should_extract = is_root || json_data.keys == ['data'] || (json_data.keys - ['data', 'type']).empty?
+            if should_extract
               json_data['data'].each do |data_item|
                 if data_item.is_a?(Hash)
                   # Normalize type using TypeConverter (mode: react)
@@ -103,20 +104,38 @@ module RjuiTools
             end
           end
 
+          # Check for TabView tabs - generate data properties for each tab's view
+          if json_data['type'] == 'TabView' && json_data['tabs'].is_a?(Array)
+            json_data['tabs'].each do |tab|
+              if tab['view']
+                # Convert view name to camelCase + Data (e.g., home -> homeData, whisky_card -> whiskyCardData)
+                view_name = tab['view']
+                data_prop_name = view_name.split('_').each_with_index.map { |part, i| i == 0 ? part.downcase : part.capitalize }.join + 'Data'
+                pascal_name = view_name.split('_').map(&:capitalize).join
+                properties << {
+                  'name' => data_prop_name,
+                  'class' => 'Object',
+                  'tsType' => "#{pascal_name}Data",
+                  'defaultValue' => nil
+                }
+              end
+            end
+          end
+
           # Process children
           child = json_data['child'] || json_data['children']
           if child
             if child.is_a?(Array)
               child.each do |c|
-                extract_data_properties(c, properties)
+                extract_data_properties(c, properties, false)
               end
             else
-              extract_data_properties(child, properties)
+              extract_data_properties(child, properties, false)
             end
           end
         elsif json_data.is_a?(Array)
           json_data.each do |item|
-            extract_data_properties(item, properties)
+            extract_data_properties(item, properties, false)
           end
         end
 
@@ -252,6 +271,9 @@ module RjuiTools
           # Handle '' as empty string (common shorthand)
           if value == "''"
             '""'
+          elsif value.is_a?(String) && (value.start_with?('"') || value.start_with?("'"))
+            # Already quoted (e.g., from TypeConverter for Color/Image types)
+            value
           else
             value.is_a?(String) ? "\"#{value}\"" : "\"#{value}\""
           end

@@ -29,12 +29,12 @@ module RjuiTools
 
           jsx = <<~JSX.chomp
             #{indent_str(indent)}<div#{id_attr} className="#{class_name}"#{style_attr}#{testid_attr}#{tag_attr}>
-            #{indent_str(indent + 2)}<nav className="#{build_nav_class}">
-            #{tab_items_jsx}
-            #{indent_str(indent + 2)}</nav>
             #{indent_str(indent + 2)}<div className="flex-1 overflow-auto">
             #{tab_panels_jsx}
             #{indent_str(indent + 2)}</div>
+            #{indent_str(indent + 2)}<nav className="#{build_nav_class}">
+            #{tab_items_jsx}
+            #{indent_str(indent + 2)}</nav>
             #{indent_str(indent)}</div>
           JSX
 
@@ -44,7 +44,7 @@ module RjuiTools
         protected
 
         def build_class_name
-          classes = ['flex', 'flex-col', 'h-full']
+          classes = ['flex', 'flex-col', 'h-screen']
 
           # Width/Height
           classes << TailwindMapper.map_width(json['width'])
@@ -96,6 +96,10 @@ module RjuiTools
           # Build button classes
           button_class = build_tab_button_class(index, selected_binding)
 
+          # Build button style for dynamic colors
+          button_style = build_tab_button_style(index, selected_binding)
+          style_attr = button_style ? "\n#{indent_str(8)}style={#{button_style}}" : ''
+
           # Show/hide labels
           show_labels = json['showLabels'] != false
           label_jsx = show_labels ? "\n#{indent_str(8)}<span className=\"text-xs mt-1\">#{title}</span>" : ''
@@ -104,7 +108,7 @@ module RjuiTools
 
           <<~JSX.chomp
             #{indent_str(6)}<button
-            #{indent_str(8)}className={`#{button_class}`}
+            #{indent_str(8)}className={`#{button_class}`}#{style_attr}
             #{indent_str(8)}onClick={() => #{on_change}(#{index})}
             #{indent_str(6)}>
             #{indent_str(8)}<div className="relative">
@@ -118,22 +122,36 @@ module RjuiTools
           tint = json['tintColor'] || 'blue-600'
           unselected = json['unselectedColor'] || 'gray-500'
 
-          tint_class = TailwindMapper.map_color(tint, 'text')
-          unselected_class = TailwindMapper.map_color(unselected, 'text')
-
           base_classes = 'flex-1 flex flex-col items-center justify-center py-2 px-1 transition-colors'
 
-          "${#{selected_binding} === #{index} ? '#{base_classes} #{tint_class}' : '#{base_classes} #{unselected_class} hover:text-gray-700'}"
+          # Check if colors are bindings - use dynamic Tailwind class names
+          if has_binding?(tint) || has_binding?(unselected)
+            tint_prop = has_binding?(tint) ? extract_binding_property(tint) : "'#{tint}'"
+            unselected_prop = has_binding?(unselected) ? extract_binding_property(unselected) : "'#{unselected}'"
+            # Generate dynamic Tailwind class: text-${colorName}
+            "${#{selected_binding} === #{index} ? '#{base_classes} text-' + #{tint_prop} : '#{base_classes} text-' + #{unselected_prop} + ' hover:opacity-80'}"
+          else
+            tint_class = TailwindMapper.map_color(tint, 'text')
+            unselected_class = TailwindMapper.map_color(unselected, 'text')
+            "${#{selected_binding} === #{index} ? '#{base_classes} #{tint_class}' : '#{base_classes} #{unselected_class} hover:text-gray-700'}"
+          end
+        end
+
+        def build_tab_button_style(index, selected_binding)
+          # No longer needed - using Tailwind classes instead
+          nil
         end
 
         def build_icon(icon, selected_icon, index, selected_binding, icon_type = 'system')
           if icon_type == 'resource'
-            # Use image from assets
-            selected_icon_name = selected_icon || icon
-            if icon != selected_icon_name
-              "#{indent_str(10)}{#{selected_binding} === #{index} ? <img src=\"/assets/#{selected_icon_name}.png\" className=\"w-6 h-6\" alt=\"\" /> : <img src=\"/assets/#{icon}.png\" className=\"w-6 h-6\" alt=\"\" />}"
+            # Use image from public/icons folder
+            # Convert icon names: ic_home -> home, ic_home_filled -> home-filled
+            icon_path = convert_icon_name_to_path(icon)
+            selected_icon_path = selected_icon ? convert_icon_name_to_path(selected_icon) : icon_path
+            if icon_path != selected_icon_path
+              "#{indent_str(10)}{#{selected_binding} === #{index} ? <img src=\"/icons/#{selected_icon_path}.svg\" className=\"w-6 h-6\" alt=\"\" /> : <img src=\"/icons/#{icon_path}.svg\" className=\"w-6 h-6\" alt=\"\" />}"
             else
-              "#{indent_str(10)}<img src=\"/assets/#{icon}.png\" className=\"w-6 h-6\" alt=\"\" />"
+              "#{indent_str(10)}<img src=\"/icons/#{icon_path}.svg\" className=\"w-6 h-6\" alt=\"\" />"
             end
           else
             # Map SF Symbol/Material icon names to Lucide React icons
@@ -165,7 +183,9 @@ module RjuiTools
           if view_name
             # Convert snake_case to PascalCase for React component name
             pascal_name = view_name.split('_').map(&:capitalize).join
-            content = "<#{pascal_name}View />"
+            # Generate data prop name from view name (e.g., home -> homeData, whisky_card -> whiskyCardData)
+            data_prop_name = view_name.split('_').each_with_index.map { |part, i| i == 0 ? part.downcase : part.capitalize }.join + 'Data'
+            content = "<#{pascal_name} data={data.#{data_prop_name}} />"
           else
             content = "<div className=\"p-4\">#{tab['title'] || "Tab #{index + 1}"} content</div>"
           end
@@ -203,6 +223,11 @@ module RjuiTools
             setter_name = "set#{raw_binding[0].upcase}#{raw_binding[1..]}"
             add_viewmodel_data_prefix(setter_name)
           end
+        end
+
+        # Convert icon name to file path - just use the icon name as-is
+        def convert_icon_name_to_path(icon_name)
+          icon_name
         end
 
         # Map SF Symbol/Material icon names to Lucide React icon component names

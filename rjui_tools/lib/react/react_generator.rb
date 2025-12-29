@@ -328,11 +328,11 @@ module RjuiTools
           next unless view_name.is_a?(String)
 
           base_name = view_name.split('/').last
-          # Convert snake_case to PascalCase, add View suffix
+          # Convert snake_case to PascalCase (no View suffix for React)
           component_name = if base_name.match?(/^[A-Z]/) && !base_name.include?('_')
-                             "#{base_name}View"
+                             base_name
                            else
-                             "#{base_name.split('_').map(&:capitalize).join}View"
+                             base_name.split('_').map(&:capitalize).join
                            end
           components << component_name
         end
