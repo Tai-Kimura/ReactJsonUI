@@ -233,27 +233,19 @@ module RjuiTools
 
               import { useRouter } from "next/navigation";
               import { useMemo, useState } from "react";
-              import Header from "@/generated/components/Header";
               import #{view_name} from "@/generated/components/#{view_name}";
-              import { HeaderViewModel } from "@/viewmodels/HeaderViewModel";
               import { #{view_name}ViewModel } from "@/viewmodels/#{view_name}ViewModel";
               import { #{view_name}Data, create#{view_name}Data } from "@/generated/data/#{view_name}Data";
 
               export default function #{view_name}Page() {
                 const router = useRouter();
                 const [data, setData] = useState<#{view_name}Data>(create#{view_name}Data());
-                const headerViewModel = useMemo(() => new HeaderViewModel(router), [router]);
                 const viewModel = useMemo(
                   () => new #{view_name}ViewModel(router, data, setData),
                   [router, data]
                 );
 
-                return (
-                  <>
-                    <Header viewModel={headerViewModel} />
-                    <#{view_name} data={viewModel.data} />
-                  </>
-                );
+                return <#{view_name} data={viewModel.data} />;
               }
             TSX
           else
@@ -261,23 +253,15 @@ module RjuiTools
               "use client";
 
               import { useRouter } from "next/navigation";
-              import { useMemo, useState } from "react";
-              import Header from "@/generated/components/Header";
+              import { useState } from "react";
               import #{view_name} from "@/generated/components/#{view_name}";
-              import { HeaderViewModel } from "@/viewmodels/HeaderViewModel";
               import { #{view_name}Data, create#{view_name}Data } from "@/generated/data/#{view_name}Data";
 
               export default function #{view_name}Page() {
                 const router = useRouter();
                 const [data, setData] = useState<#{view_name}Data>(create#{view_name}Data());
-                const headerViewModel = useMemo(() => new HeaderViewModel(router), [router]);
 
-                return (
-                  <>
-                    <Header viewModel={headerViewModel} />
-                    <#{view_name} data={data} />
-                  </>
-                );
+                return <#{view_name} data={data} />;
               }
             TSX
           end
