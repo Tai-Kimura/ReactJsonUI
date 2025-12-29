@@ -3345,6 +3345,12 @@
             "type": "string",
             "description": "Icon when tab is selected (optional, defaults to icon)"
           },
+          "iconType": {
+            "type": "string",
+            "enum": ["system", "resource"],
+            "default": "system",
+            "description": "Icon source type: 'system' for platform icons (SF Symbols/Material Icons), 'resource' for custom drawable/asset images"
+          },
           "badge": {
             "type": [
               "string",

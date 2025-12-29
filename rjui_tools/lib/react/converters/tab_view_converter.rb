@@ -85,9 +85,10 @@ module RjuiTools
           title = tab['title'] || "Tab #{index + 1}"
           icon = tab['icon'] || 'circle'
           badge = tab['badge']
+          icon_type = tab['iconType'] || 'system'
 
           # Build icon component
-          icon_jsx = build_icon(icon, tab['selectedIcon'], index, selected_binding)
+          icon_jsx = build_icon(icon, tab['selectedIcon'], index, selected_binding, icon_type)
 
           # Build badge if present
           badge_jsx = build_badge(badge) if badge
@@ -125,15 +126,25 @@ module RjuiTools
           "${#{selected_binding} === #{index} ? '#{base_classes} #{tint_class}' : '#{base_classes} #{unselected_class} hover:text-gray-700'}"
         end
 
-        def build_icon(icon, selected_icon, index, selected_binding)
-          # Map SF Symbol/Material icon names to Lucide React icons
-          icon_name = map_to_lucide_icon(icon)
-          selected_icon_name = selected_icon ? map_to_lucide_icon(selected_icon) : icon_name
-
-          if selected_icon
-            "#{indent_str(10)}{#{selected_binding} === #{index} ? <#{selected_icon_name} className=\"w-6 h-6\" /> : <#{icon_name} className=\"w-6 h-6\" />}"
+        def build_icon(icon, selected_icon, index, selected_binding, icon_type = 'system')
+          if icon_type == 'resource'
+            # Use image from assets
+            selected_icon_name = selected_icon || icon
+            if icon != selected_icon_name
+              "#{indent_str(10)}{#{selected_binding} === #{index} ? <img src=\"/assets/#{selected_icon_name}.png\" className=\"w-6 h-6\" alt=\"\" /> : <img src=\"/assets/#{icon}.png\" className=\"w-6 h-6\" alt=\"\" />}"
+            else
+              "#{indent_str(10)}<img src=\"/assets/#{icon}.png\" className=\"w-6 h-6\" alt=\"\" />"
+            end
           else
-            "#{indent_str(10)}<#{icon_name} className=\"w-6 h-6\" />"
+            # Map SF Symbol/Material icon names to Lucide React icons
+            icon_name = map_to_lucide_icon(icon)
+            selected_icon_name = selected_icon ? map_to_lucide_icon(selected_icon) : icon_name
+
+            if selected_icon
+              "#{indent_str(10)}{#{selected_binding} === #{index} ? <#{selected_icon_name} className=\"w-6 h-6\" /> : <#{icon_name} className=\"w-6 h-6\" />}"
+            else
+              "#{indent_str(10)}<#{icon_name} className=\"w-6 h-6\" />"
+            end
           end
         end
 
