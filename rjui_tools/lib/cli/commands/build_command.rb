@@ -41,7 +41,9 @@ module RjuiTools
 
           json_files = Dir.glob(File.join(layouts_dir, '**', '*.json')).reject do |file|
             # Skip Resources folder (colors.json, strings.json, etc.)
-            file.include?(File.join(layouts_dir, 'Resources'))
+            # Skip Styles folder (reusable style definitions, not components)
+            file.include?(File.join(layouts_dir, 'Resources')) ||
+              file.include?(File.join(layouts_dir, 'Styles'))
           end
 
           if json_files.empty?

@@ -151,18 +151,25 @@ module RjuiTools
         def generate_component(name, options = {})
           with_viewmodel = options[:with_viewmodel]
 
-          view_name = to_pascal_case(name)
-          json_name = to_snake_case(name)
+          # Handle nested paths like "cards/UserCard"
+          path_parts = name.split('/')
+          base_name = path_parts.last
+          dir_parts = path_parts[0...-1]
+
+          view_name = to_pascal_case(base_name)
+          json_name = to_snake_case(base_name)
 
           layouts_dir = @config['layouts_directory']
-          json_path = File.join(layouts_dir, "components", "#{json_name}.json")
+          # Build nested path for JSON file under components/
+          json_dir = File.join(layouts_dir, "components", *dir_parts)
+          json_path = File.join(json_dir, "#{json_name}.json")
 
           if File.exist?(json_path)
             Core::Logger.warn("Layout already exists: #{json_path}")
             return
           end
 
-          FileUtils.mkdir_p(File.dirname(json_path))
+          FileUtils.mkdir_p(json_dir)
 
           # Build layout based on --with-viewmodel option
           if with_viewmodel
