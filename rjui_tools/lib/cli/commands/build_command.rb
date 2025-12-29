@@ -51,6 +51,21 @@ module RjuiTools
             return
           end
 
+          # First pass: build component name -> subdir mapping
+          component_paths = {}
+          json_files.each do |json_file|
+            comp_name = to_pascal_case(File.basename(json_file, '.json'))
+            relative_path = json_file.sub("#{layouts_dir}/", '')
+            subdir = File.dirname(relative_path)
+            subdir_parts = subdir.split('/')
+            subdir_parts.shift if %w[pages components].include?(subdir_parts.first)
+            nested_subdir = subdir_parts.join('/')
+            component_paths[comp_name] = nested_subdir
+          end
+
+          # Pass component paths to generator for import resolution
+          @config['_component_paths'] = component_paths
+
           generator = React::ReactGenerator.new(@config)
 
           json_files.each do |json_file|

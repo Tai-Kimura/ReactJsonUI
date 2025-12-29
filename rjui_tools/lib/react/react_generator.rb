@@ -182,9 +182,15 @@ module RjuiTools
         end.join("\n")
         extension_imports = "\n#{extension_imports}" unless extension_imports.empty?
 
-        # Generate imports for included components
+        # Generate imports for included components using absolute paths
+        component_paths = @config['_component_paths'] || {}
         component_imports = included_components.map do |comp_name|
-          "import #{comp_name} from './#{comp_name}';"
+          subdir = component_paths[comp_name]
+          if subdir && !subdir.empty?
+            "import #{comp_name} from '@/generated/components/#{subdir}/#{comp_name}';"
+          else
+            "import #{comp_name} from '@/generated/components/#{comp_name}';"
+          end
         end.join("\n")
         component_imports = "\n#{component_imports}" unless component_imports.empty?
 
