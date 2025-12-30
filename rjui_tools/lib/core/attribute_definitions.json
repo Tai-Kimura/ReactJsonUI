@@ -843,6 +843,39 @@
       "type": "string",
       "description": "Test ID for testing (data-testid)",
       "platform": "react"
+    },
+    "confirmationDialog": {
+      "type": "object",
+      "description": "Confirmation dialog configuration (iOS 15+)",
+      "platform": "swift",
+      "mode": "swiftui",
+      "properties": {
+        "isPresented": {
+          "type": "binding",
+          "required": true,
+          "description": "Binding to control dialog visibility"
+        },
+        "title": {
+          "type": ["string", "binding"],
+          "default": "",
+          "description": "Dialog title (empty string if not specified)"
+        },
+        "titleVisibility": {
+          "type": "string",
+          "enum": ["automatic", "visible", "hidden"],
+          "default": "automatic",
+          "description": "Title visibility control"
+        },
+        "message": {
+          "type": ["string", "binding"],
+          "description": "Optional dialog message"
+        },
+        "actions": {
+          "type": "binding",
+          "required": true,
+          "description": "Binding to function returning action buttons"
+        }
+      }
     }
   },
   "Label": {
