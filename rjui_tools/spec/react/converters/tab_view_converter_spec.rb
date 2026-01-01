@@ -36,7 +36,7 @@ RSpec.describe RjuiTools::React::Converters::TabViewConverter do
           ]
         })
         result = converter.convert
-        expect(result).to include('<HomeView />')
+        expect(result).to include('<Home data={data.homeData} />')
       end
     end
 
@@ -160,7 +160,7 @@ RSpec.describe RjuiTools::React::Converters::TabViewConverter do
           ]
         })
         result = converter.convert
-        expect(result).to include('<HomeScreenView />')
+        expect(result).to include('<HomeScreen data={data.homeScreenData} />')
       end
     end
 

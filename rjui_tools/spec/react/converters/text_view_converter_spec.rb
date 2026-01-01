@@ -321,7 +321,7 @@ RSpec.describe RjuiTools::React::Converters::TextViewConverter do
         'onTextChange' => '@{updateDescription}'
       })
       result = converter.convert
-      expect(result).to include('onChange={updateDescription}')
+      expect(result).to include('onChange={data.updateDescription}')
     end
   end
 

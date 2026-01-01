@@ -42,7 +42,7 @@ RSpec.describe RjuiTools::React::Converters::TextFieldConverter do
           'text' => '@{username}'
         })
         result = converter.convert
-        expect(result).to include('value={data.username}')
+        expect(result).to include('defaultValue={data.username}')
       end
     end
 
@@ -205,7 +205,7 @@ RSpec.describe RjuiTools::React::Converters::TextFieldConverter do
         })
         converter.send(:build_class_name)
         result = converter.send(:build_style_attr)
-        expect(result).to include("--placeholder-color: '#999999'")
+        expect(result).to include("'--placeholder-color': '#999999'")
       end
     end
 
@@ -345,7 +345,7 @@ RSpec.describe RjuiTools::React::Converters::TextFieldConverter do
         'onTextChange' => '@{handleTextChange}'
       })
       result = converter.convert
-      expect(result).to include('onChange={handleTextChange}')
+      expect(result).to include('onChange={data.handleTextChange}')
     end
   end
 

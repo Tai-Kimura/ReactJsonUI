@@ -248,6 +248,14 @@
       ],
       "description": "Whether component is hidden (can be data binding)"
     },
+    "padding": {
+      "type": [
+        "number",
+        "array",
+        "binding"
+      ],
+      "description": "Padding value (number, array, or binding supported)"
+    },
     "paddings": {
       "type": [
         "number",
