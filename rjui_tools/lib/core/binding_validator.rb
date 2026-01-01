@@ -87,6 +87,7 @@ module RjuiTools
       def initialize
         @warnings = []
         @data_properties = Set.new
+        @data_types = {} # Store property name -> type mapping
         @has_data_definitions = false
       end
 
@@ -98,9 +99,10 @@ module RjuiTools
         @warnings = []
         @current_file = file_name
         @data_properties = Set.new
+        @data_types = {}
         @has_data_definitions = false
 
-        # First pass: collect all data property names
+        # First pass: collect all data property names and types
         collect_data_properties(json_data)
 
         # Second pass: validate bindings
@@ -145,7 +147,7 @@ module RjuiTools
 
       private
 
-      # Collect all data property names from the component tree
+      # Collect all data property names and types from the component tree
       def collect_data_properties(component)
         return unless component.is_a?(Hash)
 
@@ -155,9 +157,10 @@ module RjuiTools
             next unless data_item.is_a?(Hash)
             # Skip ViewModel class declarations (class ends with 'ViewModel')
             next if data_item['class'].to_s.end_with?('ViewModel')
-            # Add property name to the set
+            # Add property name and type to the maps
             if data_item['name']
               @data_properties << data_item['name']
+              @data_types[data_item['name']] = data_item['class'] if data_item['class']
               @has_data_definitions = true
             end
           end
@@ -247,6 +250,9 @@ module RjuiTools
             # Check if binding variables are defined in data (only for components with data definitions)
             # Pages/components without data definitions get bindings from ViewModel props
             check_undefined_variables(binding_expr, attribute_name, component_type) if @has_data_definitions
+
+            # Check if color attributes have correct type (should be Color, not String)
+            check_color_type(binding_expr, attribute_name, component_type)
           end
         when Hash
           value.each do |k, v|
@@ -346,6 +352,17 @@ module RjuiTools
         ALLOWED_PATTERNS.any? { |pattern| binding.match?(pattern) }
       end
 
+      # Color attributes that should use Color type, not String
+      COLOR_ATTRIBUTES = %w[
+        background fontColor borderColor tintColor
+        disabledBackground disabledFontColor
+        selectedBackground selectedFontColor
+        highlightedBackground highlightedFontColor
+        placeholderColor cursorColor
+        trackColor progressColor thumbColor
+        separatorColor indicatorColor
+      ].freeze
+
       # Check if visibility attribute is using Boolean instead of String enum
       # Valid values: "visible", "gone", "invisible"
       # Invalid: true, false, @{booleanProperty}
@@ -367,6 +384,29 @@ module RjuiTools
             context = @current_file ? "[#{@current_file}] " : ""
             @warnings << "#{context}'#{component_type}.visibility' binding '@{#{binding_expr}}' appears to be Boolean. Use String property with values: \"visible\", \"gone\", or \"invisible\"."
           end
+        end
+      end
+
+      # Check if color attributes have correct type (should be Color, not String)
+      def check_color_type(binding_expr, attribute_name, component_type)
+        # Get the base attribute name (without nested path like "shadow.color")
+        base_attr = attribute_name.split('.').last
+
+        # Check if this is a color attribute
+        return unless COLOR_ATTRIBUTES.include?(base_attr) || base_attr.end_with?('Color')
+
+        # Extract the variable name from binding expression
+        var_name = binding_expr.split('.').first.gsub(/[^a-zA-Z0-9_]/, '')
+        return if var_name.empty?
+
+        # Check the declared type in data
+        declared_type = @data_types[var_name]
+        return unless declared_type
+
+        # Warn if type is String instead of Color
+        if declared_type == 'String'
+          context = @current_file ? "[#{@current_file}] " : ""
+          @warnings << "#{context}'#{component_type}.#{attribute_name}' binding '@{#{binding_expr}}' has type 'String' but should be 'Color'. Change the data declaration to: { \"name\": \"#{var_name}\", \"class\": \"Color\" }"
         end
       end
     end
