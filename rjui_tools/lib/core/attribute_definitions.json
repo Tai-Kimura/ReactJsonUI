@@ -872,8 +872,23 @@
         },
         "actions": {
           "type": "binding",
-          "required": true,
-          "description": "Binding to function returning action buttons"
+          "description": "Binding to function returning action buttons (alternative to layout)"
+        },
+        "layout": {
+          "type": "object",
+          "description": "Layout configuration for dialog content (alternative to actions)",
+          "properties": {
+            "name": {
+              "type": "string",
+              "required": true,
+              "description": "JSON filename for dialog content"
+            },
+            "data": {
+              "type": "binding",
+              "required": true,
+              "description": "Binding to data for the layout view"
+            }
+          }
         }
       }
     }
