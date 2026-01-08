@@ -1987,6 +1987,14 @@
       ],
       "description": "Hint text color - hex string or color name from colors.json (binding supported)"
     },
+    "text": {
+      "type": [
+        "string",
+        "binding"
+      ],
+      "description": "Display text (binding supported)",
+      "platform": "swift"
+    },
     "items": {
       "type": [
         "array",
