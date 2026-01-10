@@ -320,7 +320,10 @@ RSpec.describe RjuiTools::Core::BindingValidator do
       it 'skips data attribute' do
         component = {
           'type' => 'View',
-          'data' => [{ 'name' => 'userName', 'type' => 'String' }]
+          'data' => [{ 'name' => 'userName', 'type' => 'String' }],
+          'child' => [
+            { 'type' => 'Label', 'text' => '@{userName}' }
+          ]
         }
         warnings = validator.validate(component)
         expect(warnings).to be_empty
@@ -420,6 +423,105 @@ RSpec.describe RjuiTools::Core::BindingValidator do
       expect {
         validator.print_warnings
       }.to output(/\[RJUI Binding Warning\]/).to_stdout
+    end
+  end
+
+  describe 'unused data property detection' do
+    context 'with unused data property' do
+      let(:component) do
+        {
+          'type' => 'View',
+          'data' => [
+            { 'name' => 'usedProp', 'class' => 'string' },
+            { 'name' => 'unusedProp', 'class' => 'string' }
+          ],
+          'child' => [
+            { 'type' => 'Label', 'text' => '@{usedProp}' }
+          ]
+        }
+      end
+
+      it 'warns for unused data property' do
+        warnings = validator.validate(component, 'Test.json')
+        expect(warnings.any? { |w| w.include?("'unusedProp'") && w.include?('never used') }).to be true
+      end
+
+      it 'does not warn for used data property' do
+        warnings = validator.validate(component, 'Test.json')
+        expect(warnings.none? { |w| w.include?("'usedProp'") && w.include?('never used') }).to be true
+      end
+    end
+
+    context 'with property used in shared_data' do
+      let(:component) do
+        {
+          'type' => 'View',
+          'data' => [
+            { 'name' => 'headerTitle', 'class' => 'string' }
+          ],
+          'child' => [
+            {
+              'include' => 'header',
+              'shared_data' => {
+                'title' => 'headerTitle'
+              }
+            }
+          ]
+        }
+      end
+
+      it 'does not warn for property used in shared_data' do
+        warnings = validator.validate(component)
+        expect(warnings.none? { |w| w.include?("'headerTitle'") && w.include?('never used') }).to be true
+      end
+    end
+
+    context 'with property used in include data' do
+      let(:component) do
+        {
+          'type' => 'View',
+          'data' => [
+            { 'name' => 'itemName', 'class' => 'string' }
+          ],
+          'child' => [
+            {
+              'include' => 'item_view',
+              'data' => {
+                'name' => 'itemName'
+              }
+            }
+          ]
+        }
+      end
+
+      it 'does not warn for property used in include data' do
+        warnings = validator.validate(component)
+        expect(warnings.none? { |w| w.include?("'itemName'") && w.include?('never used') }).to be true
+      end
+    end
+
+    context 'with multiple unused properties' do
+      let(:component) do
+        {
+          'type' => 'View',
+          'data' => [
+            { 'name' => 'unused1', 'class' => 'string' },
+            { 'name' => 'unused2', 'class' => 'number' },
+            { 'name' => 'used', 'class' => 'boolean' }
+          ],
+          'child' => [
+            { 'type' => 'View', 'hidden' => '@{used}' }
+          ]
+        }
+      end
+
+      it 'warns for each unused property' do
+        warnings = validator.validate(component)
+        unused_warnings = warnings.select { |w| w.include?('never used') }
+        expect(unused_warnings.length).to eq(2)
+        expect(warnings.any? { |w| w.include?("'unused1'") }).to be true
+        expect(warnings.any? { |w| w.include?("'unused2'") }).to be true
+      end
     end
   end
 end

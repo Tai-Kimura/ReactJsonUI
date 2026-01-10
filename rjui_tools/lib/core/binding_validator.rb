@@ -87,6 +87,7 @@ module RjuiTools
       def initialize
         @warnings = []
         @data_properties = Set.new
+        @used_properties = Set.new  # Track used properties for unused detection
         @data_types = {} # Store property name -> type mapping
         @has_data_definitions = false
       end
@@ -99,14 +100,19 @@ module RjuiTools
         @warnings = []
         @current_file = file_name
         @data_properties = Set.new
+        @used_properties = Set.new
         @data_types = {}
         @has_data_definitions = false
 
         # First pass: collect all data property names and types
         collect_data_properties(json_data)
 
-        # Second pass: validate bindings
+        # Second pass: validate bindings and collect used properties
         validate_component(json_data)
+
+        # Third pass: check for unused data properties
+        check_unused_properties
+
         @warnings
       end
 
@@ -211,10 +217,13 @@ module RjuiTools
 
         component_type = component['type'] || parent_type || 'Unknown'
 
+        # Track used properties from include's shared_data and data
+        collect_used_from_include(component)
+
         # Check each attribute for bindings
         component.each do |key, value|
           next if key == 'type' || key == 'child' || key == 'children' || key == 'sections'
-          next if key == 'data' || key == 'generatedBy' || key == 'include' || key == 'style'
+          next if key == 'data' || key == 'generatedBy' || key == 'include' || key == 'style' || key == 'shared_data'
 
           check_value_for_bindings(value, key, component_type)
         end
@@ -274,6 +283,9 @@ module RjuiTools
         variables = extract_variables(binding_expr)
 
         variables.each do |var|
+          # Track as used property
+          @used_properties << var if @data_properties.include?(var)
+
           unless @data_properties.include?(var)
             context = @current_file ? "[#{@current_file}] " : ""
             @warnings << "#{context}Binding variable '#{var}' in '#{component_type}.#{attribute_name}' is not defined in data. Add: { \"class\": \"#{infer_type(var, attribute_name, component_type)}\", \"name\": \"#{var}\" }"
@@ -407,6 +419,55 @@ module RjuiTools
         if declared_type == 'String'
           context = @current_file ? "[#{@current_file}] " : ""
           @warnings << "#{context}'#{component_type}.#{attribute_name}' binding '@{#{binding_expr}}' has type 'String' but should be 'Color'. Change the data declaration to: { \"name\": \"#{var_name}\", \"class\": \"Color\" }"
+        end
+      end
+
+      # Collect used properties from include's shared_data and data
+      def collect_used_from_include(component)
+        # Check shared_data (values passed to included component)
+        if component['shared_data'].is_a?(Hash)
+          component['shared_data'].each_value do |value|
+            next unless value.is_a?(String)
+            # Value can be a direct property name or a binding expression
+            if value.start_with?('@{') && value.end_with?('}')
+              # Extract variables from binding expression
+              binding_expr = value[2..-2]
+              extract_variables(binding_expr).each do |var|
+                @used_properties << var if @data_properties.include?(var)
+              end
+            else
+              # Direct property name reference
+              @used_properties << value if @data_properties.include?(value)
+            end
+          end
+        end
+
+        # Check data (values passed to included component for invalidateAll)
+        if component['data'].is_a?(Hash)
+          component['data'].each_value do |value|
+            next unless value.is_a?(String)
+            # Value can be a direct property name or a binding expression
+            if value.start_with?('@{') && value.end_with?('}')
+              # Extract variables from binding expression
+              binding_expr = value[2..-2]
+              extract_variables(binding_expr).each do |var|
+                @used_properties << var if @data_properties.include?(var)
+              end
+            else
+              # Direct property name reference
+              @used_properties << value if @data_properties.include?(value)
+            end
+          end
+        end
+      end
+
+      # Check for unused data properties and warn
+      def check_unused_properties
+        unused = @data_properties - @used_properties
+
+        unused.each do |prop|
+          context = @current_file ? "[#{@current_file}] " : ""
+          @warnings << "#{context}Data property '#{prop}' is defined but never used in bindings, shared_data, or data."
         end
       end
     end
