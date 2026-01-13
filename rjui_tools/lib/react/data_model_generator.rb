@@ -56,11 +56,17 @@ module RjuiTools
         # Extract TextField bindings for onChange handlers
         text_field_bindings = extract_text_field_bindings(expanded_data)
 
+        # Extract event handler bindings (Switch, SelectBox, etc.)
+        event_handlers = extract_event_handler_bindings(expanded_data)
+
+        # Extract value bindings (Switch, Slider, SelectBox, etc.)
+        value_bindings = extract_value_bindings(expanded_data)
+
         # Get the view name from file path
         base_name = File.basename(json_file, '.json')
 
         # Update the Data model file
-        update_data_file(base_name, data_properties, onclick_actions, text_field_bindings)
+        update_data_file(base_name, data_properties, onclick_actions, text_field_bindings, event_handlers, value_bindings)
       end
 
       def extract_onclick_actions(json_data, actions = Set.new)
@@ -127,6 +133,89 @@ module RjuiTools
         bindings.to_a
       end
 
+      # Extract event handler bindings from components
+      # Returns hash with handler name => { type: value_type, binding: property_name }
+      def extract_event_handler_bindings(json_data, handlers = {})
+        if json_data.is_a?(Hash)
+          component_type = json_data['type']
+
+          # Switch, Toggle, Slider, Radio, Segment - onValueChange with boolean/number/string
+          if %w[Switch Toggle].include?(component_type)
+            extract_handler_binding(json_data, 'onValueChange', 'boolean', handlers)
+          elsif component_type == 'Slider'
+            extract_handler_binding(json_data, 'onValueChange', 'number', handlers)
+          elsif %w[Radio Segment].include?(component_type)
+            extract_handler_binding(json_data, 'onValueChange', 'string', handlers)
+          # SelectBox - onValueChanged or onChange with string
+          elsif component_type == 'SelectBox'
+            handler_key = json_data['onValueChanged'] ? 'onValueChanged' : 'onChange'
+            extract_handler_binding(json_data, handler_key, 'string', handlers)
+          # TextView - onTextChange or onChange with string
+          elsif component_type == 'TextView'
+            handler_key = json_data['onTextChange'] ? 'onTextChange' : 'onChange'
+            extract_handler_binding(json_data, handler_key, 'string', handlers) if json_data[handler_key]
+          end
+
+          # Process children
+          child = json_data['child'] || json_data['children']
+          if child
+            if child.is_a?(Array)
+              child.each { |c| extract_event_handler_bindings(c, handlers) }
+            else
+              extract_event_handler_bindings(child, handlers)
+            end
+          end
+        elsif json_data.is_a?(Array)
+          json_data.each { |item| extract_event_handler_bindings(item, handlers) }
+        end
+
+        handlers
+      end
+
+      def extract_handler_binding(json_data, handler_key, value_type, handlers)
+        handler = json_data[handler_key]
+        return unless handler.is_a?(String) && handler.start_with?('@{') && handler.end_with?('}')
+
+        handler_name = handler[2...-1]
+        handlers[handler_name] = { type: value_type }
+      end
+
+      # Extract value bindings from components (Switch, Slider, SelectBox, etc.)
+      # These are the bound values like @{notificationsEnabled} in Switch value attribute
+      def extract_value_bindings(json_data, bindings = {})
+        if json_data.is_a?(Hash)
+          component_type = json_data['type']
+          value = json_data['value']
+
+          if value.is_a?(String) && value.start_with?('@{') && value.end_with?('}')
+            property_name = value[2...-1]
+
+            # Determine type based on component
+            if %w[Switch Toggle].include?(component_type)
+              bindings[property_name] = { type: 'boolean', defaultValue: false }
+            elsif component_type == 'Slider'
+              bindings[property_name] = { type: 'number', defaultValue: 0 }
+            elsif %w[Radio Segment SelectBox].include?(component_type)
+              bindings[property_name] = { type: 'string', defaultValue: '""' }
+            end
+          end
+
+          # Process children
+          child = json_data['child'] || json_data['children']
+          if child
+            if child.is_a?(Array)
+              child.each { |c| extract_value_bindings(c, bindings) }
+            else
+              extract_value_bindings(child, bindings)
+            end
+          end
+        elsif json_data.is_a?(Array)
+          json_data.each { |item| extract_value_bindings(item, bindings) }
+        end
+
+        bindings
+      end
+
       def extract_data_properties(json_data, properties = [], is_root = true)
         if json_data.is_a?(Hash)
           # Check for data section
@@ -190,7 +279,7 @@ module RjuiTools
         properties
       end
 
-      def update_data_file(base_name, data_properties, onclick_actions = [], text_field_bindings = [])
+      def update_data_file(base_name, data_properties, onclick_actions = [], text_field_bindings = [], event_handlers = {}, value_bindings = {})
         # Convert base_name to PascalCase
         view_name = to_pascal_case(base_name)
 
@@ -202,22 +291,22 @@ module RjuiTools
         FileUtils.mkdir_p(@data_dir)
 
         # Generate new content
-        content = generate_data_content(view_name, data_properties, onclick_actions, text_field_bindings)
+        content = generate_data_content(view_name, data_properties, onclick_actions, text_field_bindings, event_handlers, value_bindings)
 
         # Write the updated content
         File.write(data_file_path, content)
         puts "  Updated Data model: #{data_file_path}"
       end
 
-      def generate_data_content(view_name, data_properties, onclick_actions = [], text_field_bindings = [])
+      def generate_data_content(view_name, data_properties, onclick_actions = [], text_field_bindings = [], event_handlers = {}, value_bindings = {})
         if @use_typescript
-          generate_typescript_content(view_name, data_properties, onclick_actions, text_field_bindings)
+          generate_typescript_content(view_name, data_properties, onclick_actions, text_field_bindings, event_handlers, value_bindings)
         else
-          generate_javascript_content(view_name, data_properties, onclick_actions, text_field_bindings)
+          generate_javascript_content(view_name, data_properties, onclick_actions, text_field_bindings, event_handlers, value_bindings)
         end
       end
 
-      def generate_typescript_content(view_name, data_properties, onclick_actions = [], text_field_bindings = [])
+      def generate_typescript_content(view_name, data_properties, onclick_actions = [], text_field_bindings = [], event_handlers = {}, value_bindings = {})
         # Check if we need to import CollectionDataSource
         needs_collection_import = data_properties.any? { |p| p['tsType']&.include?('CollectionDataSource') || p['class'] == 'CollectionDataSource' }
 
@@ -239,7 +328,7 @@ module RjuiTools
           #{imports}export interface #{view_name}Data {
         TS
 
-        if data_properties.empty? && onclick_actions.empty? && text_field_bindings.empty?
+        if data_properties.empty? && onclick_actions.empty? && text_field_bindings.empty? && event_handlers.empty? && value_bindings.empty?
           content += "  // No data properties defined in JSON\n"
         else
           # Add each property with correct type
@@ -256,6 +345,12 @@ module RjuiTools
             end
           end
 
+          # Add value bindings (Switch, Slider, SelectBox values)
+          value_bindings.each do |prop_name, info|
+            ts_type = info[:type]
+            content += "  #{prop_name}: #{ts_type};\n"
+          end
+
           # Add onclick actions as function properties
           onclick_actions.each do |action|
             content += "  #{action}?: () => void;\n"
@@ -265,6 +360,12 @@ module RjuiTools
           text_field_bindings.each do |binding|
             handler_name = "on#{capitalize_first(binding)}Change"
             content += "  #{handler_name}?: (value: string) => void;\n"
+          end
+
+          # Add event handlers (Switch, SelectBox, etc.)
+          event_handlers.each do |handler_name, info|
+            ts_type = info[:type]
+            content += "  #{handler_name}?: (value: #{ts_type}) => void;\n"
           end
         end
 
@@ -282,6 +383,12 @@ module RjuiTools
           content += "  #{name}: #{formatted_value},\n"
         end
 
+        # Add value bindings with default values
+        value_bindings.each do |prop_name, info|
+          default_val = info[:defaultValue]
+          content += "  #{prop_name}: #{default_val},\n"
+        end
+
         onclick_actions.each do |action|
           content += "  #{action}: undefined,\n"
         end
@@ -289,6 +396,11 @@ module RjuiTools
         # Add onChange handlers with undefined default
         text_field_bindings.each do |binding|
           handler_name = "on#{capitalize_first(binding)}Change"
+          content += "  #{handler_name}: undefined,\n"
+        end
+
+        # Add event handlers with undefined default
+        event_handlers.each do |handler_name, _info|
           content += "  #{handler_name}: undefined,\n"
         end
 
@@ -302,7 +414,7 @@ module RjuiTools
         str[0].upcase + str[1..]
       end
 
-      def generate_javascript_content(view_name, data_properties, onclick_actions = [], text_field_bindings = [])
+      def generate_javascript_content(view_name, data_properties, onclick_actions = [], text_field_bindings = [], event_handlers = {}, value_bindings = {})
         content = <<~JS
           // Generated by ReactJsonUI - Do not edit directly
 
@@ -316,6 +428,12 @@ module RjuiTools
           content += " * @property {#{ts_type}} [#{name}]\n"
         end
 
+        # Add value bindings (Switch, Slider, SelectBox values)
+        value_bindings.each do |prop_name, info|
+          ts_type = info[:type]
+          content += " * @property {#{ts_type}} #{prop_name}\n"
+        end
+
         onclick_actions.each do |action|
           content += " * @property {(() => void) | undefined} [#{action}]\n"
         end
@@ -324,6 +442,12 @@ module RjuiTools
         text_field_bindings.each do |binding|
           handler_name = "on#{capitalize_first(binding)}Change"
           content += " * @property {((value: string) => void) | undefined} [#{handler_name}]\n"
+        end
+
+        # Add event handlers (Switch, SelectBox, etc.)
+        event_handlers.each do |handler_name, info|
+          ts_type = info[:type]
+          content += " * @property {((value: #{ts_type}) => void) | undefined} [#{handler_name}]\n"
         end
 
         content += " */\n\n"
@@ -340,6 +464,12 @@ module RjuiTools
           content += "  #{name}: #{formatted_value},\n"
         end
 
+        # Add value bindings with default values
+        value_bindings.each do |prop_name, info|
+          default_val = info[:defaultValue]
+          content += "  #{prop_name}: #{default_val},\n"
+        end
+
         onclick_actions.each do |action|
           content += "  #{action}: undefined,\n"
         end
@@ -347,6 +477,11 @@ module RjuiTools
         # Add onChange handlers with undefined default
         text_field_bindings.each do |binding|
           handler_name = "on#{capitalize_first(binding)}Change"
+          content += "  #{handler_name}: undefined,\n"
+        end
+
+        # Add event handlers with undefined default
+        event_handlers.each do |handler_name, _info|
           content += "  #{handler_name}: undefined,\n"
         end
 

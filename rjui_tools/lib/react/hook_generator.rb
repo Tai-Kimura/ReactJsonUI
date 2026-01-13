@@ -44,14 +44,15 @@ module RjuiTools
         json_file = find_json_file(base_name)
         return unless json_file
 
-        # Extract TextField bindings from JSON
+        # Extract TextField bindings and event handlers from JSON
         json_content = File.read(json_file, encoding: 'UTF-8')
         json_data = JSON.parse(json_content)
         expanded_data = StyleLoader.load_and_merge(json_data, @styles_dir)
         text_field_bindings = extract_text_field_bindings(expanded_data)
+        event_handlers = extract_event_handler_bindings(expanded_data)
 
         # Generate hook file (match ViewModel extension)
-        generate_hook_file(base_name, text_field_bindings, is_typescript)
+        generate_hook_file(base_name, text_field_bindings, event_handlers, is_typescript)
       end
 
       def find_json_file(base_name)
@@ -102,30 +103,35 @@ module RjuiTools
         bindings.to_a
       end
 
-      def generate_hook_file(base_name, text_field_bindings, is_typescript)
+      def generate_hook_file(base_name, text_field_bindings, event_handlers, is_typescript)
         view_name = to_pascal_case(base_name)
         extension = is_typescript ? '.ts' : '.js'
         hook_file_path = File.join(@hooks_dir, "use#{view_name}ViewModel#{extension}")
 
         content = if is_typescript
-                    generate_typescript_hook(view_name, text_field_bindings)
+                    generate_typescript_hook(view_name, text_field_bindings, event_handlers)
                   else
-                    generate_javascript_hook(view_name, text_field_bindings)
+                    generate_javascript_hook(view_name, text_field_bindings, event_handlers)
                   end
 
         File.write(hook_file_path, content)
         puts "  Generated hook: #{hook_file_path}"
       end
 
-      def generate_typescript_hook(view_name, text_field_bindings)
+      def generate_typescript_hook(view_name, text_field_bindings, event_handlers)
         data_type = "#{view_name}Data"
         vm_type = "#{view_name}ViewModel"
 
-        # Generate onChange handlers
+        # Generate onChange handlers for TextField
         on_change_defaults = text_field_bindings.map do |binding|
           handler_name = "on#{capitalize_first(binding)}Change"
           "    #{handler_name}: data.#{handler_name} ?? ((value: string) => setData(prev => ({ ...prev, #{binding}: value }))),"
-        end.join("\n")
+        end
+
+        # Generate event handlers (Switch, SelectBox, etc.) - these are handled by ViewModel, no defaults needed
+        # Event handlers are wired up in ViewModelBase.initializeEventHandlers()
+
+        all_defaults = on_change_defaults.join("\n")
 
         <<~TS
           "use client";
@@ -149,22 +155,27 @@ module RjuiTools
               );
             }
 
-          #{on_change_defaults.empty? ? '  const dataWithDefaults = data;' : "  // デフォルトのonChangeハンドラ（ViewModelで未定義の場合のみ適用）\n  const dataWithDefaults: #{data_type} = {\n    ...data,\n#{on_change_defaults}\n  };"}
+          #{all_defaults.empty? ? '  const dataWithDefaults = data;' : "  // デフォルトのonChangeハンドラ（ViewModelで未定義の場合のみ適用）\n  const dataWithDefaults: #{data_type} = {\n    ...data,\n#{all_defaults}\n  };"}
 
             return { data: dataWithDefaults, viewModel: viewModelRef.current };
           }
         TS
       end
 
-      def generate_javascript_hook(view_name, text_field_bindings)
+      def generate_javascript_hook(view_name, text_field_bindings, event_handlers)
         data_type = "#{view_name}Data"
         vm_type = "#{view_name}ViewModel"
 
-        # Generate onChange handlers
+        # Generate onChange handlers for TextField
         on_change_defaults = text_field_bindings.map do |binding|
           handler_name = "on#{capitalize_first(binding)}Change"
           "    #{handler_name}: data.#{handler_name} ?? ((value) => setData(prev => ({ ...prev, #{binding}: value }))),"
-        end.join("\n")
+        end
+
+        # Generate event handlers (Switch, SelectBox, etc.) - these are handled by ViewModel, no defaults needed
+        # Event handlers are wired up in ViewModelBase.initializeEventHandlers()
+
+        all_defaults = on_change_defaults.join("\n")
 
         <<~JS
           "use client";
@@ -191,11 +202,59 @@ module RjuiTools
               );
             }
 
-          #{on_change_defaults.empty? ? '  const dataWithDefaults = data;' : "  // デフォルトのonChangeハンドラ（ViewModelで未定義の場合のみ適用）\n  const dataWithDefaults = {\n    ...data,\n#{on_change_defaults}\n  };"}
+          #{all_defaults.empty? ? '  const dataWithDefaults = data;' : "  // デフォルトのonChangeハンドラ（ViewModelで未定義の場合のみ適用）\n  const dataWithDefaults = {\n    ...data,\n#{all_defaults}\n  };"}
 
             return { data: dataWithDefaults, viewModel: viewModelRef.current };
           }
         JS
+      end
+
+      # Extract event handler bindings from components (Switch, SelectBox, etc.)
+      def extract_event_handler_bindings(json_data, handlers = {})
+        if json_data.is_a?(Hash)
+          component_type = json_data['type']
+
+          # Switch, Toggle - onValueChange with boolean
+          if %w[Switch Toggle].include?(component_type)
+            extract_handler_binding(json_data, 'onValueChange', 'boolean', handlers)
+          # Slider - onValueChange with number
+          elsif component_type == 'Slider'
+            extract_handler_binding(json_data, 'onValueChange', 'number', handlers)
+          # Radio, Segment - onValueChange with string
+          elsif %w[Radio Segment].include?(component_type)
+            extract_handler_binding(json_data, 'onValueChange', 'string', handlers)
+          # SelectBox - onValueChanged or onChange with string
+          elsif component_type == 'SelectBox'
+            handler_key = json_data['onValueChanged'] ? 'onValueChanged' : 'onChange'
+            extract_handler_binding(json_data, handler_key, 'string', handlers)
+          # TextView - onTextChange or onChange with string
+          elsif component_type == 'TextView'
+            handler_key = json_data['onTextChange'] ? 'onTextChange' : 'onChange'
+            extract_handler_binding(json_data, handler_key, 'string', handlers) if json_data[handler_key]
+          end
+
+          # Process children
+          child = json_data['child'] || json_data['children']
+          if child
+            if child.is_a?(Array)
+              child.each { |c| extract_event_handler_bindings(c, handlers) }
+            else
+              extract_event_handler_bindings(child, handlers)
+            end
+          end
+        elsif json_data.is_a?(Array)
+          json_data.each { |item| extract_event_handler_bindings(item, handlers) }
+        end
+
+        handlers
+      end
+
+      def extract_handler_binding(json_data, handler_key, value_type, handlers)
+        handler = json_data[handler_key]
+        return unless handler.is_a?(String) && handler.start_with?('@{') && handler.end_with?('}')
+
+        handler_name = handler[2...-1]
+        handlers[handler_name] = { type: value_type }
       end
 
       def capitalize_first(str)

@@ -75,7 +75,8 @@ module RjuiTools
           return '' unless handler
 
           if has_binding?(handler)
-            " onChange={#{extract_binding_property(handler)}}"
+            prop = extract_binding_property(handler)
+            " onChange={(e) => #{prop}?.(Number(e.target.value))}"
           else
             " {/* ERROR: onValueChange requires binding format @{functionName} */}"
           end

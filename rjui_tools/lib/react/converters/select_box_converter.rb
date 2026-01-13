@@ -122,9 +122,9 @@ module RjuiTools
 
           if has_binding?(handler)
             prop = extract_binding_property(handler)
-            " onChange={(e) => #{prop}(e.target.value)}"
+            " onChange={(e) => #{prop}?.(e.target.value)}"
           else
-            " onChange={(e) => #{handler}(e.target.value)}"
+            " onChange={(e) => #{handler}?.(e.target.value)}"
           end
         end
 
