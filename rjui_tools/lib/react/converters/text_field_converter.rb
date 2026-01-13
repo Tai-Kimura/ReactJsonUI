@@ -123,20 +123,13 @@ module RjuiTools
           placeholder = json['hint'] || json['placeholder']
           attrs << " placeholder=\"#{placeholder}\"" if placeholder
 
-          # Value binding
-          # Use 'value' only when onChange handler is provided (controlled component)
-          # Otherwise use 'defaultValue' to avoid React warning
+          # Value binding - always use controlled component with value + onChange
           if json['text']
             value = convert_binding(json['text'])
-            has_change_handler = json['onTextChange'] || json['onChange']
             if value.include?('{')
-              if has_change_handler
-                attrs << " value={#{value.gsub(/[{}]/, '')}}"
-              else
-                attrs << " defaultValue={#{value.gsub(/[{}]/, '')}}"
-              end
+              attrs << " value={#{value.gsub(/[{}]/, '')}}"
             else
-              attrs << " defaultValue=\"#{value}\""
+              attrs << " value=\"#{value}\""
             end
           end
 
@@ -260,14 +253,32 @@ module RjuiTools
         end
 
         def build_on_change
+          # If custom handler is defined, use it
           handler = json['onTextChange'] || json['onChange']
-          return '' unless handler
-
-          if has_binding?(handler)
-            " onChange={#{extract_binding_property(handler)}}"
-          else
-            " onChange={#{handler}}"
+          if handler
+            if has_binding?(handler)
+              return " onChange={#{extract_binding_property(handler)}}"
+            else
+              return " onChange={#{handler}}"
+            end
           end
+
+          # Auto-generate onChange from text binding property
+          # e.g., text: "@{email}" -> onChange={(e) => data.onEmailChange?.(e.target.value)}
+          if json['text'] && has_binding?(json['text'])
+            # Use raw property name without data. prefix
+            property_name = extract_raw_binding_property(json['text'])
+            # Convert property name to onChange handler name (e.g., email -> onEmailChange)
+            handler_name = "on#{capitalize_first(property_name)}Change"
+            return " onChange={(e) => data.#{handler_name}?.(e.target.value)}"
+          end
+
+          ''
+        end
+
+        def capitalize_first(str)
+          return str if str.nil? || str.empty?
+          str[0].upcase + str[1..]
         end
 
         def build_disabled_attr

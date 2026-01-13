@@ -9,6 +9,10 @@
       "type": "string",
       "description": "AI generation command that created this component (metadata only, not rendered)"
     },
+    "partial": {
+      "type": "boolean",
+      "description": "Marks this file as a partial/include template. Partials are not standalone views and will not generate Data models."
+    },
     "type": {
       "type": "string",
       "required": true,

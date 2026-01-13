@@ -8,6 +8,8 @@ require_relative '../../core/attribute_validator'
 require_relative '../../core/binding_validator'
 require_relative '../../react/react_generator'
 require_relative '../../react/data_model_generator'
+require_relative '../../react/viewmodel_generator'
+require_relative '../../react/hook_generator'
 
 module RjuiTools
   module CLI
@@ -117,6 +119,12 @@ module RjuiTools
             end
           end
 
+          # Generate ViewModels if enabled
+          generate_viewmodels if @config['generate_viewmodels'] != false
+
+          # Generate hooks for ViewModels if enabled
+          generate_hooks if @config['generate_hooks'] != false
+
           # Print all collected warnings at the end
           print_validation_summary
           print_binding_warnings
@@ -208,6 +216,28 @@ module RjuiTools
           data_generator.update_data_models
         rescue StandardError => e
           Core::Logger.error("Error generating data models: #{e.message}")
+        end
+
+        def generate_viewmodels
+          Core::Logger.info('Generating ViewModels...')
+          viewmodel_generator = React::ViewModelGenerator.new
+          viewmodel_generator.generate_viewmodels
+        rescue StandardError => e
+          Core::Logger.error("Error generating viewmodels: #{e.message}")
+        end
+
+        def generate_hooks
+          viewmodels_dir = @config['viewmodels_directory'] || 'src/viewmodels'
+          return unless Dir.exist?(viewmodels_dir)
+
+          viewmodel_files = Dir.glob(File.join(viewmodels_dir, '*ViewModel.*'))
+          return if viewmodel_files.empty?
+
+          Core::Logger.info('Generating hooks for ViewModels...')
+          hook_generator = React::HookGenerator.new
+          hook_generator.generate_hooks
+        rescue StandardError => e
+          Core::Logger.error("Error generating hooks: #{e.message}")
         end
 
         def update_string_manager
