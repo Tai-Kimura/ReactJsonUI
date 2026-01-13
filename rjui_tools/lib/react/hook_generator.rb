@@ -14,6 +14,7 @@ module RjuiTools
         @source_path = @config['source_path'] || Dir.pwd
         @layouts_dir = File.join(@source_path, @config['layouts_directory'] || 'Layouts')
         @hooks_dir = File.join(@source_path, @config['hooks_directory'] || 'src/generated/hooks')
+        @generated_viewmodels_dir = File.join(@source_path, @config['generated_viewmodels_directory'] || 'src/generated/viewmodels')
         @viewmodels_dir = File.join(@source_path, @config['viewmodels_directory'] || 'src/viewmodels')
         @data_dir = File.join(@source_path, @config['data_directory'] || 'src/generated/data')
         @styles_dir = File.join(@source_path, @config['styles_directory'] || 'Styles')
@@ -24,7 +25,7 @@ module RjuiTools
         # Ensure hooks directory exists
         FileUtils.mkdir_p(@hooks_dir)
 
-        # Find all ViewModels (auto-detect .ts or .js)
+        # Find all ViewModel files (in src/viewmodels/)
         viewmodel_files = Dir.glob(File.join(@viewmodels_dir, "*ViewModel.{ts,js}"))
 
         viewmodel_files.each do |vm_file|
@@ -134,7 +135,7 @@ module RjuiTools
           import { #{data_type}, create#{data_type} } from "@/generated/data/#{data_type}";
           import { #{vm_type} } from "@/viewmodels/#{vm_type}";
 
-          export function use#{vm_type}(router: AppRouterInstance) {
+          export function use#{view_name}ViewModel(router: AppRouterInstance) {
             const [data, setData] = useState<#{data_type}>(create#{data_type}());
             const dataRef = useRef(data);
             dataRef.current = data;
@@ -176,7 +177,7 @@ module RjuiTools
            * Hook for #{view_name} page with ViewModel
            * @param {import("next/dist/shared/lib/app-router-context.shared-runtime").AppRouterInstance} router
            */
-          export function use#{vm_type}(router) {
+          export function use#{view_name}ViewModel(router) {
             const [data, setData] = useState(create#{data_type}());
             const dataRef = useRef(data);
             dataRef.current = data;

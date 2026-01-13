@@ -282,28 +282,24 @@ module RjuiTools
           FileUtils.mkdir_p(viewmodel_dir)
 
           viewmodel_content = <<~TS
+            // ViewModel for #{view_name}
+            // This file is NOT auto-generated after initial creation - safe to edit
+
             import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
             import { #{view_name}Data } from "@/generated/data/#{view_name}Data";
+            import { #{view_name}ViewModelBase } from "@/generated/viewmodels/#{view_name}ViewModelBase";
 
-            export class #{view_name}ViewModel {
-              private router: AppRouterInstance;
-              data: #{view_name}Data;
-              private _setData: (data: #{view_name}Data) => void;
-
+            export class #{view_name}ViewModel extends #{view_name}ViewModelBase {
               constructor(
                 router: AppRouterInstance,
-                data: #{view_name}Data,
-                setData: (data: #{view_name}Data) => void
+                getData: () => #{view_name}Data,
+                setData: (data: #{view_name}Data | ((prev: #{view_name}Data) => #{view_name}Data)) => void
               ) {
-                this.router = router;
-                this.data = data;
-                this._setData = setData;
+                super(router, getData, setData);
+                this.initializeEventHandlers();
               }
 
-              // Update data and trigger re-render
-              updateData = (updates: Partial<#{view_name}Data>) => {
-                this._setData({ ...this.data, ...updates });
-              };
+              // Override methods or add custom logic here
             }
           TS
 
@@ -323,24 +319,24 @@ module RjuiTools
           FileUtils.mkdir_p(viewmodel_dir)
 
           viewmodel_content = <<~TS
+            // ViewModel for #{view_name}
+            // This file is NOT auto-generated after initial creation - safe to edit
+
+            import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
             import { #{view_name}Data } from "@/generated/data/#{view_name}Data";
+            import { #{view_name}ViewModelBase } from "@/generated/viewmodels/#{view_name}ViewModelBase";
 
-            export class #{view_name}ViewModel {
-              data: #{view_name}Data;
-              private _setData: (data: #{view_name}Data) => void;
-
+            export class #{view_name}ViewModel extends #{view_name}ViewModelBase {
               constructor(
-                data: #{view_name}Data,
-                setData: (data: #{view_name}Data) => void
+                router: AppRouterInstance,
+                getData: () => #{view_name}Data,
+                setData: (data: #{view_name}Data | ((prev: #{view_name}Data) => #{view_name}Data)) => void
               ) {
-                this.data = data;
-                this._setData = setData;
+                super(router, getData, setData);
+                this.initializeEventHandlers();
               }
 
-              // Update data and trigger re-render
-              updateData = (updates: Partial<#{view_name}Data>) => {
-                this._setData({ ...this.data, ...updates });
-              };
+              // Override methods or add custom logic here
             }
           TS
 

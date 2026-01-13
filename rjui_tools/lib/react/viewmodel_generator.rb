@@ -42,6 +42,10 @@ module RjuiTools
         base_name = File.basename(json_file, '.json')
         view_name = to_pascal_case(base_name)
 
+        # Check if ViewModel exists - only generate Base if ViewModel exists
+        existing_vm = find_existing_viewmodel(view_name)
+        return unless existing_vm  # Skip if no ViewModel
+
         # Read and parse JSON
         json_content = File.read(json_file, encoding: 'UTF-8')
         json_data = JSON.parse(json_content)
@@ -51,15 +55,10 @@ module RjuiTools
         onclick_actions = extract_onclick_actions(expanded_data)
         text_field_bindings = extract_text_field_bindings(expanded_data)
 
-        # Check if ViewModel already exists (either .ts or .js)
-        existing_vm = find_existing_viewmodel(view_name)
-        is_typescript = existing_vm ? existing_vm.end_with?('.ts') : @use_typescript
+        is_typescript = existing_vm.end_with?('.ts')
 
-        # Generate Base ViewModel (always overwritten)
+        # Generate Base ViewModel (always overwritten when ViewModel exists)
         generate_base_viewmodel(view_name, onclick_actions, text_field_bindings, is_typescript)
-
-        # Generate ViewModel stub (only if not exists)
-        generate_viewmodel_stub(view_name, is_typescript) unless existing_vm
       end
 
       def find_existing_viewmodel(view_name)
