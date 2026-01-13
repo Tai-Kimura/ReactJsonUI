@@ -109,7 +109,7 @@ module RjuiTools
           <<~JSX.chomp
             #{indent_str(6)}<button
             #{indent_str(8)}className={`#{button_class}`}#{style_attr}
-            #{indent_str(8)}onClick={() => #{on_change}(#{index})}
+            #{indent_str(8)}onClick={() => #{on_change}?.(#{index})}
             #{indent_str(6)}>
             #{indent_str(8)}<div className="relative">
             #{icon_jsx}#{badge_jsx ? "\n#{badge_jsx}" : ''}
@@ -185,7 +185,7 @@ module RjuiTools
             pascal_name = view_name.split('_').map(&:capitalize).join
             # Generate data prop name from view name (e.g., home -> homeData, whisky_card -> whiskyCardData)
             data_prop_name = view_name.split('_').each_with_index.map { |part, i| i == 0 ? part.downcase : part.capitalize }.join + 'Data'
-            content = "<#{pascal_name} data={data.#{data_prop_name}} />"
+            content = "<#{pascal_name} data={data.#{data_prop_name}!} />"
           else
             content = "<div className=\"p-4\">#{tab['title'] || "Tab #{index + 1}"} content</div>"
           end

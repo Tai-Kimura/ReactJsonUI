@@ -50,6 +50,14 @@ module RjuiTools
           # Flexible height
           classes << 'resize-y' if json['flexible']
 
+          # Placeholder color using Tailwind
+          if json['hintColor'] || json['placeholderColor']
+            color = json['hintColor'] || json['placeholderColor']
+            classes << "placeholder-#{color}"
+          elsif json['hintAttributes'] && json['hintAttributes']['fontColor']
+            classes << "placeholder-#{json['hintAttributes']['fontColor']}"
+          end
+
           # Disabled state
           classes << 'disabled:bg-gray-100 disabled:cursor-not-allowed' if json['enabled'] == false || json['enabled'].is_a?(String)
 
@@ -64,16 +72,7 @@ module RjuiTools
             @dynamic_styles['borderRadius'] = "'#{json['cornerRadius']}px'"
           end
 
-          # Hint/placeholder color
-          if json['hintColor'] || json['placeholderColor']
-            color = json['hintColor'] || json['placeholderColor']
-            @dynamic_styles['--placeholder-color'] = "'#{color}'"
-          end
-
-          # Hint attributes (color)
-          if json['hintAttributes'] && json['hintAttributes']['fontColor']
-            @dynamic_styles['--placeholder-color'] = "'#{json['hintAttributes']['fontColor']}'"
-          end
+          # Hint/placeholder color is now handled via Tailwind class in build_class_name
 
           # Container inset (internal padding)
           if json['containerInset']
@@ -112,7 +111,9 @@ module RjuiTools
 
           style_pairs = @dynamic_styles.map do |key, value|
             clean_value = value.gsub(/^\{|\}$/, '')
-            "#{key}: #{clean_value}"
+            # CSS custom properties (starting with --) need to be quoted in JSX
+            key_str = key.start_with?('--') ? "'#{key}'" : key
+            "#{key_str}: #{clean_value}"
           end
 
           " style={{ #{style_pairs.join(', ')} }}"

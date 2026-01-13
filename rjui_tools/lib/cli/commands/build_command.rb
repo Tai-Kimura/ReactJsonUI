@@ -87,7 +87,7 @@ module RjuiTools
               output = generator.generate(component_name, json_content)
 
               # Preserve subdirectory structure from layouts
-              # e.g., Layouts/components/home/activity_item.json -> generated/components/home/ActivityItem.jsx
+              # e.g., Layouts/components/home/activity_item.json -> generated/components/home/ActivityItem.tsx
               relative_path = json_file.sub("#{layouts_dir}/", '')
               subdir = File.dirname(relative_path)
               # Remove 'pages' or 'components' prefix if present, keep nested subdirs
@@ -95,16 +95,19 @@ module RjuiTools
               subdir_parts.shift if %w[pages components].include?(subdir_parts.first)
               nested_subdir = subdir_parts.join('/')
 
+              # Use .tsx for TypeScript, .jsx for JavaScript
+              extension = @config['typescript'] ? '.tsx' : '.jsx'
+
               output_path = if nested_subdir.empty?
                               File.join(
                                 @config['components_directory'],
-                                "#{component_name}.jsx"
+                                "#{component_name}#{extension}"
                               )
                             else
                               File.join(
                                 @config['components_directory'],
                                 nested_subdir,
-                                "#{component_name}.jsx"
+                                "#{component_name}#{extension}"
                               )
                             end
 

@@ -111,8 +111,10 @@ module RjuiTools
 
           # Cells with map
           if cell_view && items_binding
-            lines << "#{indent_str(indent)}{#{items_binding}?.sections?.[#{section_index}]?.cells?.data?.map((cellData, cellIndex) => ("
-            lines << "#{indent_str(indent + 2)}<#{cell_view} key={cellIndex} data={cellData} />"
+            # Add type cast for TypeScript (CollectionDataSource uses generic type)
+            cell_cast = config['typescript'] ? " as unknown as #{cell_view}Data" : ''
+            lines << "#{indent_str(indent)}{(#{items_binding}?.sections?.[#{section_index}]?.cells?.data ?? []).map((cellData, cellIndex) => ("
+            lines << "#{indent_str(indent + 2)}<#{cell_view} key={cellIndex} data={cellData#{cell_cast}} />"
             lines << "#{indent_str(indent)}))}"
           elsif cell_view
             # Placeholder for static content
@@ -153,7 +155,9 @@ module RjuiTools
           # Cells placeholder
           if cell_view
             if items_binding
-              lines << "#{indent_str(indent)}{#{items_binding}?.map((item, index) => ("
+              # Add type annotation for TypeScript
+              item_type = config['typescript'] ? ": #{cell_view}Data" : ''
+              lines << "#{indent_str(indent)}{#{items_binding}?.map((item#{item_type}, index: number) => ("
               lines << "#{indent_str(indent + 2)}<#{cell_view} key={index} data={item} />"
               lines << "#{indent_str(indent)}))}"
             else

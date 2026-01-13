@@ -232,7 +232,7 @@ module RjuiTools
               "use client";
 
               import { useRouter } from "next/navigation";
-              import { useMemo, useState } from "react";
+              import { useRef, useState } from "react";
               import #{view_name} from "@/generated/components/#{view_name}";
               import { #{view_name}ViewModel } from "@/viewmodels/#{view_name}ViewModel";
               import { #{view_name}Data, create#{view_name}Data } from "@/generated/data/#{view_name}Data";
@@ -240,12 +240,19 @@ module RjuiTools
               export default function #{view_name}Page() {
                 const router = useRouter();
                 const [data, setData] = useState<#{view_name}Data>(create#{view_name}Data());
-                const viewModel = useMemo(
-                  () => new #{view_name}ViewModel(router, data, setData),
-                  [router, data]
-                );
+                const dataRef = useRef(data);
+                dataRef.current = data;
 
-                return <#{view_name} data={viewModel.data} />;
+                const viewModelRef = useRef<#{view_name}ViewModel | null>(null);
+                if (!viewModelRef.current) {
+                  viewModelRef.current = new #{view_name}ViewModel(
+                    router,
+                    () => dataRef.current,
+                    setData
+                  );
+                }
+
+                return <#{view_name} data={data} />;
               }
             TSX
           else

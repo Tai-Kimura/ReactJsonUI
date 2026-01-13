@@ -229,7 +229,9 @@ module RjuiTools
           style_pairs = @dynamic_styles.map do |key, value|
             # Remove braces from the value since we're inside a JSX expression
             clean_value = value.gsub(/^\{|\}$/, '')
-            "#{key}: #{clean_value}"
+            # CSS custom properties (starting with --) need to be quoted in JSX
+            key_str = key.start_with?('--') ? "'#{key}'" : key
+            "#{key_str}: #{clean_value}"
           end
 
           " style={{ #{style_pairs.join(', ')} }}"

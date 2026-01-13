@@ -49,7 +49,9 @@ module RjuiTools
               'center' => 'object-none',
               'centerCrop' => 'object-cover',
               'fitCenter' => 'object-contain',
-              'fitXY' => 'object-fill'
+              'fitXY' => 'object-fill',
+              'AspectFill' => 'object-cover',
+              'AspectFit' => 'object-contain'
             }
             classes << (mode_map[content_mode] || "object-#{content_mode}")
           end
@@ -91,7 +93,9 @@ module RjuiTools
             'center' => 'none',
             'centerCrop' => 'cover',
             'fitCenter' => 'contain',
-            'fitXY' => 'fill'
+            'fitXY' => 'fill',
+            'AspectFill' => 'cover',
+            'AspectFit' => 'contain'
           }
 
           mapped_mode = mode_map[content_mode] || content_mode

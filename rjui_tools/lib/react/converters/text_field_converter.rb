@@ -54,6 +54,12 @@ module RjuiTools
             end
           end
 
+          # Placeholder color using Tailwind
+          if json['hintColor'] || json['placeholderColor']
+            color = json['hintColor'] || json['placeholderColor']
+            classes << "placeholder-#{color}"
+          end
+
           # Disabled state
           classes << 'disabled:bg-gray-100 disabled:cursor-not-allowed' if json['enabled'] == false || json['enabled'].is_a?(String)
 
@@ -68,11 +74,7 @@ module RjuiTools
             @dynamic_styles['borderRadius'] = "'#{json['cornerRadius']}px'"
           end
 
-          # Hint/placeholder color using CSS custom property
-          if json['hintColor'] || json['placeholderColor']
-            color = json['hintColor'] || json['placeholderColor']
-            @dynamic_styles['--placeholder-color'] = "'#{color}'"
-          end
+          # Hint/placeholder color is now handled via Tailwind class in build_class_name
 
           # Caret (cursor) color
           if json['caretAttributes'] && json['caretAttributes']['fontColor']
