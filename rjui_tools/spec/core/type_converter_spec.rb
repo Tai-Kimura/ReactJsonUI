@@ -92,12 +92,12 @@ RSpec.describe RjuiTools::Core::TypeConverter do
     end
 
     context 'with language-only hash' do
-      it 'extracts react value' do
-        value = { 'swift' => 'Int', 'kotlin' => 'Int', 'react' => 'number' }
+      it 'extracts typescript value' do
+        value = { 'swift' => 'Int', 'kotlin' => 'Int', 'typescript' => 'number' }
         expect(described_class.extract_platform_value(value)).to eq('number')
       end
 
-      it 'returns original hash if no react key' do
+      it 'returns original hash if no typescript key' do
         value = { 'swift' => 'Int', 'kotlin' => 'Int' }
         expect(described_class.extract_platform_value(value)).to eq(value)
       end
@@ -108,7 +108,7 @@ RSpec.describe RjuiTools::Core::TypeConverter do
         {
           'swift' => { 'swiftui' => 'Color', 'uikit' => 'UIColor' },
           'kotlin' => { 'compose' => 'Color', 'xml' => 'Int' },
-          'react' => { 'react' => 'string' }
+          'typescript' => { 'react' => 'string' }
         }
       end
 
@@ -118,7 +118,7 @@ RSpec.describe RjuiTools::Core::TypeConverter do
 
       it 'falls back to first available mode if specified mode not found' do
         value_missing_mode = {
-          'react' => { 'react' => 'string' }
+          'typescript' => { 'react' => 'string' }
         }
         expect(described_class.extract_platform_value(value_missing_mode, 'other')).to eq('string')
       end
@@ -145,18 +145,18 @@ RSpec.describe RjuiTools::Core::TypeConverter do
     end
 
     context 'with platform-specific hash values' do
-      it 'extracts class and defaultValue for react' do
+      it 'extracts class and defaultValue for typescript' do
         prop = {
           'name' => 'backgroundColor',
           'class' => {
             'swift' => { 'swiftui' => 'Color', 'uikit' => 'UIColor' },
             'kotlin' => { 'compose' => 'Color', 'xml' => 'Int' },
-            'react' => { 'react' => 'string' }
+            'typescript' => { 'react' => 'string' }
           },
           'defaultValue' => {
             'swift' => { 'swiftui' => 'Color.blue', 'uikit' => 'UIColor.blue' },
             'kotlin' => { 'compose' => 'Color.Blue', 'xml' => '0xFF0000FF' },
-            'react' => { 'react' => '"#0000FF"' }
+            'typescript' => { 'react' => '"#0000FF"' }
           }
         }
 
@@ -339,6 +339,146 @@ RSpec.describe RjuiTools::Core::TypeConverter do
 
     it 'converts Array(String)? to string[] | undefined' do
       expect(described_class.to_typescript_type('Array(String)?')).to eq('string[] | undefined')
+    end
+  end
+
+  describe '.load_type_mapping' do
+    before(:each) do
+      described_class.clear_type_mapping_cache
+    end
+
+    it 'loads type_mapping.json' do
+      mapping = described_class.load_type_mapping
+      expect(mapping).to be_a(Hash)
+      expect(mapping).to have_key('types')
+      expect(mapping).to have_key('events')
+      expect(mapping).to have_key('defaults')
+    end
+
+    it 'caches the loaded mapping' do
+      first_load = described_class.load_type_mapping
+      second_load = described_class.load_type_mapping
+      expect(first_load).to equal(second_load)
+    end
+  end
+
+  describe '.get_type_mapping' do
+    before(:each) do
+      described_class.clear_type_mapping_cache
+    end
+
+    it 'returns mapped type for known types' do
+      expect(described_class.get_type_mapping('String')).to eq('string')
+      expect(described_class.get_type_mapping('Int')).to eq('number')
+      expect(described_class.get_type_mapping('Bool')).to eq('boolean')
+    end
+
+    it 'returns nil for unknown types' do
+      expect(described_class.get_type_mapping('UnknownType')).to be_nil
+    end
+  end
+
+  describe '.get_event_type' do
+    before(:each) do
+      described_class.clear_type_mapping_cache
+    end
+
+    context 'with Button onClick' do
+      it 'returns React.MouseEvent<HTMLButtonElement> for react' do
+        result = described_class.get_event_type('Button', 'onClick', 'react')
+        expect(result).to eq('React.MouseEvent<HTMLButtonElement>')
+      end
+    end
+
+    context 'with Switch onValueChange' do
+      it 'returns React.ChangeEvent<HTMLInputElement>' do
+        result = described_class.get_event_type('Switch', 'onValueChange', 'react')
+        expect(result).to eq('React.ChangeEvent<HTMLInputElement>')
+      end
+    end
+
+    context 'with Toggle onValueChange' do
+      it 'returns React.ChangeEvent<HTMLInputElement>' do
+        result = described_class.get_event_type('Toggle', 'onValueChange', 'react')
+        expect(result).to eq('React.ChangeEvent<HTMLInputElement>')
+      end
+    end
+
+    context 'with Slider onValueChange' do
+      it 'returns React.ChangeEvent<HTMLInputElement>' do
+        result = described_class.get_event_type('Slider', 'onValueChange', 'react')
+        expect(result).to eq('React.ChangeEvent<HTMLInputElement>')
+      end
+    end
+
+    context 'with TextField onTextChange' do
+      it 'returns React.ChangeEvent<HTMLInputElement>' do
+        result = described_class.get_event_type('TextField', 'onTextChange', 'react')
+        expect(result).to eq('React.ChangeEvent<HTMLInputElement>')
+      end
+    end
+
+    context 'with TextView onTextChange' do
+      it 'returns React.ChangeEvent<HTMLTextAreaElement>' do
+        result = described_class.get_event_type('TextView', 'onTextChange', 'react')
+        expect(result).to eq('React.ChangeEvent<HTMLTextAreaElement>')
+      end
+    end
+
+    context 'with SelectBox onValueChange' do
+      it 'returns React.ChangeEvent<HTMLSelectElement>' do
+        result = described_class.get_event_type('SelectBox', 'onValueChange', 'react')
+        expect(result).to eq('React.ChangeEvent<HTMLSelectElement>')
+      end
+    end
+
+    context 'with CheckBox onValueChange' do
+      it 'returns React.ChangeEvent<HTMLInputElement>' do
+        result = described_class.get_event_type('CheckBox', 'onValueChange', 'react')
+        expect(result).to eq('React.ChangeEvent<HTMLInputElement>')
+      end
+    end
+
+    context 'with Radio onValueChange' do
+      it 'returns React.ChangeEvent<HTMLInputElement>' do
+        result = described_class.get_event_type('Radio', 'onValueChange', 'react')
+        expect(result).to eq('React.ChangeEvent<HTMLInputElement>')
+      end
+    end
+
+    context 'with Segment onValueChange' do
+      it 'returns React.MouseEvent<HTMLButtonElement>' do
+        result = described_class.get_event_type('Segment', 'onValueChange', 'react')
+        expect(result).to eq('React.MouseEvent<HTMLButtonElement>')
+      end
+    end
+
+    it 'returns nil for unknown component' do
+      result = described_class.get_event_type('UnknownComponent', 'onClick', 'react')
+      expect(result).to be_nil
+    end
+
+    it 'returns nil for unknown attribute' do
+      result = described_class.get_event_type('Button', 'unknownEvent', 'react')
+      expect(result).to be_nil
+    end
+  end
+
+  describe '.get_default_value from type_mapping' do
+    before(:each) do
+      described_class.clear_type_mapping_cache
+    end
+
+    it 'returns default value for known TypeScript types from type_mapping.json' do
+      expect(described_class.get_default_value('string')).to eq('""')
+      expect(described_class.get_default_value('number')).to eq('0')
+      expect(described_class.get_default_value('boolean')).to eq('false')
+      expect(described_class.get_default_value('any[]')).to eq('[]')
+      expect(described_class.get_default_value('Record<string, any>')).to eq('{}')
+    end
+
+    it 'returns undefined for unknown types' do
+      expect(described_class.get_default_value('UnknownType')).to eq('undefined')
     end
   end
 end

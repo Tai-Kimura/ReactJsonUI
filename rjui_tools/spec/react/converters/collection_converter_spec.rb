@@ -47,10 +47,10 @@ RSpec.describe RjuiTools::React::Converters::CollectionConverter do
     end
 
     context 'with items binding' do
-      it 'generates map rendering' do
+      it 'generates map rendering with TypeScript index type' do
         converter = create_converter({ 'class' => 'Collection', 'cellClasses' => ['ItemCell'], 'items' => '@{listItems}' })
         result = converter.convert
-        expect(result).to include('{data.listItems?.map((item, index) =>')
+        expect(result).to include('{data.listItems?.map((item, index: number) =>')
         expect(result).to include('key={index}')
         expect(result).to include('data={item}')
       end
@@ -73,7 +73,7 @@ RSpec.describe RjuiTools::React::Converters::CollectionConverter do
     end
 
     context 'with sections' do
-      it 'generates section-based rendering' do
+      it 'generates section-based rendering with nullish coalescing' do
         json = {
           'class' => 'Collection',
           'sections' => [
@@ -85,7 +85,8 @@ RSpec.describe RjuiTools::React::Converters::CollectionConverter do
         result = converter.convert
         expect(result).to include('SectionHeader')
         expect(result).to include('SectionFooter')
-        expect(result).to include('sections?.[0]?.cells?.data?.map')
+        # Updated expectation: uses nullish coalescing with array
+        expect(result).to include('sections?.[0]?.cells?.data ?? []')
       end
     end
 

@@ -125,13 +125,15 @@ module RjuiTools
           placeholder = json['hint'] || json['placeholder']
           attrs << " placeholder=\"#{placeholder}\"" if placeholder
 
-          # Value binding - always use controlled component with value + onChange
+          # Value handling depends on binding presence
           if json['text']
-            value = convert_binding(json['text'])
-            if value.include?('{')
+            if has_binding?(json['text'])
+              # Binding present: use controlled component (value + onChange)
+              value = convert_binding(json['text'])
               attrs << " value={#{value.gsub(/[{}]/, '')}}"
             else
-              attrs << " value=\"#{value}\""
+              # No binding: use uncontrolled component (defaultValue only)
+              attrs << " defaultValue=\"#{json['text']}\""
             end
           end
 
@@ -255,13 +257,14 @@ module RjuiTools
         end
 
         def build_on_change
-          # If custom handler is defined, use it
+          # If custom handler is defined, use it (passing the event object)
           handler = json['onTextChange'] || json['onChange']
           if handler
             if has_binding?(handler)
-              return " onChange={#{extract_binding_property(handler)}}"
+              prop = extract_binding_property(handler)
+              return " onChange={(e) => #{prop}?.(e)}"
             else
-              return " onChange={#{handler}}"
+              return " onChange={(e) => #{handler}?.(e)}"
             end
           end
 

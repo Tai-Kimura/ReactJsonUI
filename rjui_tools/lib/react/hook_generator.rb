@@ -76,14 +76,62 @@ module RjuiTools
         nil
       end
 
-      def extract_text_field_bindings(json_data, bindings = Set.new)
+      # Returns a hash of { property_name => type } where type is 'string', 'boolean', or 'number'
+      def extract_text_field_bindings(json_data, bindings = {})
         if json_data.is_a?(Hash)
-          if json_data['type'] == 'TextField' && json_data['text']
+          component_type = json_data['type']
+
+          # TextField - text binding (string)
+          if component_type == 'TextField' && json_data['text']
             text_value = json_data['text']
             if text_value.is_a?(String) && text_value.start_with?('@{') && text_value.end_with?('}')
               unless json_data['onTextChange'] || json_data['onChange']
                 property_name = text_value[2...-1]
-                bindings.add(property_name)
+                bindings[property_name] = 'string'
+              end
+            end
+          end
+
+          # TextView - text binding (string)
+          if component_type == 'TextView' && json_data['text']
+            text_value = json_data['text']
+            if text_value.is_a?(String) && text_value.start_with?('@{') && text_value.end_with?('}')
+              unless json_data['onTextChange'] || json_data['onChange']
+                property_name = text_value[2...-1]
+                bindings[property_name] = 'string'
+              end
+            end
+          end
+
+          # Toggle/CheckBox/Check - isOn/checked binding (boolean)
+          if %w[Toggle CheckBox Check].include?(component_type)
+            is_on = json_data['isOn'] || json_data['checked']
+            if is_on.is_a?(String) && is_on.start_with?('@{') && is_on.end_with?('}')
+              unless json_data['onValueChange']
+                property_name = is_on[2...-1]
+                bindings[property_name] = 'boolean'
+              end
+            end
+          end
+
+          # Switch - isOn/checked/value binding (boolean)
+          if component_type == 'Switch'
+            is_on = json_data['isOn'] || json_data['checked'] || json_data['value']
+            if is_on.is_a?(String) && is_on.start_with?('@{') && is_on.end_with?('}')
+              unless json_data['onValueChange']
+                property_name = is_on[2...-1]
+                bindings[property_name] = 'boolean'
+              end
+            end
+          end
+
+          # Slider - value binding (number)
+          if component_type == 'Slider' && json_data['value']
+            value = json_data['value']
+            if value.is_a?(String) && value.start_with?('@{') && value.end_with?('}')
+              unless json_data['onValueChange']
+                property_name = value[2...-1]
+                bindings[property_name] = 'number'
               end
             end
           end
@@ -100,7 +148,7 @@ module RjuiTools
           json_data.each { |item| extract_text_field_bindings(item, bindings) }
         end
 
-        bindings.to_a
+        bindings
       end
 
       def generate_hook_file(base_name, text_field_bindings, event_handlers, is_typescript)
@@ -122,10 +170,10 @@ module RjuiTools
         data_type = "#{view_name}Data"
         vm_type = "#{view_name}ViewModel"
 
-        # Generate onChange handlers for TextField
-        on_change_defaults = text_field_bindings.map do |binding|
+        # Generate onChange handlers for bindings with type-appropriate signatures
+        on_change_defaults = text_field_bindings.map do |binding, value_type|
           handler_name = "on#{capitalize_first(binding)}Change"
-          "    #{handler_name}: data.#{handler_name} ?? ((value: string) => setData(prev => ({ ...prev, #{binding}: value }))),"
+          "    #{handler_name}: data.#{handler_name} ?? ((value: #{value_type}) => setData(prev => ({ ...prev, #{binding}: value }))),"
         end
 
         # Generate event handlers (Switch, SelectBox, etc.) - these are handled by ViewModel, no defaults needed
@@ -166,8 +214,8 @@ module RjuiTools
         data_type = "#{view_name}Data"
         vm_type = "#{view_name}ViewModel"
 
-        # Generate onChange handlers for TextField
-        on_change_defaults = text_field_bindings.map do |binding|
+        # Generate onChange handlers for bindings (JavaScript doesn't need types)
+        on_change_defaults = text_field_bindings.map do |binding, _value_type|
           handler_name = "on#{capitalize_first(binding)}Change"
           "    #{handler_name}: data.#{handler_name} ?? ((value) => setData(prev => ({ ...prev, #{binding}: value }))),"
         end

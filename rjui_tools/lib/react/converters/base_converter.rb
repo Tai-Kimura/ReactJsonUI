@@ -346,6 +346,7 @@ module RjuiTools
             'Table' => CollectionConverter,
             'Switch' => SwitchConverter,
             'Toggle' => ToggleConverter,
+            'CheckBox' => ToggleConverter,
             'Check' => ToggleConverter,
             'Checkbox' => ToggleConverter,
             'Slider' => SliderConverter,

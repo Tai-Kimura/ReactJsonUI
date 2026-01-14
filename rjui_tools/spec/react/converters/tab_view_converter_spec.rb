@@ -28,7 +28,7 @@ RSpec.describe RjuiTools::React::Converters::TabViewConverter do
         expect(result).to include('Profile')
       end
 
-      it 'generates view references' do
+      it 'generates view references with non-null assertion' do
         converter = create_converter({
           'type' => 'TabView',
           'tabs' => [
@@ -36,7 +36,7 @@ RSpec.describe RjuiTools::React::Converters::TabViewConverter do
           ]
         })
         result = converter.convert
-        expect(result).to include('<Home data={data.homeData} />')
+        expect(result).to include('<Home data={data.homeData!} />')
       end
     end
 
@@ -57,7 +57,7 @@ RSpec.describe RjuiTools::React::Converters::TabViewConverter do
     end
 
     context 'with onTabChange handler' do
-      it 'uses handler for onClick' do
+      it 'uses handler for onClick with optional chaining' do
         converter = create_converter({
           'type' => 'TabView',
           'onTabChange' => '@{handleTabChange}',
@@ -66,7 +66,7 @@ RSpec.describe RjuiTools::React::Converters::TabViewConverter do
           ]
         })
         result = converter.convert
-        expect(result).to include('onClick={() => data.handleTabChange(0)}')
+        expect(result).to include('onClick={() => data.handleTabChange?.(0)}')
       end
     end
 
@@ -152,7 +152,7 @@ RSpec.describe RjuiTools::React::Converters::TabViewConverter do
     end
 
     context 'with snake_case view names' do
-      it 'converts to PascalCase' do
+      it 'converts to PascalCase with non-null assertion' do
         converter = create_converter({
           'type' => 'TabView',
           'tabs' => [
@@ -160,7 +160,7 @@ RSpec.describe RjuiTools::React::Converters::TabViewConverter do
           ]
         })
         result = converter.convert
-        expect(result).to include('<HomeScreen data={data.homeScreenData} />')
+        expect(result).to include('<HomeScreen data={data.homeScreenData!} />')
       end
     end
 

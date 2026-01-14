@@ -47,10 +47,19 @@ RSpec.describe RjuiTools::React::Converters::ToggleConverter do
     end
 
     context 'with onValueChange handler' do
-      it 'generates onChange binding' do
+      it 'generates onChange with optional chaining and checked value' do
         converter = create_converter({ 'class' => 'CheckBox', 'onValueChange' => '@{handleChange}' })
         result = converter.convert
-        expect(result).to include('onChange={data.handleChange}')
+        expect(result).to include('onChange={(e) => data.handleChange?.(e.target.checked)}')
+      end
+    end
+
+    context 'with isOn binding but no onValueChange (auto-generated)' do
+      it 'auto-generates onChange handler from isOn binding' do
+        converter = create_converter({ 'class' => 'CheckBox', 'isOn' => '@{isEnabled}' })
+        result = converter.convert
+        expect(result).to include('checked={data.isEnabled}')
+        expect(result).to include('onChange={(e) => data.onIsEnabledChange?.(e.target.checked)}')
       end
     end
 

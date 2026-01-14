@@ -47,8 +47,11 @@ module RjuiTools
         # Expand styles before extracting data and actions
         expanded_data = StyleLoader.load_and_merge(json_data, @styles_dir)
 
-        # Extract data properties from expanded JSON
-        data_properties = extract_data_properties(expanded_data)
+        # Extract event bindings (handler name => component/attribute info) for Event type conversion
+        event_bindings = extract_event_bindings_for_type(expanded_data)
+
+        # Extract data properties from expanded JSON (pass event_bindings for Event type conversion)
+        data_properties = extract_data_properties(expanded_data, [], true, event_bindings)
 
         # Extract onclick actions from expanded JSON
         onclick_actions = extract_onclick_actions(expanded_data)
@@ -67,6 +70,45 @@ module RjuiTools
 
         # Update the Data model file
         update_data_file(base_name, data_properties, onclick_actions, text_field_bindings, event_handlers, value_bindings)
+      end
+
+      # Extract event bindings from JSON to map handler names to component/attribute
+      # Used for converting Event type to platform-specific types
+      # @param json_data [Hash] the JSON data
+      # @param bindings [Hash] accumulated bindings (handler_name => { component:, attribute: })
+      # @return [Hash] event bindings
+      def extract_event_bindings_for_type(json_data, bindings = {})
+        return bindings unless json_data.is_a?(Hash) || json_data.is_a?(Array)
+
+        if json_data.is_a?(Hash)
+          component_type = json_data['type']
+
+          # Event attributes to check
+          event_attrs = %w[onClick onclick onValueChange onValueChanged onTextChange onChange onLongPress]
+
+          event_attrs.each do |attr|
+            value = json_data[attr]
+            next unless value.is_a?(String) && value.start_with?('@{') && value.end_with?('}')
+
+            handler_name = value[2...-1]
+            bindings[handler_name] = {
+              component: component_type,
+              attribute: attr
+            }
+          end
+
+          # Process children
+          child = json_data['child'] || json_data['children']
+          if child.is_a?(Array)
+            child.each { |c| extract_event_bindings_for_type(c, bindings) }
+          elsif child
+            extract_event_bindings_for_type(child, bindings)
+          end
+        elsif json_data.is_a?(Array)
+          json_data.each { |item| extract_event_bindings_for_type(item, bindings) }
+        end
+
+        bindings
       end
 
       def extract_onclick_actions(json_data, actions = Set.new)
@@ -180,22 +222,62 @@ module RjuiTools
         handlers[handler_name] = { type: value_type }
       end
 
-      # Extract value bindings from components (Switch, Slider, SelectBox, etc.)
-      # These are the bound values like @{notificationsEnabled} in Switch value attribute
+      # Extract value bindings from components (Switch, Slider, SelectBox, TextField, TextView, etc.)
+      # These are the bound values like @{notificationsEnabled} in Switch isOn attribute
       def extract_value_bindings(json_data, bindings = {})
         if json_data.is_a?(Hash)
           component_type = json_data['type']
-          value = json_data['value']
 
-          if value.is_a?(String) && value.start_with?('@{') && value.end_with?('}')
-            property_name = value[2...-1]
-
-            # Determine type based on component
-            if %w[Switch Toggle].include?(component_type)
+          # Switch, Toggle - isOn/checked/value binding (boolean)
+          if %w[Switch Toggle].include?(component_type)
+            is_on = json_data['isOn'] || json_data['checked'] || json_data['value']
+            if is_on.is_a?(String) && is_on.start_with?('@{') && is_on.end_with?('}')
+              property_name = is_on[2...-1]
               bindings[property_name] = { type: 'boolean', defaultValue: false }
-            elsif component_type == 'Slider'
+            end
+          end
+
+          # CheckBox, Check - isOn/checked binding (boolean)
+          if %w[CheckBox Check].include?(component_type)
+            is_on = json_data['isOn'] || json_data['checked']
+            if is_on.is_a?(String) && is_on.start_with?('@{') && is_on.end_with?('}')
+              property_name = is_on[2...-1]
+              bindings[property_name] = { type: 'boolean', defaultValue: false }
+            end
+          end
+
+          # Slider - value binding (number)
+          if component_type == 'Slider'
+            value = json_data['value']
+            if value.is_a?(String) && value.start_with?('@{') && value.end_with?('}')
+              property_name = value[2...-1]
               bindings[property_name] = { type: 'number', defaultValue: 0 }
-            elsif %w[Radio Segment SelectBox].include?(component_type)
+            end
+          end
+
+          # Radio, Segment, SelectBox - value binding (string)
+          if %w[Radio Segment SelectBox].include?(component_type)
+            value = json_data['value']
+            if value.is_a?(String) && value.start_with?('@{') && value.end_with?('}')
+              property_name = value[2...-1]
+              bindings[property_name] = { type: 'string', defaultValue: '""' }
+            end
+          end
+
+          # TextField - text binding (string)
+          if component_type == 'TextField'
+            text = json_data['text']
+            if text.is_a?(String) && text.start_with?('@{') && text.end_with?('}')
+              property_name = text[2...-1]
+              bindings[property_name] = { type: 'string', defaultValue: '""' }
+            end
+          end
+
+          # TextView - text binding (string)
+          if component_type == 'TextView'
+            text = json_data['text']
+            if text.is_a?(String) && text.start_with?('@{') && text.end_with?('}')
+              property_name = text[2...-1]
               bindings[property_name] = { type: 'string', defaultValue: '""' }
             end
           end
@@ -216,7 +298,7 @@ module RjuiTools
         bindings
       end
 
-      def extract_data_properties(json_data, properties = [], is_root = true)
+      def extract_data_properties(json_data, properties = [], is_root = true, event_bindings = {})
         if json_data.is_a?(Hash)
           # Check for data section
           if json_data['data'] && json_data['data'].is_a?(Array)
@@ -227,6 +309,28 @@ module RjuiTools
                 if data_item.is_a?(Hash)
                   # Normalize type using TypeConverter (mode: react)
                   normalized = Core::TypeConverter.normalize_data_property(data_item, 'react')
+
+                  # Check if this property is bound to an event and has Event type
+                  prop_name = normalized['name']
+                  prop_class = normalized['class'].to_s
+
+                  if event_bindings[prop_name] && prop_class.include?('Event')
+                    # Get event type from type_mapping.json
+                    binding_info = event_bindings[prop_name]
+                    event_type = Core::TypeConverter.get_event_type(
+                      binding_info[:component],
+                      binding_info[:attribute]
+                    )
+
+                    if event_type
+                      # Convert Event to platform-specific type (React event type string)
+                      converted_class = prop_class.gsub('Event', event_type)
+                      normalized['class'] = converted_class
+                      # Recalculate tsType with the converted class
+                      normalized['tsType'] = Core::TypeConverter.to_typescript_type(converted_class)
+                    end
+                  end
+
                   properties << normalized
                 end
               end
@@ -264,15 +368,15 @@ module RjuiTools
           if child
             if child.is_a?(Array)
               child.each do |c|
-                extract_data_properties(c, properties, false)
+                extract_data_properties(c, properties, false, event_bindings)
               end
             else
-              extract_data_properties(child, properties, false)
+              extract_data_properties(child, properties, false, event_bindings)
             end
           end
         elsif json_data.is_a?(Array)
           json_data.each do |item|
-            extract_data_properties(item, properties, false)
+            extract_data_properties(item, properties, false, event_bindings)
           end
         end
 
@@ -317,6 +421,9 @@ module RjuiTools
           .select { |t| t.match?(/^[A-Z][a-zA-Z]+Data$/) && t != "#{view_name}Data" }
           .uniq
 
+        # Get existing property names from data section to avoid duplicates
+        existing_prop_names = data_properties.map { |p| p['name'] }.to_set
+
         imports = "// Generated by ReactJsonUI - Do not edit directly\n"
         imports += "\nimport { CollectionDataSource } from './CollectionDataSource';\n" if needs_collection_import
         data_type_imports.each do |data_type|
@@ -345,8 +452,10 @@ module RjuiTools
             end
           end
 
-          # Add value bindings (Switch, Slider, SelectBox values)
+          # Add value bindings (Switch, Slider, SelectBox values) - skip if already in data_properties
           value_bindings.each do |prop_name, info|
+            next if existing_prop_names.include?(prop_name)
+
             ts_type = info[:type]
             content += "  #{prop_name}: #{ts_type};\n"
           end
@@ -362,8 +471,21 @@ module RjuiTools
             content += "  #{handler_name}?: (value: string) => void;\n"
           end
 
-          # Add event handlers (Switch, SelectBox, etc.)
+          # Add onChange handlers for value bindings (auto-generated handlers)
+          # Skip if already handled by text_field_bindings
+          text_field_set = text_field_bindings.to_set
+          value_bindings.each do |prop_name, info|
+            next if text_field_set.include?(prop_name)
+
+            handler_name = "on#{capitalize_first(prop_name)}Change"
+            ts_type = info[:type]
+            content += "  #{handler_name}?: (value: #{ts_type}) => void;\n"
+          end
+
+          # Add event handlers (Switch, SelectBox, etc.) - skip if already in data_properties
           event_handlers.each do |handler_name, info|
+            next if existing_prop_names.include?(handler_name)
+
             ts_type = info[:type]
             content += "  #{handler_name}?: (value: #{ts_type}) => void;\n"
           end
@@ -383,8 +505,10 @@ module RjuiTools
           content += "  #{name}: #{formatted_value},\n"
         end
 
-        # Add value bindings with default values
+        # Add value bindings with default values - skip if already in data_properties
         value_bindings.each do |prop_name, info|
+          next if existing_prop_names.include?(prop_name)
+
           default_val = info[:defaultValue]
           content += "  #{prop_name}: #{default_val},\n"
         end
@@ -399,8 +523,19 @@ module RjuiTools
           content += "  #{handler_name}: undefined,\n"
         end
 
-        # Add event handlers with undefined default
+        # Add onChange handlers for value bindings with undefined default
+        # Skip if already handled by text_field_bindings
+        value_bindings.each do |prop_name, _info|
+          next if text_field_set.include?(prop_name)
+
+          handler_name = "on#{capitalize_first(prop_name)}Change"
+          content += "  #{handler_name}: undefined,\n"
+        end
+
+        # Add event handlers with undefined default - skip if already in data_properties
         event_handlers.each do |handler_name, _info|
+          next if existing_prop_names.include?(handler_name)
+
           content += "  #{handler_name}: undefined,\n"
         end
 
@@ -415,6 +550,8 @@ module RjuiTools
       end
 
       def generate_javascript_content(view_name, data_properties, onclick_actions = [], text_field_bindings = [], event_handlers = {}, value_bindings = {})
+        # Get existing property names from data section to avoid duplicates
+        existing_prop_names = data_properties.map { |p| p['name'] }.to_set
         content = <<~JS
           // Generated by ReactJsonUI - Do not edit directly
 
@@ -428,8 +565,10 @@ module RjuiTools
           content += " * @property {#{ts_type}} [#{name}]\n"
         end
 
-        # Add value bindings (Switch, Slider, SelectBox values)
+        # Add value bindings (Switch, Slider, SelectBox values) - skip if already in data_properties
         value_bindings.each do |prop_name, info|
+          next if existing_prop_names.include?(prop_name)
+
           ts_type = info[:type]
           content += " * @property {#{ts_type}} #{prop_name}\n"
         end
@@ -442,6 +581,17 @@ module RjuiTools
         text_field_bindings.each do |binding|
           handler_name = "on#{capitalize_first(binding)}Change"
           content += " * @property {((value: string) => void) | undefined} [#{handler_name}]\n"
+        end
+
+        # Add onChange handlers for value bindings (auto-generated handlers)
+        # Skip if already handled by text_field_bindings
+        text_field_set = text_field_bindings.to_set
+        value_bindings.each do |prop_name, info|
+          next if text_field_set.include?(prop_name)
+
+          handler_name = "on#{capitalize_first(prop_name)}Change"
+          ts_type = info[:type]
+          content += " * @property {((value: #{ts_type}) => void) | undefined} [#{handler_name}]\n"
         end
 
         # Add event handlers (Switch, SelectBox, etc.)
@@ -464,8 +614,10 @@ module RjuiTools
           content += "  #{name}: #{formatted_value},\n"
         end
 
-        # Add value bindings with default values
+        # Add value bindings with default values - skip if already in data_properties
         value_bindings.each do |prop_name, info|
+          next if existing_prop_names.include?(prop_name)
+
           default_val = info[:defaultValue]
           content += "  #{prop_name}: #{default_val},\n"
         end
@@ -480,8 +632,19 @@ module RjuiTools
           content += "  #{handler_name}: undefined,\n"
         end
 
-        # Add event handlers with undefined default
+        # Add onChange handlers for value bindings with undefined default
+        # Skip if already handled by text_field_bindings
+        value_bindings.each do |prop_name, _info|
+          next if text_field_set.include?(prop_name)
+
+          handler_name = "on#{capitalize_first(prop_name)}Change"
+          content += "  #{handler_name}: undefined,\n"
+        end
+
+        # Add event handlers with undefined default - skip if already in data_properties
         event_handlers.each do |handler_name, _info|
+          next if existing_prop_names.include?(handler_name)
+
           content += "  #{handler_name}: undefined,\n"
         end
 

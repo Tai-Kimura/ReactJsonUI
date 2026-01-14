@@ -71,15 +71,29 @@ module RjuiTools
         end
 
         def build_on_change
+          # If custom handler is defined, use it (passing the event object)
           handler = json['onValueChange']
-          return '' unless handler
-
-          if has_binding?(handler)
+          if handler && has_binding?(handler)
             prop = extract_binding_property(handler)
-            " onChange={(e) => #{prop}?.(Number(e.target.value))}"
-          else
-            " {/* ERROR: onValueChange requires binding format @{functionName} */}"
+            return " onChange={(e) => #{prop}?.(e)}"
           end
+
+          # Auto-generate onChange from value binding property
+          # e.g., value: "@{sliderValue}" -> onChange={(e) => data.onSliderValueChange?.(Number(e.target.value))}
+          value = json['value']
+          if value && has_binding?(value)
+            property_name = extract_raw_binding_property(value)
+            handler_name = "on#{capitalize_first(property_name)}Change"
+            return " onChange={(e) => data.#{handler_name}?.(Number(e.target.value))}"
+          end
+
+          ''
+        end
+
+        def capitalize_first(str)
+          return str if str.nil? || str.empty?
+
+          str[0].upcase + str[1..]
         end
 
         def build_disabled_attr

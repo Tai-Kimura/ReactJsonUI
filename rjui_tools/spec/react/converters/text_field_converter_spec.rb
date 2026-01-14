@@ -36,13 +36,14 @@ RSpec.describe RjuiTools::React::Converters::TextFieldConverter do
     end
 
     context 'with text binding' do
-      it 'converts binding to value attribute' do
+      it 'converts binding to controlled component (value + onChange)' do
         converter = create_converter({
           'type' => 'TextField',
           'text' => '@{username}'
         })
         result = converter.convert
-        expect(result).to include('defaultValue={data.username}')
+        expect(result).to include('value={data.username}')
+        expect(result).to include('onChange={(e) => data.onUsernameChange?.(e.target.value)}')
       end
     end
 
@@ -198,14 +199,13 @@ RSpec.describe RjuiTools::React::Converters::TextFieldConverter do
     end
 
     context 'with hintColor' do
-      it 'adds placeholder color CSS variable' do
+      it 'adds placeholder color via Tailwind class' do
         converter = create_converter({
           'type' => 'TextField',
           'hintColor' => '#999999'
         })
-        converter.send(:build_class_name)
-        result = converter.send(:build_style_attr)
-        expect(result).to include("'--placeholder-color': '#999999'")
+        result = converter.send(:build_class_name)
+        expect(result).to include('placeholder-#999999')
       end
     end
 

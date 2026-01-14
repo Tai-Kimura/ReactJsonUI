@@ -65,10 +65,10 @@ RSpec.describe RjuiTools::React::Converters::SelectBoxConverter do
     end
 
     context 'with onChange handler' do
-      it 'generates onChange with event handler' do
+      it 'generates onChange with optional chaining' do
         converter = create_converter({ 'class' => 'SelectBox', 'items' => ['A', 'B'], 'onChange' => '@{handleChange}' })
         result = converter.convert
-        expect(result).to include('onChange={(e) => data.handleChange(e.target.value)}')
+        expect(result).to include('onChange={(e) => data.handleChange?.(e.target.value)}')
       end
     end
 

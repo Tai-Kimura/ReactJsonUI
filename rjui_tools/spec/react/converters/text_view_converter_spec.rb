@@ -36,13 +36,14 @@ RSpec.describe RjuiTools::React::Converters::TextViewConverter do
     end
 
     context 'with text binding' do
-      it 'converts binding to value attribute' do
+      it 'converts binding to controlled component (value + auto-generated onChange)' do
         converter = create_converter({
           'type' => 'TextView',
           'text' => '@{description}'
         })
         result = converter.convert
         expect(result).to include('value={data.description}')
+        expect(result).to include('onChange={(e) => data.onDescriptionChange?.(e.target.value)}')
       end
     end
 
@@ -135,26 +136,24 @@ RSpec.describe RjuiTools::React::Converters::TextViewConverter do
     end
 
     context 'with hintColor' do
-      it 'adds placeholder color CSS variable' do
+      it 'adds placeholder color via Tailwind class' do
         converter = create_converter({
           'type' => 'TextView',
           'hintColor' => '#999999'
         })
-        converter.send(:build_class_name)
-        result = converter.send(:build_style_attr)
-        expect(result).to include("--placeholder-color: '#999999'")
+        result = converter.send(:build_class_name)
+        expect(result).to include('placeholder-#999999')
       end
     end
 
     context 'with hintAttributes' do
-      it 'extracts fontColor from hintAttributes' do
+      it 'extracts fontColor from hintAttributes as Tailwind class' do
         converter = create_converter({
           'type' => 'TextView',
           'hintAttributes' => { 'fontColor' => '#888888' }
         })
-        converter.send(:build_class_name)
-        result = converter.send(:build_style_attr)
-        expect(result).to include("--placeholder-color: '#888888'")
+        result = converter.send(:build_class_name)
+        expect(result).to include('placeholder-#888888')
       end
     end
 

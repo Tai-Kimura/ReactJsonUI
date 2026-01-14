@@ -129,13 +129,15 @@ module RjuiTools
           # Name attribute
           attrs << " name=\"#{json['name']}\"" if json['name']
 
-          # Value binding
+          # Value handling depends on binding presence
           if json['text']
-            value = convert_binding(json['text'])
-            if value.include?('{')
+            if has_binding?(json['text'])
+              # Binding present: use controlled component (value + onChange)
+              value = convert_binding(json['text'])
               attrs << " value={#{value.gsub(/[{}]/, '')}}"
             else
-              attrs << " defaultValue=\"#{value}\""
+              # No binding: use uncontrolled component (defaultValue only)
+              attrs << " defaultValue=\"#{json['text']}\""
             end
           end
 
@@ -158,14 +160,32 @@ module RjuiTools
         end
 
         def build_on_change
+          # If custom handler is defined, use it (passing the event object)
           handler = json['onTextChange'] || json['onChange']
-          return '' unless handler
-
-          if has_binding?(handler)
-            " onChange={#{extract_binding_property(handler)}}"
-          else
-            " onChange={#{handler}}"
+          if handler
+            if has_binding?(handler)
+              prop = extract_binding_property(handler)
+              return " onChange={(e) => #{prop}?.(e)}"
+            else
+              return " onChange={(e) => #{handler}?.(e)}"
+            end
           end
+
+          # Auto-generate onChange from text binding property
+          # e.g., text: "@{description}" -> onChange={(e) => data.onDescriptionChange?.(e.target.value)}
+          if json['text'] && has_binding?(json['text'])
+            property_name = extract_raw_binding_property(json['text'])
+            handler_name = "on#{capitalize_first(property_name)}Change"
+            return " onChange={(e) => data.#{handler_name}?.(e.target.value)}"
+          end
+
+          ''
+        end
+
+        def capitalize_first(str)
+          return str if str.nil? || str.empty?
+
+          str[0].upcase + str[1..]
         end
 
         def build_disabled_attr

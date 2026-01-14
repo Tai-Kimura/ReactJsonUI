@@ -65,10 +65,19 @@ RSpec.describe RjuiTools::React::Converters::SliderConverter do
     end
 
     context 'with onValueChange handler' do
-      it 'generates onChange binding' do
+      it 'generates onChange with optional chaining and number conversion' do
         converter = create_converter({ 'class' => 'Slider', 'onValueChange' => '@{handleSlide}' })
         result = converter.convert
-        expect(result).to include('onChange={data.handleSlide}')
+        expect(result).to include('onChange={(e) => data.handleSlide?.(Number(e.target.value))}')
+      end
+    end
+
+    context 'with value binding but no onValueChange (auto-generated)' do
+      it 'auto-generates onChange handler from value binding' do
+        converter = create_converter({ 'class' => 'Slider', 'value' => '@{sliderValue}' })
+        result = converter.convert
+        expect(result).to include('value={data.sliderValue}')
+        expect(result).to include('onChange={(e) => data.onSliderValueChange?.(Number(e.target.value))}')
       end
     end
 

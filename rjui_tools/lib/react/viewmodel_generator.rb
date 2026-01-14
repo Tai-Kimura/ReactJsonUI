@@ -51,10 +51,16 @@ module RjuiTools
         json_data = JSON.parse(json_content)
         expanded_data = StyleLoader.load_and_merge(json_data, @styles_dir)
 
+        # Extract handlers defined in data section to avoid duplicates
+        data_section_handlers = extract_data_section_handlers(expanded_data)
+
         # Extract onclick actions and TextField bindings
         onclick_actions = extract_onclick_actions(expanded_data)
         text_field_bindings = extract_text_field_bindings(expanded_data)
         event_handlers = extract_event_handler_bindings(expanded_data)
+
+        # Skip handlers that are already defined in data section (they use (Event) -> Void type)
+        event_handlers.reject! { |name, _| data_section_handlers.include?(name) }
 
         is_typescript = existing_vm.end_with?('.ts')
 
@@ -361,6 +367,38 @@ module RjuiTools
 
         handler_name = handler[2...-1]
         handlers[handler_name] = { type: value_type }
+      end
+
+      # Extract handler names defined in JSON data section with (Event) -> Void type
+      def extract_data_section_handlers(json_data, handlers = Set.new)
+        if json_data.is_a?(Hash)
+          # Check for data section
+          if json_data['data'].is_a?(Array)
+            json_data['data'].each do |prop|
+              next unless prop.is_a?(Hash)
+
+              # Check for event handler type definitions
+              prop_class = prop['class']
+              if prop_class && prop_class.include?('->') && prop_class.include?('Void')
+                handlers.add(prop['name']) if prop['name']
+              end
+            end
+          end
+
+          # Process children
+          child = json_data['child'] || json_data['children']
+          if child
+            if child.is_a?(Array)
+              child.each { |c| extract_data_section_handlers(c, handlers) }
+            else
+              extract_data_section_handlers(child, handlers)
+            end
+          end
+        elsif json_data.is_a?(Array)
+          json_data.each { |item| extract_data_section_handlers(item, handlers) }
+        end
+
+        handlers
       end
 
       def to_pascal_case(str)

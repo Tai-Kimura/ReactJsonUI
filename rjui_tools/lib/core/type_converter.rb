@@ -12,8 +12,68 @@ module RjuiTools
       @colors_data = nil
       @colors_file_path = nil
 
+      # Cache for type_mapping.json data
+      @type_mapping = nil
+
       class << self
-        attr_accessor :colors_data, :colors_file_path
+        attr_accessor :colors_data, :colors_file_path, :type_mapping
+
+        # Load type_mapping.json
+        # @return [Hash] the type mapping data
+        def load_type_mapping
+          return @type_mapping if @type_mapping
+
+          mapping_path = File.join(File.dirname(__FILE__), 'type_mapping.json')
+          if File.exist?(mapping_path)
+            begin
+              @type_mapping = JSON.parse(File.read(mapping_path))
+            rescue JSON::ParserError => e
+              warn "[TypeConverter] Warning: Failed to parse type_mapping.json: #{e.message}"
+              @type_mapping = { 'types' => {}, 'events' => {}, 'defaults' => {} }
+            end
+          else
+            warn "[TypeConverter] Warning: type_mapping.json not found at #{mapping_path}"
+            @type_mapping = { 'types' => {}, 'events' => {}, 'defaults' => {} }
+          end
+
+          @type_mapping
+        end
+
+        # Get type mapping for a JSON type
+        # @param json_type [String] the JSON type
+        # @param mode [String] the mode (not used for React, kept for API compatibility)
+        # @return [String, nil] the mapped type or nil
+        def get_type_mapping(json_type, mode = nil)
+          mapping = load_type_mapping
+          type_info = mapping.dig('types', json_type, LANGUAGE)
+          return nil unless type_info
+
+          # React doesn't have modes, so just return the value directly
+          type_info.is_a?(Hash) ? type_info.values.first : type_info
+        end
+
+        # Get event type mapping for a component and attribute
+        # @param component [String] the component type (e.g., "Button")
+        # @param attribute [String] the attribute name (e.g., "onClick")
+        # @param mode [String] the mode (not used for React)
+        # @return [String, nil] the event type or nil
+        def get_event_type(component, attribute, mode = nil)
+          mapping = load_type_mapping
+          mapping.dig('events', component, attribute, LANGUAGE)
+        end
+
+        # Get default value for a type
+        # @param ts_type [String] the TypeScript type
+        # @return [String] the default value
+        def get_default_value(ts_type)
+          mapping = load_type_mapping
+          mapping.dig('defaults', LANGUAGE, ts_type) || 'undefined'
+        end
+
+        # Clear the type mapping cache (useful for testing)
+        def clear_type_mapping_cache
+          @type_mapping = nil
+        end
 
         # Load colors.json from the specified path or auto-detect from project config
         # @param path [String, nil] optional path to colors.json
@@ -61,12 +121,13 @@ module RjuiTools
       end
 
       # Language key for this platform
-      LANGUAGE = 'react'
+      LANGUAGE = 'typescript'
 
       # Available modes for this platform
       MODES = %w[react].freeze
 
       # JSON type -> TypeScript type mapping
+      # NOTE: These are kept for backward compatibility, but type_mapping.json is preferred
       TYPE_MAPPING = {
         # Standard types (cross-platform)
         'String' => 'string',
@@ -108,6 +169,7 @@ module RjuiTools
       }.freeze
 
       # Default values for each TypeScript type
+      # NOTE: These are kept for backward compatibility, but type_mapping.json is preferred
       DEFAULT_VALUES = {
         'string' => '""',
         'number' => '0',
