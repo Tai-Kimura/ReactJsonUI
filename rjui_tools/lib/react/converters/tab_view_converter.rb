@@ -106,8 +106,12 @@ module RjuiTools
 
           on_change = build_on_change
 
+          # Build tab id for test automation (selectTab action)
+          tab_id = extract_id ? "#{extract_id}_tab_#{index}" : nil
+          tab_id_attr = tab_id ? " id=\"#{tab_id}\"" : ''
+
           <<~JSX.chomp
-            #{indent_str(6)}<button
+            #{indent_str(6)}<button#{tab_id_attr}
             #{indent_str(8)}className={`#{button_class}`}#{style_attr}
             #{indent_str(8)}onClick={() => #{on_change}?.(#{index})}
             #{indent_str(6)}>
